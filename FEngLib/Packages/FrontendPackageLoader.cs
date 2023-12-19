@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using FEngLib.Chunks;
 
 namespace FEngLib.Packages;
@@ -8,15 +8,22 @@ namespace FEngLib.Packages;
 /// </summary>
 public class FrontendPackageLoader
 {
-    /// <summary>
-    ///     Loads a data stream as a <see cref="Package" />.
-    /// </summary>
-    /// <param name="br">The <see cref="BinaryReader" /> for the data stream.</param>
-    /// <returns>A new <see cref="Package" /> instance.</returns>
-    public Package Load(BinaryReader br)
+	public FrontendPackageLoader()
+	{
+		HashResolver = new HashResolver();
+	}
+
+	public HashResolver HashResolver { get; }
+
+	/// <summary>
+	///     Loads a data stream as a <see cref="Package" />.
+	/// </summary>
+	/// <param name="br">The <see cref="BinaryReader" /> for the data stream.</param>
+	/// <returns>A new <see cref="Package" /> instance.</returns>
+	public Package Load(BinaryReader br)
     {
         var package = new Package();
-        var chunkReader = new FrontendChunkReader(package, br);
+        var chunkReader = new FrontendChunkReader(package, br, HashResolver);
 
         foreach (var chunk in chunkReader.ReadMainChunks())
             switch (chunk)

@@ -1,19 +1,15 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Diagnostics;
-using System.Collections.Generic;
-
 using CommandLine;
-
 using FEngLib;
-using FEngLib.Utils;
 using FEngLib.Objects;
 using FEngLib.Packages;
-
+using FEngLib.Utils;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System.Runtime.InteropServices;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 namespace FEngCli;
 
@@ -60,7 +56,7 @@ public class CompileCommand : BaseCommand
 		while (true)
 		{
 			var @object = objects.Find(x => x.NameHash == $"{name}{j}".BinHash());
-			
+
 			if (@object is not null)
 			{
 				j++;
@@ -110,6 +106,24 @@ public class CompileCommand : BaseCommand
 		Console.WriteLine($"Unhandled child key {key}.");
 
 		var ii = 0;
+	}
+
+	private static void RemoveStrings(Package[] packages)
+	{
+		foreach (var package in packages)
+		{
+			foreach (var @object in package.Objects)
+			{
+				var text = @object as Text;
+
+				if (text is not null && text.Value is not null && text.Value != string.Empty)
+				{
+					Console.WriteLine($"Removing Text object string {text.Value}...");
+
+					text.Value = string.Empty;
+				}
+			}
+		}
 	}
 
 	private static void CopyObjectsCustomize(Package package)
@@ -295,23 +309,10 @@ public class CompileCommand : BaseCommand
 			NullValueHandling = NullValueHandling.Ignore
 		})).ToArray();
 
-		foreach (var package in packages)
-		{
-			foreach (var @object in package.Objects)
-			{
-				var text = @object as Text;
-
-				if (text is not null && text.Value is not null && text.Value != string.Empty)
-				{
-					Console.WriteLine($"Removing Text object string {text.Value}...");
-
-					text.Value = string.Empty;
-				}
-			}
-		}
-
-		CopyObjectsCustomize(Array.Find(packages, x => x.Name == "FeCustomizeParts.fng"));
-		CopyObjectsWorldMap(Array.Find(packages, x => x.Name == "WorldMapMain.fng"));
+		//NFSCO specific
+		//RemoveStrings(packages);
+		//CopyObjectsCustomize(Array.Find(packages, x => x.Name == "FeCustomizeParts.fng"));
+		//CopyObjectsWorldMap(Array.Find(packages, x => x.Name == "WorldMapMain.fng"));
 
 		using var bw = new BinaryWriter(File.Create(OutputPath));
 

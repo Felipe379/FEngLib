@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using FEngLib.Objects;
 using FEngLib.Packages;
@@ -10,11 +10,13 @@ namespace FEngLib.Chunks;
 
 public class ScriptDataChunk : FrontendObjectChunk
 {
-    public ScriptDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ScriptDataChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
     {
     }
 
-    public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
+	private string _logReference = "Script";
+
+	public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var ctx = new ScriptProcessingContext(FrontendObject.CreateScript());
         var tagStream = new ScriptTagStream(reader,
@@ -26,7 +28,7 @@ public class ScriptDataChunk : FrontendObjectChunk
             ProcessTag(ctx, tag);
         }
 
-        return FrontendObject;
+		return FrontendObject;
     }
 
     public override FrontendChunkType GetChunkType()
@@ -42,8 +44,8 @@ public class ScriptDataChunk : FrontendObjectChunk
                 ProcessScriptHeaderTag(ctx, scriptHeaderTag);
                 break;
             case ScriptNameTag scriptNameTag:
-                ctx.Script.Name = scriptNameTag.Name;
-                ctx.Script.Id = scriptNameTag.NameHash;
+				ctx.Script.Name = HashResolver.ResolveNameHash(scriptNameTag.Name, scriptNameTag.NameHash, "Script");
+				ctx.Script.Id = scriptNameTag.NameHash;
                 break;
             case ScriptChainTag scriptChainTag:
                 ctx.Script.ChainedId = scriptChainTag.Id;
@@ -188,7 +190,8 @@ public class ScriptDataChunk : FrontendObjectChunk
         ScriptHeaderTag scriptHeaderTag)
     {
         ctx.Script.Id = scriptHeaderTag.Id;
-        ctx.Script.Flags = scriptHeaderTag.Flags;
+		ctx.Script.Name = HashResolver.ResolveNameHash(ctx.Script.Name, scriptHeaderTag.Id, _logReference);
+		ctx.Script.Flags = scriptHeaderTag.Flags;
         ctx.Script.Length = scriptHeaderTag.Length;
     }
 }

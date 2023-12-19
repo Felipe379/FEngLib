@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using FEngLib.Objects;
 using FEngLib.Packages;
 
@@ -16,7 +16,7 @@ public class FrontendObjectContainerChunk : FrontendObjectChunk
         return FrontendChunkType.FrontendObjectContainer;
     }
 
-    public FrontendObjectContainerChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public FrontendObjectContainerChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
     {
     }
 }

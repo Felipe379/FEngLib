@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using FEngLib.Messaging;
 using FEngLib.Objects;
 using FEngLib.Packages;
@@ -8,11 +8,13 @@ namespace FEngLib.Chunks;
 
 public class MessageResponsesDataChunk : FrontendObjectChunk
 {
-    public MessageResponsesDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public MessageResponsesDataChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
     {
     }
 
-    public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
+	private string _logReference = "Message";
+
+	public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var tagProcessor = new MessageResponseTagProcessor<IObject<ObjectData>>();
         TagStream tagStream = new MessageTagStream(reader,
@@ -22,9 +24,10 @@ public class MessageResponsesDataChunk : FrontendObjectChunk
         {
             var tag = tagStream.NextTag();
             tagProcessor.ProcessTag(FrontendObject, tag);
+			FrontendObject.Name = HashResolver.ResolveNameHash(FrontendObject.Name, FrontendObject.NameHash, _logReference);
         }
 
-        return FrontendObject;
+		return FrontendObject;
     }
 
     public override FrontendChunkType GetChunkType()

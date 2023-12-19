@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Linq;
 using FEngLib.Objects;
 using FEngLib.Objects.Tags;
 using FEngLib.Packages;
@@ -10,9 +11,11 @@ namespace FEngLib.Chunks;
 
 public class ObjectDataChunk : FrontendObjectChunk
 {
-    public ObjectDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ObjectDataChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
     {
     }
+
+	private string _logReference = "Object";
 
     public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
@@ -23,12 +26,12 @@ public class ObjectDataChunk : FrontendObjectChunk
         {
             var tag = tagStream.NextTag();
             newFrontendObject = tagStream.Object = ProcessTag(package, newFrontendObject, tag);
-        }
+		}
 
         return newFrontendObject;
     }
 
-    private IObject<ObjectData> ProcessTag(Package package, IObject<ObjectData> frontendObject, Tag tag)
+	private IObject<ObjectData> ProcessTag(Package package, IObject<ObjectData> frontendObject, Tag tag)
     {
         switch (tag)
         {
@@ -56,7 +59,8 @@ public class ObjectDataChunk : FrontendObjectChunk
             case StringBufferLengthTag _:
                 break;
             case ObjectHashTag objectHashTag:
-                frontendObject.NameHash = objectHashTag.Hash;
+				frontendObject.Name = HashResolver.ResolveNameHash(null, objectHashTag.Hash, _logReference);
+				frontendObject.NameHash = objectHashTag.Hash;
                 break;
             case ObjectReferenceTag objectReferenceTag:
                 ProcessObjectReferenceTag(package, frontendObject, objectReferenceTag);
@@ -68,7 +72,7 @@ public class ObjectDataChunk : FrontendObjectChunk
                 ProcessObjectParentTag(package, frontendObject, objectParentTag);
                 break;
             case ObjectNameTag objectNameTag:
-                frontendObject.Name = objectNameTag.Name;
+				frontendObject.Name = HashResolver.ResolveNameHash(objectNameTag.Name, objectNameTag.NameHash, _logReference);
                 frontendObject.NameHash = objectNameTag.NameHash;
                 break;
             case MultiImageTextureTag _:

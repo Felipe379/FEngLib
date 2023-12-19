@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -47,6 +47,9 @@ public class GLRenderTreeRenderer
 
     public void LoadTextures(string directory)
     {
+		if (!Directory.Exists(directory))
+			Directory.CreateDirectory(directory);
+
         _loadedTextures.Clear();
         foreach (var pngFile in Directory.GetFiles(directory, "*.png"))
         {

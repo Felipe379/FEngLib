@@ -10,13 +10,22 @@
     <ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.8.0" />
       <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0-beta11" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\FEngLib\FEngLib.csproj" />
       <ProjectReference Include="..\FEngRender\FEngRender.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="compile_fng.bat">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="decompile_fng.bat">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

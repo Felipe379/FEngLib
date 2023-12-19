@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using FEngLib.Messaging;
 using FEngLib.Packages;
 using FEngLib.Packages.Tags;

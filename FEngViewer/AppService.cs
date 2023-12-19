@@ -1,7 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using FEngLib.Packages;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
 
 namespace FEngViewer;
 
@@ -41,7 +43,25 @@ public class AppService
         return _currentPackage = new FrontendPackageLoader().Load(mr);
     }
 
-    public List<ResourceRequest> GetResourceRequests()
+	public Package LoadJson(string path)
+	{
+		var package = JsonConvert.DeserializeObject<Package>(File.ReadAllText(path), new JsonSerializerSettings
+		{
+			Formatting = Formatting.Indented,
+			Converters = new List<JsonConverter>
+			{
+				new StringEnumConverter()
+			},
+			TypeNameHandling = TypeNameHandling.Auto,
+			ReferenceLoopHandling = ReferenceLoopHandling.Error,
+			PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+			NullValueHandling = NullValueHandling.Ignore
+		});
+
+		return _currentPackage = package;
+	}
+
+	public List<ResourceRequest> GetResourceRequests()
     {
         return _currentPackage?.ResourceRequests ??
                throw new NullReferenceException("Received a request for resource requests when no package is loaded!");

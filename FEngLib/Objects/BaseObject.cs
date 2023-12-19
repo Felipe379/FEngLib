@@ -140,13 +140,16 @@ public abstract class BaseObject : BaseObject<ObjectData, BaseObjectScript>
 /// </typeparam>
 /// <typeparam name="TScript"></typeparam>
 public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObject<TScript>
-	where TData : ObjectData where TScript : Script, new()
+	where TData : ObjectData, new()
+	where TScript : Script, new()
 {
 	protected BaseObject(TData data)
 	{
 		Scripts = new List<TScript>();
 		MessageResponses = new List<MessageResponse>();
 		Data = data;
+		//"Fix" render crash on some UG1 .fngs from the demo/final game
+		//Data = data ?? new();
 	}
 
 	public abstract object Clone();

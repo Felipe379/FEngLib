@@ -103,11 +103,14 @@ public interface IImage<out TData> : IObject<TData> where TData : ImageData
 }
 
 public class Image<TData, TScript> : BaseObject<TData, TScript>, IImage<TData>
-	where TData : ImageData, new() where TScript : Script, new()
+	where TData : ImageData, new()
+	where TScript : Script, new()
 {
 	protected Image(TData data) : base(data)
 	{
 		Data = data;
+		//"Fix" render crash on some UG1 .fngs from final and the .fng from demo
+		//Data = data ?? new();
 	}
 
 	public override void InitializeData()
