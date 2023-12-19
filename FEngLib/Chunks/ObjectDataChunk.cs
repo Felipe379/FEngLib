@@ -102,7 +102,8 @@ public class ObjectDataChunk : FrontendObjectChunk
     private BaseObject ProcessStringBufferLabelHashTag(Text frontendString,
         StringBufferLabelHashTag stringBufferLabelHashTag)
     {
-        frontendString.Hash = stringBufferLabelHashTag.Hash;
+		frontendString.Label = HashResolver.ResolveNameHash(frontendString.Label, stringBufferLabelHashTag.Hash, "Label");
+		frontendString.Hash = stringBufferLabelHashTag.Hash;
         return frontendString;
     }
 

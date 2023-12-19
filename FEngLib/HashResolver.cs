@@ -49,9 +49,9 @@ namespace FEngLib
 					if (keyValue.Value.Count <= 1)
 						continue;
 
-					foreach (var name in keyValue.Value)
+					foreach (var value in keyValue.Value)
 					{
-						unresolved.WriteLine($"0x{keyValue:x8} - {name}");
+						unresolved.WriteLine($"0x{keyValue.Key:x8} - {value}");
 					}
 				}
 				unresolved.Close();
