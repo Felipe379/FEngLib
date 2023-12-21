@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -64,6 +64,10 @@ public class RenderTree : IEnumerable<RenderTreeNode>
     /// <returns>The newly constructed <see cref="RenderTree"/> object.</returns>
     public static RenderTree Create(Package package)
     {
+		try
+		{
+
+
         var nodes = new List<RenderTreeNode>();
 
         var childrenDict = package.Objects
@@ -75,7 +79,15 @@ public class RenderTree : IEnumerable<RenderTreeNode>
         // Build up children mapping
         foreach (var frontendObject in package.Objects.Where(o => o.Parent != null))
         {
-            childrenDict[frontendObject.Parent.Guid].Add(frontendObject);
+				try
+				{
+					childrenDict[frontendObject.Parent.Guid].Add(frontendObject);
+				}
+				catch (Exception ex)
+				{
+
+					throw;
+				}
         }
 
         void GenerateNodes(IEnumerable<IObject<ObjectData>> frontendObjects, IList<RenderTreeNode> nodeList)
@@ -107,5 +119,12 @@ public class RenderTree : IEnumerable<RenderTreeNode>
         GenerateNodes(package.Objects.Where(o => o.Parent == null), nodes);
 
         return new RenderTree(nodes);
-    }
+
+		}
+		catch (Exception ex)
+		{
+
+			throw;
+		}
+	}
 }

@@ -1,9 +1,11 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Drawing.Design;
 using System.Numerics;
+using FEngLib;
 using FEngLib.Objects;
 using FEngLib.Packages;
 using FEngLib.Structures;
+using FEngLib.Utils;
 using FEngViewer.TypeConverters;
 using FEngViewer.UIEditors;
 using JetBrains.Annotations;
@@ -15,18 +17,48 @@ namespace FEngViewer;
 
 public abstract class ObjectViewWrapper<TObject> where TObject : class, IObject<ObjectData>
 {
-    protected ObjectViewWrapper(TObject wrappedObject)
+    protected ObjectViewWrapper(TObject wrappedObject, HashResolver hashResolver)
     {
         WrappedObject = wrappedObject;
+		HashResolver = hashResolver;
     }
 
     [NotNull] protected TObject WrappedObject { get; }
+	protected HashResolver HashResolver { get; }
 
-    #region Basic object properties
+	#region Basic object properties
 
-    [Category("Meta")]
+	[Category("Meta")]
+	[ReadOnly(true)]
+	public string Name
+	{
+		get => WrappedObject.Name;
+		set => WrappedObject.Name = value;
+	}
+
+	[Category("Meta")]
+	[TypeConverter(typeof(HexTypeConverter))]
+	[ReadOnly(true)]
+	[DisplayName("Hash (hex)")]
+	public uint HashHex
+	{
+		get => WrappedObject.NameHash;
+		set => WrappedObject.NameHash = value;
+	}
+
+	[Category("Meta")]
+	[ReadOnly(true)]
+	[DisplayName("Hash (dec)")]
+	public uint HashDec
+	{
+		get => WrappedObject.NameHash;
+		set => WrappedObject.NameHash = value;
+	}
+
+	[Category("Meta")]
     [TypeConverter(typeof(HexTypeConverter))]
-    public uint Guid
+	[ReadOnly(true)]
+	public uint Guid
     {
         get => WrappedObject.Guid;
         set => WrappedObject.Guid = value;
@@ -240,7 +272,7 @@ public abstract class ObjectViewWrapper<TObject> where TObject : class, IObject<
 
 public class DefaultObjectViewWrapper : ObjectViewWrapper<IObject<ObjectData>>
 {
-    public DefaultObjectViewWrapper(IObject<ObjectData> wrappedObject) : base(wrappedObject)
+    public DefaultObjectViewWrapper(IObject<ObjectData> wrappedObject, HashResolver hashResolver) : base(wrappedObject, hashResolver)
     {
     }
 
@@ -252,7 +284,7 @@ public class DefaultObjectViewWrapper : ObjectViewWrapper<IObject<ObjectData>>
 
 public class TextObjectViewWrapper : ObjectViewWrapper<Text>
 {
-    public TextObjectViewWrapper(Text wrappedObject) : base(wrappedObject)
+    public TextObjectViewWrapper(Text wrappedObject, HashResolver hashResolver) : base(wrappedObject, hashResolver)
     {
     }
 
@@ -272,16 +304,50 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
         set => WrappedObject.Value = value;
     }
 
-    [Category("Text")]
-    [Description("The ID of the localized string to display in-game.")]
-    [TypeConverter(typeof(HexTypeConverter))]
-    public uint LabelHash
-    {
-        get => WrappedObject.Hash;
-        set => WrappedObject.Hash = value;
-    }
+	[Category("Text")]
+	[Description("The language label of the localized string to display in-game.")]
+	[RefreshProperties(RefreshProperties.Repaint)]
+	public string Label
+	{
+		get => WrappedObject.Label;
+		set
+		{
+			WrappedObject.Label = value;
+			WrappedObject.Hash = value.BinHash();
+		}
+	}
 
-    [Category("Text")]
+	[Category("Text")]
+	[Description("The ID of the localized string to display in-game.")]
+	[TypeConverter(typeof(HexTypeConverter))]
+	[RefreshProperties(RefreshProperties.Repaint)]
+	[DisplayName("LabelHash (hex)")]
+	public uint LabelHashHex
+	{
+		get => WrappedObject.Hash;
+		set
+		{
+			WrappedObject.Hash = value;
+			WrappedObject.Label = HashResolver.ResolveNameHash(WrappedObject.Label, value);
+		}
+	}
+
+	[Category("Text")]
+	[Description("The ID of the localized string to display in-game.")]
+	[TypeConverter(typeof(HexTypeConverter))]
+	[RefreshProperties(RefreshProperties.Repaint)]
+	[DisplayName("LabelHash (dec)")]
+	public uint LabelHashDec
+	{
+		get => WrappedObject.Hash;
+		set
+		{
+			WrappedObject.Hash = value;
+			WrappedObject.Label = HashResolver.ResolveNameHash(WrappedObject.Label, value);
+		}
+	}
+
+	[Category("Text")]
     public TextFormat Formatting
     {
         get => WrappedObject.Formatting;
@@ -305,7 +371,7 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
 
 public abstract class ImageObjectViewWrapper<TImage> : ObjectViewWrapper<TImage> where TImage : class, IImage<ImageData>
 {
-    protected ImageObjectViewWrapper(TImage wrappedObject) : base(wrappedObject)
+    protected ImageObjectViewWrapper(TImage wrappedObject, HashResolver hashResolver) : base(wrappedObject, hashResolver)
     {
     }
 
@@ -338,14 +404,14 @@ public abstract class ImageObjectViewWrapper<TImage> : ObjectViewWrapper<TImage>
 
 public class ImageObjectViewWrapper : ImageObjectViewWrapper<Image>
 {
-    public ImageObjectViewWrapper(Image wrappedObject) : base(wrappedObject)
+    public ImageObjectViewWrapper(Image wrappedObject, HashResolver hashResolver) : base(wrappedObject, hashResolver)
     {
     }
 }
 
 public class ColoredImageObjectViewWrapper : ImageObjectViewWrapper<ColoredImage>
 {
-    public ColoredImageObjectViewWrapper(ColoredImage wrappedObject) : base(wrappedObject)
+    public ColoredImageObjectViewWrapper(ColoredImage wrappedObject, HashResolver hashResolver) : base(wrappedObject, hashResolver)
     {
     }
 

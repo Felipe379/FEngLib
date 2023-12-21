@@ -19,15 +19,24 @@ namespace FEngViewer
 		public IObject<ObjectData> ObjectSelected { get; set; }
 		public bool ShouldCopyObject { get; set; }
 
-		public IObject<ObjectData> GetObject(bool objectIsGroup)
+		public string SearchText { get; set; }
+		public int SearchIndex { get; set; }
+
+		public static string GetObjectTreeKey(IObject<ObjectData> objectData) => objectData != null ? $"{GetObjectText(objectData)}:{objectData.Guid:X}" : null;
+		public static string GetObjectText(IObject<ObjectData> objectData) => objectData != null ? $"{objectData.Name ?? objectData.NameHash.ToString("X")}" : null;
+
+		public IObject<ObjectData> GetCurrentSelectedObject(bool? objectReturnIsGroup = null)
 		{
 			if (_packageView.treeView1.SelectedNode?.Tag is not RenderTreeNode node)
 				return null;
 
 			var nodeObject = node.GetObject();
 
-			if (objectIsGroup && nodeObject is not Group grp)
-				return null;
+			if (objectReturnIsGroup.HasValue)
+			{
+				if (nodeObject is Group grp && !objectReturnIsGroup.Value)
+					return null;
+			}
 
 			return _packageView._currentPackage.Objects.Find(x => x.NameHash == nodeObject.NameHash && x.Guid == nodeObject.Guid);
 		}

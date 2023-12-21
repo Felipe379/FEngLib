@@ -29,7 +29,7 @@ namespace FEngLib
 					}
 					else if (Keys.TryGetValue(hash, out var names))
 					{
-						name = string.Join(" / ", names);
+						name = names.First();
 					}
 				}
 			}
@@ -48,13 +48,13 @@ namespace FEngLib
 			else
 			{
 				Keys.Add(hash, new HashSet<string>() { name });
-				WriteUserHashes(name);
+				WriteHashes(name, "UserHashes");
 			}
 		}
 
-		private void WriteUserHashes(string name)
+		private void WriteHashes(string name, string fileName)
 		{
-			var file = $"{_keysDirectory}\\UserKeys.txt";
+			var file = $"{_keysDirectory}\\{fileName}.txt";
 
 			StreamWriter userHashes;
 			{
