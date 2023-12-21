@@ -5,7 +5,8 @@ namespace FEngViewer.Prompt
 {
 	public partial class InputForm : Form
 	{
-		public string Input {
+		public string Input
+		{
 			get { return TxtInput.Text; }
 			set { TxtInput.Text = value; }
 		}
@@ -13,6 +14,7 @@ namespace FEngViewer.Prompt
 		public InputForm()
 		{
 			InitializeComponent();
+			BtnOk.Enabled = !string.IsNullOrWhiteSpace(TxtInput.Text);
 		}
 
 		public InputForm(CharacterCasing characterCasing)
@@ -32,6 +34,11 @@ namespace FEngViewer.Prompt
 		{
 			DialogResult = DialogResult.Cancel;
 			Input = null;
+		}
+
+		private void TxtInput_TextChanged(object sender, EventArgs e)
+		{
+			BtnOk.Enabled = !string.IsNullOrWhiteSpace(TxtInput.Text);
 		}
 	}
 }

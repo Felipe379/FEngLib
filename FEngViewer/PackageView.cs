@@ -6,7 +6,6 @@ using FEngLib.Scripts;
 using FEngLib.Structures;
 using FEngLib.Utils;
 using FEngRender.Data;
-using FEngViewer.Prompt;
 using FEngViewer.Properties;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
@@ -24,14 +23,18 @@ namespace FEngViewer;
 
 public partial class PackageView : Form
 {
-	private Package _currentPackage;
-	private RenderTree _currentRenderTree;
+	internal Package _currentPackage;
+	internal RenderTree _currentRenderTree;
+	private PackageViewExtensions _packageViewExtensions;
 
 	private TreeNode _rootNode;
 
 	public PackageView()
 	{
 		InitializeComponent();
+		_packageViewExtensions = new PackageViewExtensions(this);
+		LblDetails.Text = string.Empty;
+		//SetLabelDetails();
 
 		var imageList = new ImageList();
 		imageList.Images.Add("TreeItem_Package", Resources.TreeItem_Package);
@@ -58,7 +61,7 @@ public partial class PackageView : Form
 
 		var opts = Parser.Default.ParseArguments<Options>(args);
 
-		opts.WithParsed(parsed => LoadFile(parsed.InputFile))
+		opts.WithParsed(parsed => LoadFile(parsed.InputFile, false))
 			.WithNotParsed(err => Application.Exit());
 	}
 
@@ -234,20 +237,7 @@ public partial class PackageView : Form
 		tms.CopyTo(bw.BaseStream);
 	}
 
-	private void ImportJson(string path)
-	{
-		if (string.IsNullOrWhiteSpace(path))
-			return;
-
-		var package = AppService.Instance.LoadJson(path);
-
-		viewOutput.Init(Path.Combine(Path.GetDirectoryName(path) ?? "", "textures"));
-
-		_currentPackage = package;
-		CurrentPackageWasModified();
-	}
-
-	private void ExportJson(string path)
+	private void SavePackageToJson(string path)
 	{
 		File.WriteAllText(path, JsonConvert.SerializeObject(_currentPackage, new JsonSerializerSettings
 		{
@@ -263,15 +253,23 @@ public partial class PackageView : Form
 		}));
 	}
 
-	private void OpenFile(string path)
+	private void OpenRecentlySaved(string path, bool fileIsJson)
 	{
-		if (MessageBox.Show($"Do you want to open the file?{Environment.NewLine}{Path.GetFileName(path)}", "Success", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
+		var message = fileIsJson ? $"Do you want to open the file?{Environment.NewLine}{Path.GetFileName(path)}" : $"Do you want to open the folder?{Environment.NewLine}{Path.GetDirectoryName(path)}";
+		if (MessageBox.Show(message, "Success", MessageBoxButtons.YesNo, MessageBoxIcon.Information) == DialogResult.Yes)
 		{
-			Process.Start(new ProcessStartInfo
+			var processStartInfo = new ProcessStartInfo
 			{
 				FileName = path,
 				UseShellExecute = true
-			});
+			};
+			if (!fileIsJson)
+			{
+				processStartInfo.FileName = Path.GetDirectoryName(path);
+				processStartInfo.Verb = "open";
+			}
+
+			Process.Start(processStartInfo);
 		}
 	}
 
@@ -340,31 +338,43 @@ public partial class PackageView : Form
 	private void OpenFileMenuItem_Click(object sender, EventArgs e)
 	{
 		var ofd = new OpenFileDialog();
-		ofd.Filter = "FNG Files (*.fng)|*.fng|All files (*.*)|*.*";
+		ofd.Filter = "FNG Files (*.fng, *.bin)|*.fng;*.bin|JSON Files (*.json)|*.json";
 		ofd.CheckFileExists = true;
 		if (ofd.ShowDialog() == DialogResult.OK)
 		{
-			LoadFile(ofd.FileName);
+			switch (ofd.FilterIndex)
+			{
+				case 1:
+					LoadFile(ofd.FileName, false);
+					break;
+				case 2:
+					LoadFile(ofd.FileName, true);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(ofd.FilterIndex));
+			}
+			_packageViewExtensions.ObjectSelected = null;
+			_packageViewExtensions.ShouldCopyObject = false;
 		}
 	}
 
-	private void JsonImportMenuItem_Click(object sender, EventArgs e)
+	private void LoadFile(string path = null, bool fileIsJson = false)
 	{
-		var ofd = new OpenFileDialog();
-		ofd.Filter = "JSON Files (*.json)|*.json|All files (*.*)|*.*";
-		ofd.CheckFileExists = true;
-		if (ofd.ShowDialog() == DialogResult.OK)
-		{
-			ImportJson(ofd.FileName);
-		}
-	}
-
-	private void LoadFile(string path)
-	{
+		Package package;
 		if (string.IsNullOrWhiteSpace(path))
-			return;
+		{
+			if (_currentPackage is null)
+				return;
 
-		var package = AppService.Instance.LoadFile(path);
+			package = AppService.Instance.ReloadFile();
+		}
+		else
+		{
+			if (fileIsJson)
+				package = AppService.Instance.LoadJson(path);
+			else
+				package = AppService.Instance.LoadFile(path);
+		}
 
 		viewOutput.Init(Path.Combine(Path.GetDirectoryName(path) ?? "", "textures"));
 
@@ -372,48 +382,87 @@ public partial class PackageView : Form
 		CurrentPackageWasModified();
 	}
 
-	private void CurrentPackageWasModified(uint? nameHash = null)
+	private void SaveFileMenuItem_Click(object sender, EventArgs e)
+	{
+		if (_currentPackage is null)
+			return;
+
+		var sfd = new SaveFileDialog();
+		sfd.Filter = "FNG Files (*.fng)|*.fng|BIN Files (*.bin)|*.bin|JSON Files (*.json)|*.json";
+		sfd.FileName = Path.GetFileNameWithoutExtension(_currentPackage?.Name);
+		sfd.AddExtension = true;
+		if (sfd.ShowDialog() == DialogResult.OK)
+		{
+			switch (sfd.FilterIndex)
+			{
+				case 1:
+				case 2:
+					SaveFile(sfd.FileName, false);
+					break;
+				case 3:
+					SaveFile(sfd.FileName, true);
+					break;
+				default:
+					throw new ArgumentOutOfRangeException(nameof(sfd.FilterIndex));
+			}
+		}
+	}
+
+	private void ReloadFileMenuItem_Click(object sender, EventArgs e)
+	{
+		LoadFile();
+	}
+
+	private void SaveFile(string path, bool fileIsJson)
+	{
+		if (string.IsNullOrWhiteSpace(path))
+			return;
+
+		if (fileIsJson)
+			SavePackageToJson(path);
+		else
+			SavePackageToChunk(path);
+
+		OpenRecentlySaved(path, fileIsJson);
+	}
+
+
+	private void CurrentPackageWasModified(uint? key = null, uint? guid = null)
 	{
 		_currentRenderTree = RenderTree.Create(_currentPackage);
 		PopulateTreeView(_currentPackage, _currentRenderTree);
 
-		viewOutput.SelectedNode = null;
+		if (key.HasValue && guid.HasValue)
+		{
+			// How the fuck do I select the correct object using key and guid if there are two or more with the same key?
+			var renderTree = RenderTree.GetAllTreeNodesForRendering(_currentRenderTree);
+			var renderTreeNode = renderTree.Where(d =>
+			{
+				var frontendObject = d.GetObject();
+				return frontendObject.NameHash == key && frontendObject.Guid == guid;
+			}).FirstOrDefault();
+
+			if (renderTreeNode is not null)
+			{
+				var feObj = renderTreeNode.GetObject();
+				var treeKey = $"{feObj.Name ?? feObj.NameHash.ToString("X")}";
+				var foundNodes = treeView1.Nodes.Find(treeKey, true);
+				treeView1.SelectedNode = foundNodes.LastOrDefault();
+				treeView1.Focus();
+			}
+			else
+			{
+				viewOutput.SelectedNode = null;
+			}
+		}
+		else
+		{
+			viewOutput.SelectedNode = null;
+		}
 		Render();
 
 		// window title
 		Text = _currentPackage.Name;
-	}
-
-	private void SaveFileMenuItem_Click(object sender, EventArgs e)
-	{
-		var sfd = new SaveFileDialog();
-		sfd.Filter = "FNG Files (*.fng)|*.fng|All files (*.*)|*.*";
-		sfd.FileName = Path.GetFileNameWithoutExtension(_currentPackage?.Name);
-		sfd.AddExtension = true;
-		if (sfd.ShowDialog() == DialogResult.OK)
-		{
-			SaveFile(sfd.FileName);
-		}
-	}
-
-	private void SaveFile(string path)
-	{
-		if (string.IsNullOrWhiteSpace(path))
-			return;
-		SavePackageToChunk(path);
-	}
-
-	private void JsonExportMenuItem_Click(object sender, EventArgs e)
-	{
-		var sfd = new SaveFileDialog();
-		sfd.Filter = "JSON Files (*.json)|*.json|All files (*.*)|*.*";
-		sfd.FileName = Path.GetFileNameWithoutExtension(_currentPackage?.Name);
-		sfd.AddExtension = true;
-		if (sfd.ShowDialog() == DialogResult.OK)
-		{
-			ExportJson(sfd.FileName);
-			OpenFile(sfd.FileName);
-		}
 	}
 
 	private void treeView1_MouseDown(object sender, MouseEventArgs e)
@@ -422,7 +471,6 @@ public partial class PackageView : Form
 
 		TreeNode hit_node = treeView1.GetNodeAt(e.X, e.Y);
 		treeView1.SelectedNode = hit_node;
-
 		var ctxPoint = new Point(e.X, e.Y);
 
 		if (hit_node?.Tag is RenderTreeNode)
@@ -462,69 +510,104 @@ public partial class PackageView : Form
 		Render();
 	}
 
+	private void renameToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		var selectedObject = _packageViewExtensions.GetObject(false);
+		if (selectedObject is null)
+			return;
+
+		var input = _packageViewExtensions.ObjectInput(selectedObject.Name, selectedObject is Group);
+
+		if (string.IsNullOrWhiteSpace(input))
+			return;
+
+		selectedObject.Name = input;
+		selectedObject.NameHash = input.BinHash();
+		AppService.Instance.HashResolver.AddUserKey(selectedObject.Name, selectedObject.NameHash);
+
+		CurrentPackageWasModified(selectedObject.NameHash, selectedObject.Guid);
+	}
+
 	private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+		var selectedObject = _packageViewExtensions.GetObject(false);
+		if (selectedObject is null)
 			return;
 
-		var nodeObject = node.GetObject();
-
-		if (nodeObject is Group grp)
-			return;
-
-		_currentPackage.Objects.Remove(nodeObject);
+		_currentPackage.Objects.Remove(selectedObject);
 		CurrentPackageWasModified();
 	}
 
 	private void cloneToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+		var selectedObject = _packageViewExtensions.GetObject(false);
+		var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject.Parent);
+
+		if (newObject is null)
 			return;
 
-		var nodeObject = node.GetObject();
-
-		if (nodeObject is Group grp)
-			return;
-
-		var selectedObject = _currentPackage.Objects.Find(x => x.NameHash == nodeObject.NameHash);
-
-		if (selectedObject is null)
-			return;
-
-		var inputForm = new InputForm(CharacterCasing.Upper);
-		inputForm.Input = selectedObject.Name;
-		if (inputForm.ShowDialog() != DialogResult.OK)
-			return;
-
-		var inputHash = inputForm.Input.BinHash();
-
-		if (_currentPackage.Objects.Any(x => x.Name == inputForm.Input || x.NameHash == inputHash))
-		{
-			MessageBox.Show($"An object with the name {inputForm.Input} or hash 0x{inputHash:x8} already exists", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			return;
-		}
-
-		var newObject = selectedObject.Clone() as IObject<ObjectData>;
-
-		newObject.Name = inputForm.Input;
-		newObject.NameHash = inputForm.Input.BinHash();
-		var guid = selectedObject.Guid;
-
-		while (_currentPackage.Objects.Find(x => x.Guid == guid) is not null)
-		{
-			newObject.Guid = selectedObject.Guid++;
-		}
-
-		foreach (var targetList in _currentPackage.MessageTargetLists)
-		{
-			if (targetList.Targets.Contains(selectedObject.Guid))
-				targetList.Targets.Add(newObject.Guid);
-		}
+		AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
 
 		_currentPackage.ResourceRequests.Add(newObject.ResourceRequest);
 		_currentPackage.Objects.Add(newObject);
 
-		CurrentPackageWasModified();
+		CurrentPackageWasModified(newObject.NameHash, newObject.Guid);
+	}
+
+	private void cutToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetObject(false);
+		_packageViewExtensions.ShouldCopyObject = false;
+	}
+
+	private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetObject(false);
+		_packageViewExtensions.ShouldCopyObject = true;
+	}
+
+	private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		if (_packageViewExtensions.ObjectSelected is null)
+			return;
+
+		var selectedGroup = _packageViewExtensions.GetObject(true);
+
+		if (selectedGroup is null)
+			return;
+
+		uint? key = selectedGroup.NameHash;
+		uint? guid = selectedGroup.Guid;
+
+		if (_packageViewExtensions.ShouldCopyObject)
+		{
+			var newObject = _packageViewExtensions.CopyObject(_packageViewExtensions.ObjectSelected, selectedGroup);
+
+			if (newObject is null)
+				return;
+
+			AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
+			key = newObject.NameHash;
+			guid = newObject.Guid;
+			_currentPackage.ResourceRequests.Add(newObject.ResourceRequest);
+			_currentPackage.Objects.Add(newObject);
+		}
+		else
+		{
+			_packageViewExtensions.ObjectSelected.Parent = selectedGroup;
+			_packageViewExtensions.ObjectSelected = null;
+		}
+
+		CurrentPackageWasModified(key, guid);
+	}
+
+	private void SetLabelDetails()
+	{
+		var details = $"{DateTimeOffset.Now:dd/MM/yyyy HH:mm:ss}";
+		if (!string.IsNullOrWhiteSpace(AppService.Instance.CurrentFileLoaded))
+			details += $"| {AppService.Instance.CurrentFileLoaded}";
+
+		LblDetails.Text = details;
 	}
 
 	[UsedImplicitly]

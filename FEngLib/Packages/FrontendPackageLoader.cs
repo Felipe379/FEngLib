@@ -8,9 +8,9 @@ namespace FEngLib.Packages;
 /// </summary>
 public class FrontendPackageLoader
 {
-	public FrontendPackageLoader()
+	public FrontendPackageLoader(HashResolver hashResolver)
 	{
-		HashResolver = new HashResolver();
+		HashResolver = hashResolver;
 	}
 
 	public HashResolver HashResolver { get; }

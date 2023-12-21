@@ -9,6 +9,7 @@ namespace FEngLib
 	public class HashResolver
 	{
 		private Dictionary<uint, HashSet<string>> Keys { get; } = new Dictionary<uint, HashSet<string>>();
+		private string _keysDirectory => $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\Keys";
 
 		public HashResolver()
 		{
@@ -36,6 +37,34 @@ namespace FEngLib
 			return name;
 		}
 
+		public void AddUserKey(string name, uint hash)
+		{
+			if (Keys.ContainsKey(hash))
+			{
+				Keys[hash].Add(name);
+				if (Keys[hash].Count > 1)
+					LogWriteHashCollision();
+			}
+			else
+			{
+				Keys.Add(hash, new HashSet<string>() { name });
+				WriteUserHashes(name);
+			}
+		}
+
+		private void WriteUserHashes(string name)
+		{
+			var file = $"{_keysDirectory}\\UserKeys.txt";
+
+			StreamWriter userHashes;
+			{
+				userHashes = !File.Exists(file) ? new StreamWriter(file) : File.AppendText(file);
+				userHashes.WriteLine(name);
+				userHashes.Close();
+			}
+		}
+
+
 		private void LogWriteHashCollision()
 		{
 			var file = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\_Log_HashCollision.txt";
@@ -61,7 +90,7 @@ namespace FEngLib
 
 		private Dictionary<uint, HashSet<string>> ReadKeys()
 		{
-			var files = GetFiles($"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\Keys");
+			var files = GetFiles(_keysDirectory);
 
 			var keys = new HashSet<string>(ReadFiles(files));
 			return FillDictionary(keys);

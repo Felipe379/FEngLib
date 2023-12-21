@@ -1,4 +1,4 @@
-﻿
+
 using System.Windows.Forms;
 
 namespace FEngViewer
@@ -45,14 +45,18 @@ namespace FEngViewer
 			this.menuStrip1 = new MenuStrip();
 			this.FileMenuItem = new ToolStripMenuItem();
 			this.OpenFileMenuItem = new ToolStripMenuItem();
+			this.ReloadFileMenuItem = new ToolStripMenuItem();
 			this.SaveFileMenuItem = new ToolStripMenuItem();
-			this.JsonImportMenuItem = new ToolStripMenuItem();
-			this.JsonExportMenuItem = new ToolStripMenuItem();
 			this.objectContextMenu = new ContextMenuStrip(this.components);
+			this.renameToolStripMenuItem = new ToolStripMenuItem();
+			this.cloneToolStripMenuItem = new ToolStripMenuItem();
+			this.copyToolStripMenuItem = new ToolStripMenuItem();
+			this.cutToolStripMenuItem = new ToolStripMenuItem();
+			this.pasteToolStripMenuItem = new ToolStripMenuItem();
 			this.deleteToolStripMenuItem = new ToolStripMenuItem();
 			this.scriptContextMenu = new ContextMenuStrip(this.components);
 			this.toggleScriptItem = new ToolStripMenuItem();
-			this.cloneToolStripMenuItem = new ToolStripMenuItem();
+			this.LblDetails = new Label();
 			((System.ComponentModel.ISupportInitialize)this.splitContainer1).BeginInit();
 			this.splitContainer1.Panel1.SuspendLayout();
 			this.splitContainer1.Panel2.SuspendLayout();
@@ -80,8 +84,8 @@ namespace FEngViewer
 			// splitContainer1.Panel2
 			// 
 			this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
-			this.splitContainer1.Size = new System.Drawing.Size(1499, 963);
-			this.splitContainer1.SplitterDistance = 429;
+			this.splitContainer1.Size = new System.Drawing.Size(1484, 763);
+			this.splitContainer1.SplitterDistance = 424;
 			this.splitContainer1.TabIndex = 0;
 			// 
 			// treeView1
@@ -89,7 +93,7 @@ namespace FEngViewer
 			this.treeView1.Dock = DockStyle.Fill;
 			this.treeView1.Location = new System.Drawing.Point(0, 0);
 			this.treeView1.Name = "treeView1";
-			this.treeView1.Size = new System.Drawing.Size(429, 963);
+			this.treeView1.Size = new System.Drawing.Size(424, 763);
 			this.treeView1.TabIndex = 1;
 			this.treeView1.AfterSelect += this.treeView1_AfterSelect;
 			this.treeView1.MouseDown += this.treeView1_MouseDown;
@@ -110,7 +114,7 @@ namespace FEngViewer
 			// splitContainer2.Panel2
 			// 
 			this.splitContainer2.Panel2.Controls.Add(this.objectPropertyGrid);
-			this.splitContainer2.Size = new System.Drawing.Size(1060, 960);
+			this.splitContainer2.Size = new System.Drawing.Size(1050, 760);
 			this.splitContainer2.SplitterDistance = 649;
 			this.splitContainer2.TabIndex = 5;
 			// 
@@ -180,7 +184,7 @@ namespace FEngViewer
 			this.objectPropertyGrid.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 			this.objectPropertyGrid.Location = new System.Drawing.Point(3, 3);
 			this.objectPropertyGrid.Name = "objectPropertyGrid";
-			this.objectPropertyGrid.Size = new System.Drawing.Size(401, 953);
+			this.objectPropertyGrid.Size = new System.Drawing.Size(391, 753);
 			this.objectPropertyGrid.TabIndex = 4;
 			// 
 			// menuStrip1
@@ -189,13 +193,13 @@ namespace FEngViewer
 			this.menuStrip1.Items.AddRange(new ToolStripItem[] { this.FileMenuItem });
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(1499, 24);
+			this.menuStrip1.Size = new System.Drawing.Size(1484, 24);
 			this.menuStrip1.TabIndex = 4;
 			this.menuStrip1.Text = "menuStrip1";
 			// 
 			// FileMenuItem
 			// 
-			this.FileMenuItem.DropDownItems.AddRange(new ToolStripItem[] { this.OpenFileMenuItem, this.SaveFileMenuItem, this.JsonImportMenuItem, this.JsonExportMenuItem });
+			this.FileMenuItem.DropDownItems.AddRange(new ToolStripItem[] { this.OpenFileMenuItem, this.ReloadFileMenuItem, this.SaveFileMenuItem });
 			this.FileMenuItem.Name = "FileMenuItem";
 			this.FileMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.FileMenuItem.Text = "File";
@@ -203,42 +207,78 @@ namespace FEngViewer
 			// OpenFileMenuItem
 			// 
 			this.OpenFileMenuItem.Name = "OpenFileMenuItem";
-			this.OpenFileMenuItem.Size = new System.Drawing.Size(141, 22);
+			this.OpenFileMenuItem.ShortcutKeys = Keys.Control | Keys.O;
+			this.OpenFileMenuItem.Size = new System.Drawing.Size(183, 22);
 			this.OpenFileMenuItem.Text = "Open";
 			this.OpenFileMenuItem.Click += this.OpenFileMenuItem_Click;
+			// 
+			// ReloadFileMenuItem
+			// 
+			this.ReloadFileMenuItem.Name = "ReloadFileMenuItem";
+			this.ReloadFileMenuItem.ShortcutKeys = Keys.Control | Keys.Shift | Keys.R;
+			this.ReloadFileMenuItem.Size = new System.Drawing.Size(183, 22);
+			this.ReloadFileMenuItem.Text = "Reload";
+			this.ReloadFileMenuItem.Click += this.ReloadFileMenuItem_Click;
 			// 
 			// SaveFileMenuItem
 			// 
 			this.SaveFileMenuItem.Name = "SaveFileMenuItem";
-			this.SaveFileMenuItem.Size = new System.Drawing.Size(141, 22);
+			this.SaveFileMenuItem.ShortcutKeys = Keys.Control | Keys.S;
+			this.SaveFileMenuItem.Size = new System.Drawing.Size(183, 22);
 			this.SaveFileMenuItem.Text = "Save";
 			this.SaveFileMenuItem.Click += this.SaveFileMenuItem_Click;
-			// 
-			// JsonImportMenuItem
-			// 
-			this.JsonImportMenuItem.Name = "JsonImportMenuItem";
-			this.JsonImportMenuItem.Size = new System.Drawing.Size(141, 22);
-			this.JsonImportMenuItem.Text = "JSON Import";
-			this.JsonImportMenuItem.Click += this.JsonImportMenuItem_Click;
-			// 
-			// JsonExportMenuItem
-			// 
-			this.JsonExportMenuItem.Name = "JsonExportMenuItem";
-			this.JsonExportMenuItem.Size = new System.Drawing.Size(141, 22);
-			this.JsonExportMenuItem.Text = "JSON Export";
-			this.JsonExportMenuItem.Click += this.JsonExportMenuItem_Click;
 			// 
 			// objectContextMenu
 			// 
 			this.objectContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
-			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.cloneToolStripMenuItem, this.deleteToolStripMenuItem });
+			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.renameToolStripMenuItem, this.cloneToolStripMenuItem, this.copyToolStripMenuItem, this.cutToolStripMenuItem, this.pasteToolStripMenuItem, this.deleteToolStripMenuItem });
 			this.objectContextMenu.Name = "objectContextMenu";
-			this.objectContextMenu.Size = new System.Drawing.Size(181, 70);
+			this.objectContextMenu.Size = new System.Drawing.Size(159, 136);
+			// 
+			// renameToolStripMenuItem
+			// 
+			this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
+			this.renameToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.R;
+			this.renameToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+			this.renameToolStripMenuItem.Text = "Rename";
+			this.renameToolStripMenuItem.Click += this.renameToolStripMenuItem_Click;
+			// 
+			// cloneToolStripMenuItem
+			// 
+			this.cloneToolStripMenuItem.Name = "cloneToolStripMenuItem";
+			this.cloneToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+			this.cloneToolStripMenuItem.Text = "Clone";
+			this.cloneToolStripMenuItem.Click += this.cloneToolStripMenuItem_Click;
+			// 
+			// copyToolStripMenuItem
+			// 
+			this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
+			this.copyToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.C;
+			this.copyToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+			this.copyToolStripMenuItem.Text = "Copy";
+			this.copyToolStripMenuItem.Click += this.copyToolStripMenuItem_Click;
+			// 
+			// cutToolStripMenuItem
+			// 
+			this.cutToolStripMenuItem.Name = "cutToolStripMenuItem";
+			this.cutToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.X;
+			this.cutToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+			this.cutToolStripMenuItem.Text = "Cut";
+			this.cutToolStripMenuItem.Click += this.cutToolStripMenuItem_Click;
+			// 
+			// pasteToolStripMenuItem
+			// 
+			this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
+			this.pasteToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.V;
+			this.pasteToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
+			this.pasteToolStripMenuItem.Text = "Paste";
+			this.pasteToolStripMenuItem.Click += this.pasteToolStripMenuItem_Click;
 			// 
 			// deleteToolStripMenuItem
 			// 
 			this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
-			this.deleteToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.deleteToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D;
+			this.deleteToolStripMenuItem.Size = new System.Drawing.Size(158, 22);
 			this.deleteToolStripMenuItem.Text = "Delete";
 			this.deleteToolStripMenuItem.Click += this.deleteToolStripMenuItem_Click;
 			// 
@@ -256,17 +296,19 @@ namespace FEngViewer
 			this.toggleScriptItem.Text = "toolStripMenuItem1";
 			this.toggleScriptItem.Click += this.toggleScriptItem_Click;
 			// 
-			// cloneToolStripMenuItem
+			// LblDetails
 			// 
-			this.cloneToolStripMenuItem.Name = "cloneToolStripMenuItem";
-			this.cloneToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-			this.cloneToolStripMenuItem.Text = "Clone";
-			this.cloneToolStripMenuItem.Click += this.cloneToolStripMenuItem_Click;
+			this.LblDetails.Location = new System.Drawing.Point(12, 797);
+			this.LblDetails.Name = "LblDetails";
+			this.LblDetails.Size = new System.Drawing.Size(136, 15);
+			this.LblDetails.TabIndex = 5;
+			this.LblDetails.Text = "dd/MM/yyyy HH:mm:ss";
 			// 
 			// PackageView
 			// 
 			this.AutoScaleMode = AutoScaleMode.Inherit;
-			this.ClientSize = new System.Drawing.Size(1499, 1061);
+			this.ClientSize = new System.Drawing.Size(1484, 861);
+			this.Controls.Add(this.LblDetails);
 			this.Controls.Add(this.menuStrip1);
 			this.Controls.Add(this.splitContainer1);
 			this.Name = "PackageView";
@@ -300,7 +342,6 @@ namespace FEngViewer
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem OpenFileMenuItem;
         private System.Windows.Forms.ToolStripMenuItem SaveFileMenuItem;
-        private System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.ContextMenuStrip objectContextMenu;
         private System.Windows.Forms.ContextMenuStrip scriptContextMenu;
         private System.Windows.Forms.ToolStripMenuItem toggleScriptItem;
@@ -311,8 +352,13 @@ namespace FEngViewer
         private SplitContainer splitContainer2;
         private ToolStripMenuItem deleteToolStripMenuItem;
 		private ToolStripMenuItem FileMenuItem;
-		private ToolStripMenuItem JsonExportMenuItem;
-		private ToolStripMenuItem JsonImportMenuItem;
 		private ToolStripMenuItem cloneToolStripMenuItem;
+		private ToolStripMenuItem copyToolStripMenuItem;
+		private ToolStripMenuItem pasteToolStripMenuItem;
+		private ToolStripMenuItem cutToolStripMenuItem;
+		private ToolStripMenuItem renameToolStripMenuItem;
+		private ToolStripMenuItem ReloadFileMenuItem;
+		internal TreeView treeView1;
+		private Label LblDetails;
 	}
 }

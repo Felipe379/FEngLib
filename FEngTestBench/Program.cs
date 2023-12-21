@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -101,7 +101,7 @@ internal static class Program
         ms.Position = 0;
 
         using var mr = new BinaryReader(ms);
-        return new FrontendPackageLoader().Load(mr);
+        return new FrontendPackageLoader(new HashResolver()).Load(mr);
     }
 
     private static void SavePackageToChunk(Package pkg, string path)

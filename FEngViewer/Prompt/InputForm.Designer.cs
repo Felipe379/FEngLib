@@ -59,6 +59,7 @@ namespace FEngViewer.Prompt
 			this.TxtInput.Name = "TxtInput";
 			this.TxtInput.Size = new System.Drawing.Size(260, 23);
 			this.TxtInput.TabIndex = 3;
+			this.TxtInput.TextChanged += this.TxtInput_TextChanged;
 			// 
 			// InputForm
 			// 
