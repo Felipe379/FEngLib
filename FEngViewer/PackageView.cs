@@ -17,7 +17,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 using Image = FEngLib.Objects.Image;
 
 namespace FEngViewer;
@@ -52,6 +51,13 @@ public partial class PackageView : Form
 		imageList.Images.Add("TreeItem_GenericResource", Resources.TreeItem_GenericResource);
 		imageList.Images.Add("TreeItem_Font", Resources.TreeItem_Font);
 		imageList.Images.Add("TreeItem_Keyframe", Resources.TreeItem_Keyframe);
+		imageList.Images.Add("TreeItem_SimpleImage", Resources.TreeItem_SimpleImage);
+		imageList.Images.Add("TreeItem_Model", Resources.TreeItem_Model);
+		imageList.Images.Add("TreeItem_Effect", Resources.TreeItem_Effect);
+		imageList.Images.Add("TreeItem_AnimatedImage", Resources.TreeItem_AnimatedImage);
+		imageList.Images.Add("TreeItem_List", Resources.TreeItem_List);
+		imageList.Images.Add("TreeItem_CodeList", Resources.TreeItem_CodeList);
+		imageList.Images.Add("TreeItem_GenericObject", Resources.TreeItem_GenericObject);
 		treeView1.ImageList = imageList;
 	}
 
@@ -92,6 +98,9 @@ public partial class PackageView : Form
 				ResourceType.MultiImage => "TreeItem_MultiImage",
 				ResourceType.Movie => "TreeItem_Movie",
 				ResourceType.Font => "TreeItem_Font",
+				ResourceType.Model => "TreeItem_Model",
+				ResourceType.AnimatedImage => "TreeItem_AnimatedImage",
+				ResourceType.Effect => "TreeItem_Effect",
 				_ => "TreeItem_GenericResource"
 			};
 		}
@@ -129,16 +138,16 @@ public partial class PackageView : Form
 			ObjectType.Movie => "TreeItem_Movie",
 			ObjectType.ColoredImage => "TreeItem_ColoredImage",
 			ObjectType.MultiImage => "TreeItem_MultiImage",
-			_ => null
+			ObjectType.AnimImage => "TreeItem_AnimatedImage",
+			ObjectType.Effect => "TreeItem_Effect",
+			ObjectType.Model => "TreeItem_Model",
+			ObjectType.SimpleImage => "TreeItem_SimpleImage",
+			ObjectType.List => "TreeItem_List",
+			ObjectType.CodeList=> "TreeItem_CodeList",
+			_ => "TreeItem_GenericObject"
 		};
 
 		var nodeText = PackageViewExtensions.GetObjectText(feObj);
-
-		if (nodeImageKey == null)
-		{
-			nodeText = feObj.Type + " " + nodeText;
-		}
-
 		var objTreeNode = collection.Add(nodeText);
 		objTreeNode.Tag = viewNode;
 		objTreeNode.Name = PackageViewExtensions.GetObjectTreeKey(feObj);
@@ -469,6 +478,7 @@ public partial class PackageView : Form
 		{
 			var foundNodes = treeView1.Nodes.Find(treeKey, true);
 			treeView1.SelectedNode = foundNodes.First();
+			treeView1.SelectedNode.Expand();
 			treeView1.Focus();
 		}
 		else
@@ -529,17 +539,17 @@ public partial class PackageView : Form
 
 	private void renameToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject(false);
+		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
 		if (selectedObject is null)
 			return;
 
-		var input = _packageViewExtensions.ObjectInput(selectedObject.Name, selectedObject is Group);
+		var objectInput = _packageViewExtensions.ObjectInput(selectedObject.Name, false);
 
-		if (string.IsNullOrWhiteSpace(input))
+		if (string.IsNullOrWhiteSpace(objectInput.Input))
 			return;
 
-		selectedObject.Name = input;
-		selectedObject.NameHash = input.BinHash();
+		selectedObject.Name = objectInput.Input;
+		selectedObject.NameHash = objectInput.Input.BinHash();
 		AppService.Instance.HashResolver.AddUserKey(selectedObject.Name, selectedObject.NameHash);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
@@ -547,40 +557,36 @@ public partial class PackageView : Form
 
 	private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject(false);
+		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
 		if (selectedObject is null)
 			return;
 
 		var parentKey = PackageViewExtensions.GetObjectTreeKey(selectedObject.Parent);
-		_currentPackage.Objects.Remove(selectedObject);
+		_packageViewExtensions.DeleteObject(selectedObject);
 		CurrentPackageWasModified(parentKey);
 	}
 
 	private void duplicateToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject(false);
+		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
 		var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject?.Parent);
 
 		if (newObject is null)
 			return;
 
 		AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
-
-		_currentPackage.ResourceRequests.Add(newObject.ResourceRequest);
-		_currentPackage.Objects.Add(newObject);
-
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(newObject));
 	}
 
 	private void cutToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetCurrentSelectedObject(false);
+		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetCurrentSelectedObject();
 		_packageViewExtensions.ShouldCopyObject = false;
 	}
 
 	private void copyToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetCurrentSelectedObject(false);
+		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetCurrentSelectedObject();
 		_packageViewExtensions.ShouldCopyObject = true;
 	}
 
@@ -604,13 +610,16 @@ public partial class PackageView : Form
 				return;
 
 			AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
-			_currentPackage.ResourceRequests.Add(newObject.ResourceRequest);
-			_currentPackage.Objects.Add(newObject);
-
 			treeKey = PackageViewExtensions.GetObjectTreeKey(newObject);
 		}
 		else
 		{
+			if (PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected) == PackageViewExtensions.GetObjectTreeKey(selectedGroup))
+			{
+				_packageViewExtensions.ObjectSelected = null;
+				return;
+			}
+
 			treeKey = PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected);
 			_packageViewExtensions.ObjectSelected.Parent = selectedGroup;
 			_packageViewExtensions.ObjectSelected = null;

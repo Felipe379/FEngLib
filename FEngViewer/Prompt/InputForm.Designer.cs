@@ -31,11 +31,12 @@ namespace FEngViewer.Prompt
 			this.BtnOk = new System.Windows.Forms.Button();
 			this.BtnCancel = new System.Windows.Forms.Button();
 			this.TxtInput = new System.Windows.Forms.TextBox();
+			this.ChkChildren = new System.Windows.Forms.CheckBox();
 			this.SuspendLayout();
 			// 
 			// BtnOk
 			// 
-			this.BtnOk.Location = new System.Drawing.Point(197, 46);
+			this.BtnOk.Location = new System.Drawing.Point(197, 60);
 			this.BtnOk.Name = "BtnOk";
 			this.BtnOk.Size = new System.Drawing.Size(75, 23);
 			this.BtnOk.TabIndex = 0;
@@ -45,7 +46,7 @@ namespace FEngViewer.Prompt
 			// 
 			// BtnCancel
 			// 
-			this.BtnCancel.Location = new System.Drawing.Point(116, 46);
+			this.BtnCancel.Location = new System.Drawing.Point(116, 60);
 			this.BtnCancel.Name = "BtnCancel";
 			this.BtnCancel.Size = new System.Drawing.Size(75, 23);
 			this.BtnCancel.TabIndex = 1;
@@ -61,12 +62,23 @@ namespace FEngViewer.Prompt
 			this.TxtInput.TabIndex = 3;
 			this.TxtInput.TextChanged += this.TxtInput_TextChanged;
 			// 
+			// ChkChildren
+			// 
+			this.ChkChildren.AutoSize = true;
+			this.ChkChildren.Location = new System.Drawing.Point(12, 41);
+			this.ChkChildren.Name = "ChkChildren";
+			this.ChkChildren.Size = new System.Drawing.Size(138, 19);
+			this.ChkChildren.TabIndex = 4;
+			this.ChkChildren.Text = "Create children if any";
+			this.ChkChildren.UseVisualStyleBackColor = true;
+			// 
 			// InputForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.CancelButton = this.BtnCancel;
-			this.ClientSize = new System.Drawing.Size(284, 81);
+			this.ClientSize = new System.Drawing.Size(284, 91);
+			this.Controls.Add(this.ChkChildren);
 			this.Controls.Add(this.TxtInput);
 			this.Controls.Add(this.BtnCancel);
 			this.Controls.Add(this.BtnOk);
@@ -84,5 +96,6 @@ namespace FEngViewer.Prompt
 		private System.Windows.Forms.Button BtnOk;
 		private System.Windows.Forms.Button BtnCancel;
 		private System.Windows.Forms.TextBox TxtInput;
+		private System.Windows.Forms.CheckBox ChkChildren;
 	}
 }

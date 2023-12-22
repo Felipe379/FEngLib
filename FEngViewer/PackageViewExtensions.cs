@@ -46,14 +46,32 @@ namespace FEngViewer
 			if (existingObject is null)
 				return null;
 
-			var input = ObjectInput(existingObject.Name, existingObject is Group);
+			var objectInput = ObjectInput(existingObject.Name, existingObject is Group);
 
-			if (string.IsNullOrWhiteSpace(input))
+			if (string.IsNullOrWhiteSpace(objectInput.Input))
 				return null;
 
+			var newObject = CreateNewObject(existingObject, parent, objectInput.Input, objectInput.Input.BinHash());
+
+			if (newObject is null)
+				return null;
+
+			_packageView._currentPackage.ResourceRequests.Add(newObject.ResourceRequest);
+			_packageView._currentPackage.Objects.Add(newObject);
+
+			if (objectInput.CreateChildren && newObject is Group)
+			{
+				CreateChildren(existingObject, newObject);
+			}
+
+			return newObject;
+		}
+
+		public IObject<ObjectData> CreateNewObject(IObject<ObjectData> existingObject, IObject<ObjectData> parent, string name, uint nameHash)
+		{
 			var newObject = existingObject.Clone() as IObject<ObjectData>;
-			newObject.Name = input;
-			newObject.NameHash = input.BinHash();
+			newObject.Name = name;
+			newObject.NameHash = nameHash;
 			newObject.Parent = parent;
 
 			var guid = existingObject.Guid;
@@ -72,31 +90,66 @@ namespace FEngViewer
 			return newObject;
 		}
 
-		public string ObjectInput(string defaultInput, bool isGroup)
+		public void CreateChildren(IObject<ObjectData> objectData, IObject<ObjectData> parent)
 		{
-			var inputForm = new InputForm(CharacterCasing.Upper);
+			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent == objectData);
+
+			foreach (var child in children)
+			{
+				var newChild = CreateNewObject(child, parent, child.Name, child.NameHash);
+				_packageView._currentPackage.ResourceRequests.Add(newChild.ResourceRequest);
+				_packageView._currentPackage.Objects.Add(newChild);
+
+				if (newChild is Group)
+				{
+					CreateChildren(child, newChild);
+				}
+			}
+		}
+
+		public void DeleteObject(IObject<ObjectData> objectData)
+		{
+			if (objectData is Group)
+			{
+				var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent == objectData);
+
+				foreach (var child in children)
+				{
+					if (child is Group)
+						DeleteObject(child);
+					else
+					{
+						if (ObjectSelected == child)
+							ObjectSelected = null;
+						_packageView._currentPackage.Objects.Remove(child);
+					}
+				}
+			}
+
+			if (ObjectSelected == objectData)
+				ObjectSelected = null;
+
+			_packageView._currentPackage.Objects.Remove(objectData);
+		}
+
+		public (string Input, bool CreateChildren) ObjectInput(string defaultInput, bool isGroup)
+		{
+			var inputForm = new InputForm(CharacterCasing.Upper, isGroup);
 			inputForm.Input = defaultInput;
+			inputForm.CreateChildren = isGroup;
 			if (inputForm.ShowDialog() != DialogResult.OK)
-				return null;
+				return (null, false);
 
 			var inputHash = inputForm.Input.BinHash();
 
 			if (_packageView._currentPackage.Objects.Any(x => x.Name == inputForm.Input || x.NameHash == inputHash))
 			{
-				if (isGroup)
-				{
-					var result = MessageBox.Show($"A group with the name {inputForm.Input} or hash 0x{inputHash:x8} already exists.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-					return null;
-				}
-				else
-				{
-					var result = MessageBox.Show($"An object with the name {inputForm.Input} or hash 0x{inputHash:x8} already exists. Do you want to create it anyway?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-					if (result != DialogResult.Yes)
-						return null;
-				}
+				var result = MessageBox.Show($"An object with the name {inputForm.Input} or hash 0x{inputHash:x8} already exists. Do you want to create it anyway?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+				if (result != DialogResult.Yes)
+					return (null, false);
 			}
 
-			return inputForm.Input;
+			return (inputForm.Input, inputForm.CreateChildren);
 		}
 	}
 }

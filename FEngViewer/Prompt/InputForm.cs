@@ -11,17 +11,25 @@ namespace FEngViewer.Prompt
 			set { TxtInput.Text = value; }
 		}
 
+		public bool CreateChildren
+		{
+			get { return ChkChildren.Checked; }
+			set { ChkChildren.Checked = value; }
+		}
+
 		public InputForm()
 		{
 			InitializeComponent();
 			BtnOk.Enabled = !string.IsNullOrWhiteSpace(TxtInput.Text);
+			ChkChildren.Visible = false;
 		}
 
-		public InputForm(CharacterCasing characterCasing)
+		public InputForm(CharacterCasing characterCasing, bool createChildren)
 		{
 			InitializeComponent();
 
 			TxtInput.CharacterCasing = CharacterCasing.Upper;
+			ChkChildren.Visible = createChildren;
 		}
 
 		private void BtnOk_Click(object sender, EventArgs e)
