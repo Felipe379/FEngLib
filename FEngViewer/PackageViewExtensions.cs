@@ -1,7 +1,9 @@
 using FEngLib.Objects;
+using FEngLib.Scripts;
 using FEngLib.Utils;
-using FEngRender.Data;
 using FEngViewer.Prompt;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -23,45 +25,42 @@ namespace FEngViewer
 		public int SearchIndex { get; set; }
 
 		public static string GetObjectTreeKey(IObject<ObjectData> objectData) => objectData != null ? $"{GetObjectText(objectData)}:{objectData.Guid:X}" : null;
-		public static string GetObjectText(IObject<ObjectData> objectData) => objectData != null ? $"{objectData.Name ?? objectData.NameHash.ToString("X")}" : null;
+		public static string GetObjectText(IObject<ObjectData> objectData) => objectData != null ? $"{objectData.Name ?? "0x" + objectData.NameHash.ToString("X")}" : null;
 
-		public IObject<ObjectData> GetCurrentSelectedObject(bool? objectReturnIsGroup = null)
-		{
-			if (_packageView.treeView1.SelectedNode?.Tag is not RenderTreeNode node)
-				return null;
-
-			var nodeObject = node.GetObject();
-
-			if (objectReturnIsGroup.HasValue)
-			{
-				if (nodeObject is Group grp && !objectReturnIsGroup.Value)
-					return null;
-			}
-
-			return _packageView._currentPackage.Objects.Find(x => x.NameHash == nodeObject.NameHash && x.Guid == nodeObject.Guid);
-		}
-
-		public IObject<ObjectData> CopyObject(IObject<ObjectData> existingObject, IObject<ObjectData> parent)
+		public IObject<ObjectData> CopyObject(IObject<ObjectData> existingObject, IObject<ObjectData> selectedObject, int? index = null)
 		{
 			if (existingObject is null)
 				return null;
 
 			var objectInput = ObjectInput(existingObject.Name, existingObject is Group);
 
-			if (string.IsNullOrWhiteSpace(objectInput.Input))
+			if (string.IsNullOrWhiteSpace(objectInput.Name))
 				return null;
 
-			var newObject = CreateNewObject(existingObject, parent, objectInput.Input, objectInput.Input.BinHash());
+			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash, existingObject))
+				return null;
+
+			var parent = selectedObject.Parent;
+
+			var newObject = CreateNewObject(existingObject, parent, objectInput.Name, objectInput.NameHash);
 
 			if (newObject is null)
 				return null;
 
-			_packageView._currentPackage.ResourceRequests.Add(newObject.ResourceRequest);
-			_packageView._currentPackage.Objects.Add(newObject);
+			var validIndex = index ?? _packageView._currentPackage.Objects.Count;
+			var newObjectDictionary = new Dictionary<int, IObject<ObjectData>>();
 
 			if (objectInput.CreateChildren && newObject is Group)
 			{
-				CreateChildren(existingObject, newObject);
+				newObjectDictionary = CreateChildren(existingObject, newObject, validIndex);
+			}
+
+			newObjectDictionary.Add(validIndex, newObject);
+
+			foreach (var pair in newObjectDictionary.OrderBy(p => p.Key))
+			{
+
+				_packageView._currentPackage.Objects.Insert(pair.Key, FixClonedObject(pair.Value));
 			}
 
 			return newObject;
@@ -74,37 +73,47 @@ namespace FEngViewer
 			newObject.NameHash = nameHash;
 			newObject.Parent = parent;
 
-			var guid = existingObject.Guid;
+			return newObject;
+		}
+
+		public IObject<ObjectData> FixClonedObject(IObject<ObjectData> newObject)
+		{
+			var oldGuid = newObject.Guid;
 
 			while (_packageView._currentPackage.Objects.Find(x => x.Guid == newObject.Guid) is not null)
 			{
-				newObject.Guid = guid++;
+				newObject.Guid++;
 			}
 
 			foreach (var targetList in _packageView._currentPackage.MessageTargetLists)
 			{
-				if (targetList.Targets.Contains(existingObject.Guid))
+				if (targetList.Targets.Contains(oldGuid))
 					targetList.Targets.Add(newObject.Guid);
 			}
 
 			return newObject;
 		}
 
-		public void CreateChildren(IObject<ObjectData> objectData, IObject<ObjectData> parent)
+		public Dictionary<int, IObject<ObjectData>> CreateChildren(IObject<ObjectData> objectData, IObject<ObjectData> newObjectData, int index)
 		{
-			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent == objectData);
-
+			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent?.NameHash == objectData.NameHash && x.Parent?.Guid == objectData.Guid);
+			var newChildren = new Dictionary<int, IObject<ObjectData>>();
 			foreach (var child in children)
 			{
-				var newChild = CreateNewObject(child, parent, child.Name, child.NameHash);
-				_packageView._currentPackage.ResourceRequests.Add(newChild.ResourceRequest);
-				_packageView._currentPackage.Objects.Add(newChild);
+				index++;
+				var newChild = CreateNewObject(child, newObjectData, child.Name, child.NameHash);
+				newChildren.Add(index, newChild);
 
 				if (newChild is Group)
 				{
-					CreateChildren(child, newChild);
+					var groupChildren = CreateChildren(child, newChild, index);
+					foreach (var groupChild in groupChildren)
+						newChildren.Add(groupChild.Key, groupChild.Value);
+					index = groupChildren.Keys.Max();
 				}
 			}
+
+			return newChildren;
 		}
 
 		public void DeleteObject(IObject<ObjectData> objectData)
@@ -132,24 +141,104 @@ namespace FEngViewer
 			_packageView._currentPackage.Objects.Remove(objectData);
 		}
 
-		public (string Input, bool CreateChildren) ObjectInput(string defaultInput, bool isGroup)
+		public IObject<ObjectData> FindLastChild(IObject<ObjectData> objectData)
+		{
+			if (objectData is null)
+				return null;
+
+			if (objectData is not Group)
+				return objectData;
+
+			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent?.NameHash == objectData.NameHash && x.Parent?.Guid == objectData.Guid);
+			var lastChild = objectData;
+
+			foreach (var child in children)
+			{
+				lastChild = child;
+
+				if (child is Group)
+					lastChild = FindLastChild(child);
+			}
+
+			return lastChild;
+		}
+
+		public int MoveChildren(IObject<ObjectData> parent, int indexMove)
+		{
+			var index = _packageView._currentPackage.Objects.IndexOf(parent);
+			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent?.NameHash == parent.NameHash && x.Parent?.Guid == parent.Guid);
+
+			foreach (var child in children)
+			{
+				index += indexMove;
+				var childIndex = _packageView._currentPackage.Objects.IndexOf(child);
+				MoveItem(childIndex, index);
+
+				if (child is Group)
+					index = MoveChildren(child, indexMove);
+			}
+
+			return index;
+		}
+
+		public void MoveItem(int oldIndex, int newIndex)
+		{
+			var item = _packageView._currentPackage.Objects[oldIndex];
+
+			_packageView._currentPackage.Objects.RemoveAt(oldIndex);
+
+			if (newIndex > _packageView._currentPackage.Objects.Count)
+				newIndex = _packageView._currentPackage.Objects.Count;
+
+			_packageView._currentPackage.Objects.Insert(newIndex, item);
+		}
+
+		public (string Name, uint NameHash, bool CreateChildren) ObjectInput(string defaultInput, bool isGroup)
 		{
 			var inputForm = new InputForm(CharacterCasing.Upper, isGroup);
 			inputForm.Input = defaultInput;
 			inputForm.CreateChildren = isGroup;
 			if (inputForm.ShowDialog() != DialogResult.OK)
-				return (null, false);
+				return (null, 0, false);
 
-			var inputHash = inputForm.Input.BinHash();
-
-			if (_packageView._currentPackage.Objects.Any(x => x.Name == inputForm.Input || x.NameHash == inputHash))
+			var input = string.Empty;
+			uint inputHash = 0;
+			if (inputForm.Input.IsHash(16))
 			{
-				var result = MessageBox.Show($"An object with the name {inputForm.Input} or hash 0x{inputHash:x8} already exists. Do you want to create it anyway?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-				if (result != DialogResult.Yes)
-					return (null, false);
+				inputHash = Convert.ToUInt32(inputForm.Input, 16);
+				input = AppService.Instance.HashResolver.ResolveNameHash(null, inputHash) ?? inputForm.Input;
+			}
+			else
+			{
+				input = inputForm.Input;
+				inputHash = inputForm.Input.BinHash();
 			}
 
-			return (inputForm.Input, inputForm.CreateChildren);
+			return (input, inputHash, inputForm.CreateChildren);
+		}
+
+		public bool NameAlreadyExists(string name, uint hash, IObject<ObjectData> data, object tag = null)
+		{
+			if (tag is Script collection)
+			{
+				var scripts = data.GetScripts();
+
+				if (scripts.Any(s => s.Id == hash || s.Name == name))
+				{
+					var result = MessageBox.Show($"A script with the name {name} or hash 0x{hash:x8} already exists.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+					return true;
+				}
+			}
+			else
+			{
+				if (_packageView._currentPackage.Objects.Any(x => x.NameHash == hash || x.Name == name))
+				{
+					var result = MessageBox.Show($"An object with the name {name} or hash 0x{hash:x8} already exists. Do you want to create it anyway?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+					return result != DialogResult.Yes;
+				}
+			}
+
+			return false;
 		}
 	}
 }

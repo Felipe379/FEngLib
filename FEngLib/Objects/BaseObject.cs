@@ -164,7 +164,9 @@ public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObje
 		this.Data = @object.Data?.Clone() as TData;
 		this.Type = @object.Type;
 		this.Flags = @object.Flags;
-		this.ResourceRequest = @object.ResourceRequest?.Clone() as ResourceRequest;
+		this.ResourceRequest = @object.ResourceRequest;
+		//We should not clone ResourceRequest as they are universal. Instead, we should just copy the reference.
+		//this.ResourceRequest = @object.ResourceRequest?.Clone() as ResourceRequest;
 
 		if ((this.ResourceRequest is null) != (@object.ResourceRequest is null))
 		{

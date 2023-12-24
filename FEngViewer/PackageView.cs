@@ -4,9 +4,9 @@ using FEngLib.Objects;
 using FEngLib.Packages;
 using FEngLib.Scripts;
 using FEngLib.Structures;
-using FEngLib.Utils;
 using FEngRender.Data;
 using FEngViewer.Properties;
+using FEngViewer.Wrappers;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -33,7 +33,7 @@ public partial class PackageView : Form
 	{
 		InitializeComponent();
 		_packageViewExtensions = new PackageViewExtensions(this);
-		SetLabelDetails();
+		SetFormDetails();
 
 		var imageList = new ImageList();
 		imageList.Images.Add("TreeItem_Package", Resources.TreeItem_Package);
@@ -71,6 +71,12 @@ public partial class PackageView : Form
 			.WithNotParsed(err => Application.Exit());
 	}
 
+	[UsedImplicitly]
+	private class Options
+	{
+		[Option('i', "input")] public string InputFile { get; [UsedImplicitly] set; }
+	}
+
 	private void Render()
 	{
 		viewOutput.Render(_currentRenderTree);
@@ -91,6 +97,7 @@ public partial class PackageView : Form
 		foreach (var resourceRequest in package.ResourceRequests)
 		{
 			var resourceRequestNode = resourceListNode.Nodes.Add(resourceRequest.Name);
+			resourceRequestNode.Tag = resourceRequest;
 
 			resourceRequestNode.ImageKey = resourceRequestNode.SelectedImageKey = resourceRequest.Type switch
 			{
@@ -143,7 +150,7 @@ public partial class PackageView : Form
 			ObjectType.Model => "TreeItem_Model",
 			ObjectType.SimpleImage => "TreeItem_SimpleImage",
 			ObjectType.List => "TreeItem_List",
-			ObjectType.CodeList=> "TreeItem_CodeList",
+			ObjectType.CodeList => "TreeItem_CodeList",
 			_ => "TreeItem_GenericObject"
 		};
 
@@ -172,6 +179,7 @@ public partial class PackageView : Form
 			var eventNode =
 				node.Nodes.Add($"0x{scriptEvent.EventId:X} -> {scriptEvent.Target:X} @ T={scriptEvent.Time}");
 			eventNode.ImageKey = eventNode.SelectedImageKey = "TreeItem_ScriptEvent";
+			eventNode.Tag = scriptEvent;
 		}
 
 		var scriptTracks = script.GetTracks();
@@ -207,27 +215,32 @@ public partial class PackageView : Form
 
 		var trackNode = scriptNode.Nodes.Add(name);
 		trackNode.ImageKey = trackNode.SelectedImageKey = "TreeItem_ScriptTrack";
+		trackNode.Tag = track;
 
-		void AddNodeKey(int time, object value)
+		void AddNodeKey<T>(int time, object value, T tag) where T : TrackNode
 		{
 			var node = trackNode.Nodes.Add($"T={time}: {value}");
 			node.ImageKey = node.SelectedImageKey = "TreeItem_Keyframe";
-			;
+			node.Tag = tag;
 		}
 
 		switch (track)
 		{
 			case Vector2Track vector2Track:
-				foreach (var deltaKey in vector2Track.DeltaKeys) AddNodeKey(deltaKey.Time, deltaKey.Val);
+				foreach (var deltaKey in vector2Track.DeltaKeys)
+					AddNodeKey(deltaKey.Time, deltaKey.Val, deltaKey);
 				break;
 			case Vector3Track vector3Track:
-				foreach (var deltaKey in vector3Track.DeltaKeys) AddNodeKey(deltaKey.Time, deltaKey.Val);
+				foreach (var deltaKey in vector3Track.DeltaKeys)
+					AddNodeKey(deltaKey.Time, deltaKey.Val, deltaKey);
 				break;
 			case QuaternionTrack quaternionTrack:
-				foreach (var deltaKey in quaternionTrack.DeltaKeys) AddNodeKey(deltaKey.Time, deltaKey.Val);
+				foreach (var deltaKey in quaternionTrack.DeltaKeys)
+					AddNodeKey(deltaKey.Time, deltaKey.Val, deltaKey);
 				break;
 			case ColorTrack colorTrack:
-				foreach (var deltaKey in colorTrack.DeltaKeys) AddNodeKey(deltaKey.Time, deltaKey.Val);
+				foreach (var deltaKey in colorTrack.DeltaKeys)
+					AddNodeKey(deltaKey.Time, deltaKey.Val, deltaKey);
 				break;
 			default:
 				throw new NotImplementedException($"Unsupported: {track.GetType()}");
@@ -290,6 +303,7 @@ public partial class PackageView : Form
 		{
 			viewOutput.SelectedNode = viewNode;
 			var wrappedObject = viewNode.GetObject();
+			LblItemIndex.Text = "Index: " + _currentPackage.Objects.IndexOf(wrappedObject).ToString("D4");
 			objectPropertyGrid.SelectedObject = wrappedObject switch
 			{
 				Text t => new TextObjectViewWrapper(t, AppService.Instance.HashResolver),
@@ -297,8 +311,36 @@ public partial class PackageView : Form
 				ColoredImage ci => new ColoredImageObjectViewWrapper(ci, AppService.Instance.HashResolver),
 				_ => new DefaultObjectViewWrapper(wrappedObject, AppService.Instance.HashResolver)
 			};
-			Render();
 		}
+#if DEBUG
+		else if (e.Node?.Tag is Script script)
+		{
+			objectPropertyGrid.SelectedObject = new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
+		}
+		else if (e.Node?.Tag is Track track)
+		{
+			objectPropertyGrid.SelectedObject = track;//new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
+		}
+		else if (e.Node?.Tag is TrackNode trackNode)
+		{
+			objectPropertyGrid.SelectedObject = trackNode;//new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
+		}
+		else if (e.Node?.Tag is Event scriptEvent)
+		{
+			objectPropertyGrid.SelectedObject = scriptEvent;//new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
+		}
+#endif
+		else
+		{
+
+#if DEBUG
+			objectPropertyGrid.SelectedObject = e.Node?.Tag;
+#else
+			objectPropertyGrid.SelectedObject = null;
+#endif
+		LblItemIndex.Text = null;
+		}
+		Render();
 	}
 
 	private void viewOutput_MouseMove(object sender, MouseEventArgs e)
@@ -308,6 +350,14 @@ public partial class PackageView : Form
 
 	private void viewOutput_MouseClick(object sender, MouseEventArgs e)
 	{
+		if (e.Button == MouseButtons.Right)
+		{
+			var ctxPoint = new Point(e.X, e.Y);
+			viewerContextMenu.Show(viewOutput, ctxPoint);
+			return;
+		}
+
+
 		bool WithinBounds(RenderTreeNode node, float x, float y)
 		{
 			var extents = node.Get2DExtents();
@@ -488,13 +538,13 @@ public partial class PackageView : Form
 		Render();
 
 		// window title
-		Text = _currentPackage.Name;
-		SetLabelDetails();
+		SetFormDetails();
 	}
 
 	private void treeView1_MouseDown(object sender, MouseEventArgs e)
 	{
-		if (e.Button != MouseButtons.Right) return;
+		if (e.Button != MouseButtons.Right)
+			return;
 
 		TreeNode hit_node = treeView1.GetNodeAt(e.X, e.Y);
 		treeView1.SelectedNode = hit_node;
@@ -508,13 +558,13 @@ public partial class PackageView : Form
 		{
 			var viewNode = (RenderTreeNode)hit_node.Parent.Tag;
 
-			toggleScriptItem.Text = ReferenceEquals(viewNode.GetCurrentScript(), script) ? "Stop" : "Start";
+			toggleScriptMenuItem.Text = ReferenceEquals(viewNode.GetCurrentScript(), script) ? "Stop" : "Start";
 
 			scriptContextMenu.Show(treeView1, ctxPoint);
 		}
 	}
 
-	private void toggleScriptItem_Click(object sender, EventArgs e)
+	private void toggleScriptMenuItem_Click(object sender, EventArgs e)
 	{
 		if (treeView1.SelectedNode?.Tag is Script script)
 		{
@@ -523,33 +573,61 @@ public partial class PackageView : Form
 		}
 	}
 
-	private void radioBgBlack_CheckedChanged(object sender, EventArgs e)
+	private void renameScriptMenuItem_Click(object sender, EventArgs e)
 	{
-		if (sender == radioBgBlack)
+		if (treeView1.SelectedNode?.Tag is not Script script)
+			return;
+
+		var viewNode = (RenderTreeNode)treeView1.SelectedNode.Parent.Tag;
+		var objectData = viewNode.GetObject();
+		var scripts = objectData.GetScripts();
+
+		var objectInput = _packageViewExtensions.ObjectInput(script.Name, false);
+
+		if (string.IsNullOrWhiteSpace(objectInput.Name) || objectInput.Name == script.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash, objectData, script))
+			return;
+
+		foreach (var chainedScript in scripts)
 		{
-			viewOutput.BackgroundColor = new Color4(0, 0, 0, 255);
+			if (chainedScript.ChainedId == script.Id)
+				chainedScript.ChainedId = objectInput.NameHash;
 		}
-		else if (sender == radioBgGreen)
-		{
-			viewOutput.BackgroundColor = new Color4(0, 255, 0, 255);
-		}
+
+		script.Name = objectInput.Name;
+		script.Id = objectInput.NameHash;
+
+		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objectData));
+
+	}
+
+	private void backgroundColorMenuItem_Click(object sender, EventArgs e)
+	{
+		var colorDialog = new ColorDialog();
+		if (colorDialog.ShowDialog() != DialogResult.OK)
+			return;
+
+		viewOutput.BackgroundColor = new Color4(colorDialog.Color.B, colorDialog.Color.G, colorDialog.Color.R, colorDialog.Color.A);
 
 		Render();
 	}
 
 	private void renameToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
 		if (selectedObject is null)
 			return;
 
 		var objectInput = _packageViewExtensions.ObjectInput(selectedObject.Name, false);
 
-		if (string.IsNullOrWhiteSpace(objectInput.Input))
+		if (string.IsNullOrWhiteSpace(objectInput.Name) || objectInput.Name == selectedObject.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash, selectedObject))
 			return;
 
-		selectedObject.Name = objectInput.Input;
-		selectedObject.NameHash = objectInput.Input.BinHash();
+		selectedObject.Name = objectInput.Name;
+		selectedObject.NameHash = objectInput.NameHash;
 		AppService.Instance.HashResolver.AddUserKey(selectedObject.Name, selectedObject.NameHash);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
@@ -557,7 +635,11 @@ public partial class PackageView : Form
 
 	private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
 		if (selectedObject is null)
 			return;
 
@@ -568,25 +650,41 @@ public partial class PackageView : Form
 
 	private void duplicateToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
-		var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject?.Parent);
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
+		if (selectedObject is null)
+			return;
+
+		var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
+		var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
+		var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject, position);
 
 		if (newObject is null)
 			return;
 
 		AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
+
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(newObject));
 	}
 
 	private void cutToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetCurrentSelectedObject();
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		_packageViewExtensions.ObjectSelected = node.GetObject();
 		_packageViewExtensions.ShouldCopyObject = false;
 	}
 
 	private void copyToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		_packageViewExtensions.ObjectSelected = _packageViewExtensions.GetCurrentSelectedObject();
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		_packageViewExtensions.ObjectSelected = node.GetObject();
 		_packageViewExtensions.ShouldCopyObject = true;
 	}
 
@@ -595,16 +693,21 @@ public partial class PackageView : Form
 		if (_packageViewExtensions.ObjectSelected is null)
 			return;
 
-		var selectedGroup = _packageViewExtensions.GetCurrentSelectedObject(true);
-
-		if (selectedGroup is null)
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
 			return;
 
-		var treeKey = PackageViewExtensions.GetObjectTreeKey(selectedGroup);
+		var selectedObject = node.GetObject();
+
+		if (selectedObject is null)
+			return;
+
+		var treeKey = PackageViewExtensions.GetObjectTreeKey(selectedObject);
 
 		if (_packageViewExtensions.ShouldCopyObject)
 		{
-			var newObject = _packageViewExtensions.CopyObject(_packageViewExtensions.ObjectSelected, selectedGroup);
+			var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
+			var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
+			var newObject = _packageViewExtensions.CopyObject(_packageViewExtensions.ObjectSelected, selectedObject, position);
 
 			if (newObject is null)
 				return;
@@ -614,15 +717,26 @@ public partial class PackageView : Form
 		}
 		else
 		{
-			if (PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected) == PackageViewExtensions.GetObjectTreeKey(selectedGroup))
+			if (_packageViewExtensions.ObjectSelected == selectedObject)
 			{
 				_packageViewExtensions.ObjectSelected = null;
 				return;
 			}
 
 			treeKey = PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected);
-			_packageViewExtensions.ObjectSelected.Parent = selectedGroup;
-			_packageViewExtensions.ObjectSelected = null;
+			var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
+			var position = _currentPackage.Objects.IndexOf(lastChild);
+			var oldIndex = _currentPackage.Objects.IndexOf(_packageViewExtensions.ObjectSelected);
+
+			var indexMove = oldIndex > position ? 1 : 0;
+			position += indexMove;
+
+			if (oldIndex == position)
+				return;
+
+			_packageViewExtensions.ObjectSelected.Parent = selectedObject.Parent;
+			_packageViewExtensions.MoveItem(oldIndex, position);
+			_packageViewExtensions.MoveChildren(_packageViewExtensions.ObjectSelected, indexMove);
 		}
 
 		CurrentPackageWasModified(treeKey);
@@ -650,53 +764,110 @@ public partial class PackageView : Form
 
 	private void moveUpToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		MoveItem(-1);
-	}
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
 
-	private void moveDownToolStripMenuItem_Click(object sender, EventArgs e)
-	{
-		MoveItem(1);
-	}
+		var selectedObject = node.GetObject();
 
-	private void MoveItem(int position)
-	{
-		var selectedObject = _packageViewExtensions.GetCurrentSelectedObject();
 		if (selectedObject is null)
 			return;
 
-		var parentNodeObjects = _currentPackage.Objects
-			.Select((o, i) => (Index: i, Object: o))
-			.Where(item => item.Object.Parent?.NameHash == selectedObject.Parent?.NameHash && item.Object.Parent?.Guid == selectedObject.Parent?.Guid)
-			.Select((c, i) => (IndexInParent: i, CurrentPackageObject: c))
-			.ToList();
+		var parents = _currentPackage.Objects.FindAll(x => x.Parent?.NameHash == selectedObject.Parent?.NameHash && x.Parent?.Guid == selectedObject.Parent?.Guid);
+		var indexInParents = parents.IndexOf(selectedObject);
+		var newIndex = indexInParents - 1;
 
-		var currentItem = parentNodeObjects
-			.Where(p => p.CurrentPackageObject.Object.NameHash == selectedObject.NameHash && p.CurrentPackageObject.Object.Guid == selectedObject.Guid)
-			.Single();
-
-		var currentItemNewIndex = currentItem.IndexInParent + position;
-		if (currentItemNewIndex > parentNodeObjects.Count - 1 || currentItemNewIndex < 0)
+		if (newIndex > parents.Count - 1 || newIndex < 0)
 			return;
 
-		var unrelatedObjectWithSameParent = parentNodeObjects.ElementAt(currentItemNewIndex);
-		_currentPackage.Objects[unrelatedObjectWithSameParent.CurrentPackageObject.Index] = selectedObject;
-		_currentPackage.Objects[currentItem.CurrentPackageObject.Index] = unrelatedObjectWithSameParent.CurrentPackageObject.Object;
+		var lastChild = parents.ElementAt(newIndex);
+
+		var position = _currentPackage.Objects.IndexOf(lastChild);
+		var oldIndex = _currentPackage.Objects.IndexOf(selectedObject);
+
+		_packageViewExtensions.MoveItem(oldIndex, position);
+		_packageViewExtensions.MoveChildren(selectedObject, 1);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
 	}
 
-	private void SetLabelDetails()
+	private void moveDownToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
+		if (selectedObject is null)
+			return;
+
+		var parents = _currentPackage.Objects.FindAll(x => x.Parent?.NameHash == selectedObject.Parent?.NameHash && x.Parent?.Guid == selectedObject.Parent?.Guid);
+		var indexInParents = parents.IndexOf(selectedObject);
+		var newIndex = indexInParents + 1;
+
+		if (newIndex > parents.Count - 1 || newIndex < 0)
+			return;
+
+		var objectInNewIndex = parents.ElementAt(newIndex);
+		var lastChild = _packageViewExtensions.FindLastChild(objectInNewIndex);
+
+		var position = _currentPackage.Objects.IndexOf(lastChild);
+		var oldIndex = _currentPackage.Objects.IndexOf(selectedObject);
+
+		_packageViewExtensions.MoveItem(oldIndex, position);
+		_packageViewExtensions.MoveChildren(selectedObject, 0);
+
+		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
+	}
+
+	private void moveUpScriptMenuItem_Click(object sender, EventArgs e)
+	{
+		MoveScript(-1);
+	}
+
+	private void moveDownScriptMenuItem_Click(object sender, EventArgs e)
+	{
+		MoveScript(1);
+	}
+
+
+	private void MoveScript(int position)
+	{
+		if (treeView1.SelectedNode?.Tag is not Script script)
+			return;
+
+		var viewNode = (RenderTreeNode)treeView1.SelectedNode.Parent.Tag;
+		var selectedObject = viewNode.GetObject();
+
+		if (selectedObject is null || selectedObject is not BaseObject baseObject)
+			return;
+
+		var currentItemIndex = baseObject.Scripts.IndexOf(script as BaseObjectScript);
+		var currentItemNewIndex = currentItemIndex + position;
+		if (currentItemNewIndex > baseObject.Scripts.Count - 1 || currentItemNewIndex < 0)
+			return;
+
+		var unrelatedScript = baseObject.Scripts.ElementAt(currentItemNewIndex);
+
+		baseObject.Scripts[currentItemNewIndex] = script as BaseObjectScript;
+		baseObject.Scripts[currentItemIndex] = unrelatedScript;
+
+		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
+	}
+
+	private void SetFormDetails()
 	{
 		var details = $"{DateTimeOffset.Now:dd/MM/yyyy HH:mm:ss}";
 		if (!string.IsNullOrWhiteSpace(AppService.Instance.CurrentFileLoaded))
 			details += $" | {AppService.Instance.CurrentFileLoaded}";
 
 		LblDetails.Text = details;
-	}
 
-	[UsedImplicitly]
-	private class Options
-	{
-		[Option('i', "input")] public string InputFile { get; [UsedImplicitly] set; }
+		this.Text = $"FEngViewer";
+		if (_currentPackage is not null)
+			this.Text += $" - {_currentPackage.Name}";
+
+#if DEBUG
+		Text += $" - Debug {DateTime.Today:dd/MM/yyyy}";
+#endif
 	}
 }

@@ -34,9 +34,6 @@ namespace FEngViewer
 			this.components = new System.ComponentModel.Container();
 			this.viewOutput = new GLRenderControl();
 			this.labelCoordDisplay = new Label();
-			this.groupBgColor = new GroupBox();
-			this.radioBgGreen = new RadioButton();
-			this.radioBgBlack = new RadioButton();
 			this.colorDialog1 = new ColorDialog();
 			this.menuStrip1 = new MenuStrip();
 			this.FileMenuItem = new ToolStripMenuItem();
@@ -53,7 +50,10 @@ namespace FEngViewer
 			this.pasteToolStripMenuItem = new ToolStripMenuItem();
 			this.deleteToolStripMenuItem = new ToolStripMenuItem();
 			this.scriptContextMenu = new ContextMenuStrip(this.components);
-			this.toggleScriptItem = new ToolStripMenuItem();
+			this.toggleScriptMenuItem = new ToolStripMenuItem();
+			this.renameScriptMenuItem = new ToolStripMenuItem();
+			this.moveUpScriptMenuItem = new ToolStripMenuItem();
+			this.moveDownScriptMenuItem = new ToolStripMenuItem();
 			this.LblDetails = new Label();
 			this.tableLayoutPanel1 = new TableLayoutPanel();
 			this.tableLayoutPanel2 = new TableLayoutPanel();
@@ -62,12 +62,15 @@ namespace FEngViewer
 			this.TxtSearch = new TextBox();
 			this.objectPropertyGrid = new PropertyGrid();
 			this.treeView1 = new TreeView();
-			this.groupBgColor.SuspendLayout();
+			this.LblItemIndex = new Label();
+			this.viewerContextMenu = new ContextMenuStrip(this.components);
+			this.backgroundColorMenuItem = new ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.objectContextMenu.SuspendLayout();
 			this.scriptContextMenu.SuspendLayout();
 			this.tableLayoutPanel1.SuspendLayout();
 			this.tableLayoutPanel2.SuspendLayout();
+			this.viewerContextMenu.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// viewOutput
@@ -97,42 +100,6 @@ namespace FEngViewer
 			this.labelCoordDisplay.Size = new System.Drawing.Size(72, 15);
 			this.labelCoordDisplay.TabIndex = 2;
 			this.labelCoordDisplay.Text = "X:    0   Y:    0";
-			// 
-			// groupBgColor
-			// 
-			this.groupBgColor.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-			this.groupBgColor.Controls.Add(this.radioBgGreen);
-			this.groupBgColor.Controls.Add(this.radioBgBlack);
-			this.groupBgColor.Location = new System.Drawing.Point(896, 487);
-			this.groupBgColor.Name = "groupBgColor";
-			this.groupBgColor.Size = new System.Drawing.Size(154, 58);
-			this.groupBgColor.TabIndex = 3;
-			this.groupBgColor.TabStop = false;
-			this.groupBgColor.Text = "Background";
-			// 
-			// radioBgGreen
-			// 
-			this.radioBgGreen.AutoSize = true;
-			this.radioBgGreen.Location = new System.Drawing.Point(77, 26);
-			this.radioBgGreen.Name = "radioBgGreen";
-			this.radioBgGreen.Size = new System.Drawing.Size(56, 19);
-			this.radioBgGreen.TabIndex = 1;
-			this.radioBgGreen.Text = "Green";
-			this.radioBgGreen.UseVisualStyleBackColor = true;
-			this.radioBgGreen.CheckedChanged += this.radioBgBlack_CheckedChanged;
-			// 
-			// radioBgBlack
-			// 
-			this.radioBgBlack.AutoSize = true;
-			this.radioBgBlack.Checked = true;
-			this.radioBgBlack.Location = new System.Drawing.Point(6, 26);
-			this.radioBgBlack.Name = "radioBgBlack";
-			this.radioBgBlack.Size = new System.Drawing.Size(53, 19);
-			this.radioBgBlack.TabIndex = 0;
-			this.radioBgBlack.TabStop = true;
-			this.radioBgBlack.Text = "Black";
-			this.radioBgBlack.UseVisualStyleBackColor = true;
-			this.radioBgBlack.CheckedChanged += this.radioBgBlack_CheckedChanged;
 			// 
 			// menuStrip1
 			// 
@@ -248,21 +215,42 @@ namespace FEngViewer
 			// scriptContextMenu
 			// 
 			this.scriptContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
-			this.scriptContextMenu.Items.AddRange(new ToolStripItem[] { this.toggleScriptItem });
+			this.scriptContextMenu.Items.AddRange(new ToolStripItem[] { this.toggleScriptMenuItem, this.renameScriptMenuItem, this.moveUpScriptMenuItem, this.moveDownScriptMenuItem });
 			this.scriptContextMenu.Name = "scriptContextMenu";
-			this.scriptContextMenu.Size = new System.Drawing.Size(181, 26);
+			this.scriptContextMenu.Size = new System.Drawing.Size(138, 92);
 			// 
-			// toggleScriptItem
+			// toggleScriptMenuItem
 			// 
-			this.toggleScriptItem.Name = "toggleScriptItem";
-			this.toggleScriptItem.Size = new System.Drawing.Size(180, 22);
-			this.toggleScriptItem.Text = "toolStripMenuItem1";
-			this.toggleScriptItem.Click += this.toggleScriptItem_Click;
+			this.toggleScriptMenuItem.Name = "toggleScriptMenuItem";
+			this.toggleScriptMenuItem.Size = new System.Drawing.Size(137, 22);
+			this.toggleScriptMenuItem.Text = "Start/Stop";
+			this.toggleScriptMenuItem.Click += this.toggleScriptMenuItem_Click;
+			// 
+			// renameScriptMenuItem
+			// 
+			this.renameScriptMenuItem.Name = "renameScriptMenuItem";
+			this.renameScriptMenuItem.Size = new System.Drawing.Size(137, 22);
+			this.renameScriptMenuItem.Text = "Rename";
+			this.renameScriptMenuItem.Click += this.renameScriptMenuItem_Click;
+			// 
+			// moveUpScriptMenuItem
+			// 
+			this.moveUpScriptMenuItem.Name = "moveUpScriptMenuItem";
+			this.moveUpScriptMenuItem.Size = new System.Drawing.Size(137, 22);
+			this.moveUpScriptMenuItem.Text = "Move up";
+			this.moveUpScriptMenuItem.Click += this.moveUpScriptMenuItem_Click;
+			// 
+			// moveDownScriptMenuItem
+			// 
+			this.moveDownScriptMenuItem.Name = "moveDownScriptMenuItem";
+			this.moveDownScriptMenuItem.Size = new System.Drawing.Size(137, 22);
+			this.moveDownScriptMenuItem.Text = "Move down";
+			this.moveDownScriptMenuItem.Click += this.moveDownScriptMenuItem_Click;
 			// 
 			// LblDetails
 			// 
 			this.LblDetails.AutoSize = true;
-			this.tableLayoutPanel1.SetColumnSpan(this.LblDetails, 4);
+			this.tableLayoutPanel1.SetColumnSpan(this.LblDetails, 3);
 			this.LblDetails.Location = new System.Drawing.Point(3, 805);
 			this.LblDetails.Name = "LblDetails";
 			this.LblDetails.Size = new System.Drawing.Size(136, 15);
@@ -283,8 +271,8 @@ namespace FEngViewer
 			this.tableLayoutPanel1.Controls.Add(this.labelCoordDisplay, 1, 2);
 			this.tableLayoutPanel1.Controls.Add(this.LblDetails, 0, 3);
 			this.tableLayoutPanel1.Controls.Add(this.objectPropertyGrid, 3, 0);
-			this.tableLayoutPanel1.Controls.Add(this.groupBgColor, 2, 2);
 			this.tableLayoutPanel1.Controls.Add(this.treeView1, 0, 1);
+			this.tableLayoutPanel1.Controls.Add(this.LblItemIndex, 3, 3);
 			this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 27);
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
 			this.tableLayoutPanel1.RowCount = 4;
@@ -366,6 +354,29 @@ namespace FEngViewer
 			this.treeView1.AfterSelect += this.treeView1_AfterSelect;
 			this.treeView1.MouseDown += this.treeView1_MouseDown;
 			// 
+			// LblItemIndex
+			// 
+			this.LblItemIndex.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+			this.LblItemIndex.AutoSize = true;
+			this.LblItemIndex.Location = new System.Drawing.Point(1444, 805);
+			this.LblItemIndex.Name = "LblItemIndex";
+			this.LblItemIndex.Size = new System.Drawing.Size(13, 15);
+			this.LblItemIndex.TabIndex = 9;
+			this.LblItemIndex.Text = "0";
+			// 
+			// viewerContextMenu
+			// 
+			this.viewerContextMenu.Items.AddRange(new ToolStripItem[] { this.backgroundColorMenuItem });
+			this.viewerContextMenu.Name = "viewerContextMenu";
+			this.viewerContextMenu.Size = new System.Drawing.Size(181, 48);
+			// 
+			// backgroundColorMenuItem
+			// 
+			this.backgroundColorMenuItem.Name = "backgroundColorMenuItem";
+			this.backgroundColorMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.backgroundColorMenuItem.Text = "Background color";
+			this.backgroundColorMenuItem.Click += this.backgroundColorMenuItem_Click;
+			// 
 			// PackageView
 			// 
 			this.AutoScaleMode = AutoScaleMode.Inherit;
@@ -377,8 +388,6 @@ namespace FEngViewer
 			this.Name = "PackageView";
 			this.Text = "FEngViewer";
 			this.Load += this.PackageView_Load;
-			this.groupBgColor.ResumeLayout(false);
-			this.groupBgColor.PerformLayout();
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();
 			this.objectContextMenu.ResumeLayout(false);
@@ -387,6 +396,7 @@ namespace FEngViewer
 			this.tableLayoutPanel1.PerformLayout();
 			this.tableLayoutPanel2.ResumeLayout(false);
 			this.tableLayoutPanel2.PerformLayout();
+			this.viewerContextMenu.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
 		}
@@ -400,10 +410,7 @@ namespace FEngViewer
 		private System.Windows.Forms.ToolStripMenuItem SaveFileMenuItem;
 		private System.Windows.Forms.ContextMenuStrip objectContextMenu;
 		private System.Windows.Forms.ContextMenuStrip scriptContextMenu;
-		private System.Windows.Forms.ToolStripMenuItem toggleScriptItem;
-		private System.Windows.Forms.GroupBox groupBgColor;
-		private System.Windows.Forms.RadioButton radioBgGreen;
-		private System.Windows.Forms.RadioButton radioBgBlack;
+		private System.Windows.Forms.ToolStripMenuItem toggleScriptMenuItem;
 		private ToolStripMenuItem deleteToolStripMenuItem;
 		private ToolStripMenuItem FileMenuItem;
 		private ToolStripMenuItem duplicateToolStripMenuItem;
@@ -422,5 +429,13 @@ namespace FEngViewer
 		private Button BtnPrevious;
 		private ToolStripMenuItem moveUpToolStripMenuItem;
 		private ToolStripMenuItem moveDownToolStripMenuItem;
+		private ToolStripMenuItem editToolStripMenuItem;
+		private ToolStripMenuItem renameScriptMenuItem;
+		private ToolStripMenuItem moveUpScriptMenuItem;
+		private ToolStripMenuItem moveDownScriptMenuItem;
+		private Label LblItemIndex;
+		private Button BtnBackgroundColorPicker;
+		private ContextMenuStrip viewerContextMenu;
+		private ToolStripMenuItem backgroundColorMenuItem;
 	}
 }

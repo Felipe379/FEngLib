@@ -24,11 +24,9 @@ namespace FEngViewer.Prompt
 			ChkChildren.Visible = false;
 		}
 
-		public InputForm(CharacterCasing characterCasing, bool createChildren)
+		public InputForm(CharacterCasing characterCasing, bool createChildren) : this()
 		{
-			InitializeComponent();
-
-			TxtInput.CharacterCasing = CharacterCasing.Upper;
+			TxtInput.CharacterCasing = characterCasing;
 			ChkChildren.Visible = createChildren;
 		}
 
