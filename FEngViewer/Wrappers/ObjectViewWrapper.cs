@@ -56,7 +56,6 @@ public abstract class ObjectViewWrapper<TObject> where TObject : class, IObject<
 	}
 
 	[Category("Meta")]
-	[TypeConverter(typeof(HexTypeConverter))]
 	[ReadOnly(true)]
 	public uint Guid
 	{

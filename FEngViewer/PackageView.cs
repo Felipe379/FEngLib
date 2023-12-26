@@ -1,5 +1,6 @@
 using CommandLine;
 using FEngLib;
+using FEngLib.Messaging;
 using FEngLib.Objects;
 using FEngLib.Packages;
 using FEngLib.Scripts;
@@ -57,6 +58,7 @@ public partial class PackageView : Form
 		imageList.Images.Add("TreeItem_AnimatedImage", Resources.TreeItem_AnimatedImage);
 		imageList.Images.Add("TreeItem_List", Resources.TreeItem_List);
 		imageList.Images.Add("TreeItem_CodeList", Resources.TreeItem_CodeList);
+		imageList.Images.Add("TreeItem_Message", Resources.TreeItem_Message);
 		imageList.Images.Add("TreeItem_GenericObject", Resources.TreeItem_GenericObject);
 		treeView1.ImageList = imageList;
 	}
@@ -112,6 +114,32 @@ public partial class PackageView : Form
 			};
 		}
 
+#if DEBUG
+		var messageResponseListNode = _rootNode.Nodes.Add("MessageResponse");
+		messageResponseListNode.ImageKey = messageResponseListNode.SelectedImageKey = "TreeItem_Message";
+		foreach (var messageResponses in package.MessageResponses)
+		{
+			var messageResponseNode = messageResponseListNode.Nodes.Add(messageResponses.Id.ToString());
+			messageResponseNode.Tag = messageResponses;
+		}
+
+		var messageDefinitionsListNode = _rootNode.Nodes.Add("MessageDefinitions");
+		messageDefinitionsListNode.ImageKey = messageDefinitionsListNode.SelectedImageKey = "TreeItem_Message";
+		foreach (var messageDefinitions in package.MessageDefinitions)
+		{
+			var messageDefinitionsNode = messageDefinitionsListNode.Nodes.Add(messageDefinitions.Name);
+			messageDefinitionsNode.Tag = messageDefinitions;
+		}
+
+		var messageTargetsNodeList = _rootNode.Nodes.Add("MessageTargets");
+		messageTargetsNodeList.ImageKey = messageTargetsNodeList.SelectedImageKey = "TreeItem_Message";
+		foreach (var messageTargetsLists in package.MessageTargetLists)
+		{
+			var messageTargetsNode = messageTargetsNodeList.Nodes.Add(messageTargetsLists.MsgId.ToString());
+			messageTargetsNode.Tag = messageTargetsLists;
+		}
+#endif
+
 		//var objectListNode = rootNode.Nodes.Add("Objects");
 		//objectListNode.ImageKey = "TreeItem_ObjectList";
 		ApplyObjectsToTreeNodes(feObjectNodes, _rootNode.Nodes);
@@ -163,8 +191,27 @@ public partial class PackageView : Form
 
 		foreach (var script in feObj.GetScripts())
 			CreateScriptTreeNode(objTreeNode.Nodes, script);
+#if DEBUG
+		foreach (var messageResponses in feObj.MessageResponses)
+			CreateMessageResponses(objTreeNode.Nodes, messageResponses);
+#endif
 
 		return objTreeNode;
+	}
+
+	private static void CreateMessageResponses(TreeNodeCollection collection, MessageResponse messageResponse)
+	{
+		var node = collection.Add(messageResponse.Id.ToString());
+		// ReSharper disable once LocalizableElement
+		node.ImageKey = node.SelectedImageKey = "TreeItem_Message";
+		node.Tag = messageResponse;
+
+		foreach (var message in messageResponse.Responses)
+		{
+			var eventNode = node.Nodes.Add(message.StringParam ?? message.Id.ToString());
+			eventNode.ImageKey = eventNode.SelectedImageKey = "TreeItem_Message";
+			eventNode.Tag = message;
+		}
 	}
 
 	private static void CreateScriptTreeNode(TreeNodeCollection collection, Script script)
@@ -317,18 +364,6 @@ public partial class PackageView : Form
 		{
 			objectPropertyGrid.SelectedObject = new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
 		}
-		else if (e.Node?.Tag is Track track)
-		{
-			objectPropertyGrid.SelectedObject = track;//new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
-		}
-		else if (e.Node?.Tag is TrackNode trackNode)
-		{
-			objectPropertyGrid.SelectedObject = trackNode;//new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
-		}
-		else if (e.Node?.Tag is Event scriptEvent)
-		{
-			objectPropertyGrid.SelectedObject = scriptEvent;//new DefaultScriptViewWrapper(script, AppService.Instance.HashResolver);
-		}
 #endif
 		else
 		{
@@ -414,8 +449,6 @@ public partial class PackageView : Form
 				default:
 					throw new ArgumentOutOfRangeException(nameof(ofd.FilterIndex));
 			}
-			_packageViewExtensions.ObjectSelected = null;
-			_packageViewExtensions.ShouldCopyObject = false;
 		}
 	}
 
@@ -437,6 +470,9 @@ public partial class PackageView : Form
 				package = AppService.Instance.LoadFile(path);
 		}
 
+		_packageViewExtensions.ObjectSelected = null;
+		_packageViewExtensions.ShouldCopyObject = false;
+		_packageViewExtensions.SearchIndex = -1;
 		viewOutput.Init(Path.Combine(Path.GetDirectoryName(path) ?? "", "textures"));
 
 		_currentPackage = package;
@@ -487,35 +523,42 @@ public partial class PackageView : Form
 		OpenRecentlySaved(path, fileIsJson);
 	}
 
+	public static IEnumerable<TreeNode> FlattenTree(TreeView tv)
+	{
+		return FlattenTree(tv.Nodes);
+	}
+
+	public static IEnumerable<TreeNode> FlattenTree(TreeNodeCollection coll)
+	{
+		return coll.Cast<TreeNode>()
+			.Concat(coll.Cast<TreeNode>()
+			.SelectMany(x => FlattenTree(x.Nodes)));
+	}
+
 	private void FindNode(string text, int direction)
 	{
 		if (string.IsNullOrEmpty(text))
 			return;
 
-		var objectsFound = _currentPackage.Objects
-			.Where(o => new[] { o.Name, $"0x{o.NameHash.ToString("X")}" }.Any(t => t != null && t.Contains(text, StringComparison.CurrentCultureIgnoreCase)))
-			.ToArray();
+		var nodes = FlattenTree(treeView1)
+			.ToList();
 
-		if (objectsFound.Any())
+		var nodesFound = nodes
+			.Where(n => n.Text.Contains(text, StringComparison.InvariantCultureIgnoreCase))
+			.ToList();
+
+		if (nodesFound.Any())
 		{
 			_packageViewExtensions.SearchIndex += direction;
-			if (_packageViewExtensions.SearchIndex > objectsFound.Length - 1)
+			if (_packageViewExtensions.SearchIndex > nodesFound.Count - 1)
 				_packageViewExtensions.SearchIndex = 0;
 			else if (_packageViewExtensions.SearchIndex < 0)
-				_packageViewExtensions.SearchIndex = objectsFound.Length - 1;
+				_packageViewExtensions.SearchIndex = nodesFound.Count - 1;
 
-			var objectFound = objectsFound.ElementAtOrDefault(_packageViewExtensions.SearchIndex);
+			var node = nodesFound.ElementAtOrDefault(_packageViewExtensions.SearchIndex);
 
-			if (objectFound is not null)
-			{
-				var treeKey = PackageViewExtensions.GetObjectTreeKey(objectFound);
-				var foundNodes = treeView1.Nodes.Find(treeKey, true);
-				if (foundNodes.Any())
-				{
-					treeView1.SelectedNode = foundNodes.First();
-					treeView1.Focus();
-				}
-			}
+			treeView1.SelectedNode = node;
+			treeView1.Focus();
 		}
 	}
 
@@ -660,7 +703,7 @@ public partial class PackageView : Form
 
 		var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
 		var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
-		var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject, position);
+		var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject.Parent, position);
 
 		if (newObject is null)
 			return;
@@ -706,8 +749,10 @@ public partial class PackageView : Form
 		if (_packageViewExtensions.ShouldCopyObject)
 		{
 			var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
-			var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
-			var newObject = _packageViewExtensions.CopyObject(_packageViewExtensions.ObjectSelected, selectedObject, position);
+			var newIndex = _currentPackage.Objects.IndexOf(lastChild) + 1;
+			var parent = selectedObject is Group && selectedObject == lastChild ? selectedObject : selectedObject.Parent;
+
+			var newObject = _packageViewExtensions.CopyObject(_packageViewExtensions.ObjectSelected, parent, newIndex);
 
 			if (newObject is null)
 				return;
@@ -725,18 +770,17 @@ public partial class PackageView : Form
 
 			treeKey = PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected);
 			var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
-			var position = _currentPackage.Objects.IndexOf(lastChild);
+			var newIndex = _currentPackage.Objects.IndexOf(lastChild) + 1;
 			var oldIndex = _currentPackage.Objects.IndexOf(_packageViewExtensions.ObjectSelected);
 
-			var indexMove = oldIndex > position ? 1 : 0;
-			position += indexMove;
-
-			if (oldIndex == position)
+			if (oldIndex == newIndex)
 				return;
 
-			_packageViewExtensions.ObjectSelected.Parent = selectedObject.Parent;
-			_packageViewExtensions.MoveItem(oldIndex, position);
-			_packageViewExtensions.MoveChildren(_packageViewExtensions.ObjectSelected, indexMove);
+			_packageViewExtensions.ObjectSelected.Parent = selectedObject is Group && selectedObject == lastChild ? selectedObject : selectedObject.Parent;
+			_packageViewExtensions.MoveItem(oldIndex, newIndex);
+			_packageViewExtensions.MoveChildren(_packageViewExtensions.ObjectSelected);
+
+			_packageViewExtensions.ObjectSelected = null;
 		}
 
 		CurrentPackageWasModified(treeKey);
@@ -774,18 +818,18 @@ public partial class PackageView : Form
 
 		var parents = _currentPackage.Objects.FindAll(x => x.Parent?.NameHash == selectedObject.Parent?.NameHash && x.Parent?.Guid == selectedObject.Parent?.Guid);
 		var indexInParents = parents.IndexOf(selectedObject);
-		var newIndex = indexInParents - 1;
+		var newIndexInParents = indexInParents - 1;
 
-		if (newIndex > parents.Count - 1 || newIndex < 0)
+		if (newIndexInParents > parents.Count - 1 || newIndexInParents < 0)
 			return;
 
-		var lastChild = parents.ElementAt(newIndex);
+		var lastChild = parents.ElementAt(newIndexInParents);
 
-		var position = _currentPackage.Objects.IndexOf(lastChild);
+		var newIndex = _currentPackage.Objects.IndexOf(lastChild);
 		var oldIndex = _currentPackage.Objects.IndexOf(selectedObject);
 
-		_packageViewExtensions.MoveItem(oldIndex, position);
-		_packageViewExtensions.MoveChildren(selectedObject, 1);
+		_packageViewExtensions.MoveItem(oldIndex, newIndex);
+		_packageViewExtensions.MoveChildren(selectedObject);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
 	}
@@ -802,19 +846,19 @@ public partial class PackageView : Form
 
 		var parents = _currentPackage.Objects.FindAll(x => x.Parent?.NameHash == selectedObject.Parent?.NameHash && x.Parent?.Guid == selectedObject.Parent?.Guid);
 		var indexInParents = parents.IndexOf(selectedObject);
-		var newIndex = indexInParents + 1;
+		var newIndexInParents = indexInParents + 1;
 
-		if (newIndex > parents.Count - 1 || newIndex < 0)
+		if (newIndexInParents > parents.Count - 1 || newIndexInParents < 0)
 			return;
 
-		var objectInNewIndex = parents.ElementAt(newIndex);
+		var objectInNewIndex = parents.ElementAt(newIndexInParents);
 		var lastChild = _packageViewExtensions.FindLastChild(objectInNewIndex);
 
-		var position = _currentPackage.Objects.IndexOf(lastChild);
 		var oldIndex = _currentPackage.Objects.IndexOf(selectedObject);
+		var newIndex = _currentPackage.Objects.IndexOf(lastChild) + 1;
 
-		_packageViewExtensions.MoveItem(oldIndex, position);
-		_packageViewExtensions.MoveChildren(selectedObject, 0);
+		_packageViewExtensions.MoveItem(oldIndex, newIndex);
+		_packageViewExtensions.MoveChildren(selectedObject);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
 	}
@@ -867,7 +911,7 @@ public partial class PackageView : Form
 			this.Text += $" - {_currentPackage.Name}";
 
 #if DEBUG
-		Text += $" - Debug {DateTime.Today:dd/MM/yyyy}";
+		Text += $" - Debug";
 #endif
 	}
 }

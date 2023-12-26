@@ -40,7 +40,7 @@ namespace FEngViewer
 			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash, existingObject))
 				return null;
 
-			var parent = selectedObject.Parent;
+			var parent = selectedObject;
 
 			var newObject = CreateNewObject(existingObject, parent, objectInput.Name, objectInput.NameHash);
 
@@ -163,19 +163,20 @@ namespace FEngViewer
 			return lastChild;
 		}
 
-		public int MoveChildren(IObject<ObjectData> parent, int indexMove)
+		public int MoveChildren(IObject<ObjectData> parent)
 		{
-			var index = _packageView._currentPackage.Objects.IndexOf(parent);
+			var index = _packageView._currentPackage.Objects.IndexOf(parent) + 1;
 			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent?.NameHash == parent.NameHash && x.Parent?.Guid == parent.Guid);
 
 			foreach (var child in children)
 			{
-				index += indexMove;
 				var childIndex = _packageView._currentPackage.Objects.IndexOf(child);
 				MoveItem(childIndex, index);
 
+				index += childIndex > index ? 1 : 0;
+
 				if (child is Group)
-					index = MoveChildren(child, indexMove);
+					index = MoveChildren(child);
 			}
 
 			return index;
@@ -187,8 +188,8 @@ namespace FEngViewer
 
 			_packageView._currentPackage.Objects.RemoveAt(oldIndex);
 
-			if (newIndex > _packageView._currentPackage.Objects.Count)
-				newIndex = _packageView._currentPackage.Objects.Count;
+			if (newIndex > oldIndex)
+				newIndex--;
 
 			_packageView._currentPackage.Objects.Insert(newIndex, item);
 		}
