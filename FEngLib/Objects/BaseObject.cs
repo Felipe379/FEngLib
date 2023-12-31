@@ -147,9 +147,12 @@ public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObje
 	{
 		Scripts = new List<TScript>();
 		MessageResponses = new List<MessageResponse>();
-		Data = data;
+#if DEBUG
 		//"Fix" render crash on some UG1 .fngs from the demo/final game
-		//Data = data ?? new();
+		Data = data ?? new();
+#else
+		Data = data;
+#endif
 	}
 
 	public abstract object Clone();

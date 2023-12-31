@@ -71,7 +71,7 @@ namespace FEngLib
 
 			StreamWriter unresolved;
 			{
-				unresolved = !File.Exists(file) ? new StreamWriter(file) : File.AppendText(file);
+				unresolved = new StreamWriter(file);
 
 				foreach (var keyValue in Keys)
 				{
@@ -83,6 +83,19 @@ namespace FEngLib
 						unresolved.WriteLine($"0x{keyValue.Key:x8} - {value}");
 					}
 				}
+				unresolved.Close();
+			}
+		}
+
+		public static void LogWrite(string key, string reference)
+		{
+			var file = $"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\\_Log_{reference}.txt";
+
+			StreamWriter unresolved;
+			{
+				unresolved = !File.Exists(file) ? new StreamWriter(file) : File.AppendText(file);
+
+				unresolved.WriteLine(key);
 				unresolved.Close();
 			}
 		}

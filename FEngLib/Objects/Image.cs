@@ -108,9 +108,13 @@ public class Image<TData, TScript> : BaseObject<TData, TScript>, IImage<TData>
 {
 	protected Image(TData data) : base(data)
 	{
+		//Data = data;
+#if DEBUG
+		//"Fix" render crash on some UG1 .fngs from the demo/final game
+		Data = data ?? new();
+#else
 		Data = data;
-		//"Fix" render crash on some UG1 .fngs from final and the .fng from demo
-		//Data = data ?? new();
+#endif
 	}
 
 	public override void InitializeData()

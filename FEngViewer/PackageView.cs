@@ -119,7 +119,8 @@ public partial class PackageView : Form
 		messageResponseListNode.ImageKey = messageResponseListNode.SelectedImageKey = "TreeItem_Message";
 		foreach (var messageResponses in package.MessageResponses)
 		{
-			var messageResponseNode = messageResponseListNode.Nodes.Add(messageResponses.Id.ToString());
+			var name = AppService.Instance.HashResolver.ResolveNameHash(null, messageResponses.Id);
+			var messageResponseNode = messageResponseListNode.Nodes.Add(name ?? messageResponses.Id.ToString());
 			messageResponseNode.Tag = messageResponses;
 		}
 
@@ -135,7 +136,8 @@ public partial class PackageView : Form
 		messageTargetsNodeList.ImageKey = messageTargetsNodeList.SelectedImageKey = "TreeItem_Message";
 		foreach (var messageTargetsLists in package.MessageTargetLists)
 		{
-			var messageTargetsNode = messageTargetsNodeList.Nodes.Add(messageTargetsLists.MsgId.ToString());
+			var name = AppService.Instance.HashResolver.ResolveNameHash(null, messageTargetsLists.MsgId);
+			var messageTargetsNode = messageTargetsNodeList.Nodes.Add(name ?? messageTargetsLists.MsgId.ToString());
 			messageTargetsNode.Tag = messageTargetsLists;
 		}
 #endif
@@ -201,14 +203,20 @@ public partial class PackageView : Form
 
 	private static void CreateMessageResponses(TreeNodeCollection collection, MessageResponse messageResponse)
 	{
-		var node = collection.Add(messageResponse.Id.ToString());
+		var name = AppService.Instance.HashResolver.ResolveNameHash(null, messageResponse.Id);
+		var node = collection.Add(name ?? messageResponse.Id.ToString());
 		// ReSharper disable once LocalizableElement
 		node.ImageKey = node.SelectedImageKey = "TreeItem_Message";
 		node.Tag = messageResponse;
 
 		foreach (var message in messageResponse.Responses)
 		{
-			var eventNode = node.Nodes.Add(message.StringParam ?? message.Id.ToString());
+			string nameResponse = null;
+			if (message.IntParam.HasValue)
+			{
+				nameResponse = AppService.Instance.HashResolver.ResolveNameHash(null, message.IntParam.Value);
+			}
+			var eventNode = node.Nodes.Add(nameResponse ?? (message.IntParam.HasValue ? "IntParam " + message.IntParam.ToString() : "Id " + message.Id.ToString()));
 			eventNode.ImageKey = eventNode.SelectedImageKey = "TreeItem_Message";
 			eventNode.Tag = message;
 		}
