@@ -381,7 +381,7 @@ public partial class PackageView : Form
 #else
 			objectPropertyGrid.SelectedObject = null;
 #endif
-		LblItemIndex.Text = null;
+			LblItemIndex.Text = null;
 		}
 		Render();
 	}
@@ -635,7 +635,10 @@ public partial class PackageView : Form
 
 		var objectInput = _packageViewExtensions.ObjectInput(script.Name, false);
 
-		if (string.IsNullOrWhiteSpace(objectInput.Name) || objectInput.Name == script.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash, objectData, script))
+		if (!objectInput.NameHash.HasValue)
+			return;
+
+		if (objectInput.Name == script.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, objectData, script))
 			return;
 
 		foreach (var chainedScript in scripts)
@@ -645,7 +648,7 @@ public partial class PackageView : Form
 		}
 
 		script.Name = objectInput.Name;
-		script.Id = objectInput.NameHash;
+		script.Id = objectInput.NameHash.Value;
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objectData));
 
@@ -674,11 +677,14 @@ public partial class PackageView : Form
 
 		var objectInput = _packageViewExtensions.ObjectInput(selectedObject.Name, false);
 
-		if (string.IsNullOrWhiteSpace(objectInput.Name) || objectInput.Name == selectedObject.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash, selectedObject))
+		if (!objectInput.NameHash.HasValue)
+			return;
+
+		if (objectInput.Name == selectedObject.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, selectedObject))
 			return;
 
 		selectedObject.Name = objectInput.Name;
-		selectedObject.NameHash = objectInput.NameHash;
+		selectedObject.NameHash = objectInput.NameHash.Value;
 		AppService.Instance.HashResolver.AddUserKey(selectedObject.Name, selectedObject.NameHash);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));

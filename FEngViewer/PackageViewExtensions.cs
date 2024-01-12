@@ -34,15 +34,15 @@ namespace FEngViewer
 
 			var objectInput = ObjectInput(existingObject.Name, existingObject is Group);
 
-			if (string.IsNullOrWhiteSpace(objectInput.Name))
+			if (!objectInput.NameHash.HasValue)
 				return null;
 
-			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash, existingObject))
+			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, existingObject))
 				return null;
 
 			var parent = selectedObject;
 
-			var newObject = CreateNewObject(existingObject, parent, objectInput.Name, objectInput.NameHash);
+			var newObject = CreateNewObject(existingObject, parent, objectInput.Name, objectInput.NameHash.Value);
 
 			if (newObject is null)
 				return null;
@@ -194,7 +194,7 @@ namespace FEngViewer
 			_packageView._currentPackage.Objects.Insert(newIndex, item);
 		}
 
-		public (string Name, uint NameHash, bool CreateChildren) ObjectInput(string defaultInput, bool isGroup)
+		public (string Name, uint? NameHash, bool CreateChildren) ObjectInput(string defaultInput, bool isGroup)
 		{
 			var inputForm = new InputForm(CharacterCasing.Upper, isGroup);
 			inputForm.Input = defaultInput;
@@ -207,12 +207,16 @@ namespace FEngViewer
 			if (inputForm.Input.IsHash(16))
 			{
 				inputHash = Convert.ToUInt32(inputForm.Input, 16);
-				input = AppService.Instance.HashResolver.ResolveNameHash(null, inputHash) ?? inputForm.Input;
+				input = AppService.Instance.HashResolver.ResolveNameHash(null, inputHash);
 			}
-			else
+			else if (!string.IsNullOrEmpty(inputForm.Input))
 			{
 				input = inputForm.Input;
 				inputHash = inputForm.Input.BinHash();
+			}
+			else
+			{
+				return (null, null, false);
 			}
 
 			return (input, inputHash, inputForm.CreateChildren);
@@ -224,7 +228,7 @@ namespace FEngViewer
 			{
 				var scripts = data.GetScripts();
 
-				if (scripts.Any(s => s.Id == hash || s.Name == name))
+				if (scripts.Any(s => s.Id == hash || (!string.IsNullOrEmpty(name) && s.Name == name)))
 				{
 					var result = MessageBox.Show($"A script with the name {name} or hash 0x{hash:x8} already exists.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					return true;
@@ -232,7 +236,7 @@ namespace FEngViewer
 			}
 			else
 			{
-				if (_packageView._currentPackage.Objects.Any(x => x.NameHash == hash || x.Name == name))
+				if (_packageView._currentPackage.Objects.Any(x => x.NameHash == hash || (!string.IsNullOrEmpty(name) && x.Name == name)))
 				{
 					var result = MessageBox.Show($"An object with the name {name} or hash 0x{hash:x8} already exists. Do you want to create it anyway?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 					return result != DialogResult.Yes;
