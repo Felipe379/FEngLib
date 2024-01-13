@@ -59,6 +59,8 @@ namespace FEngViewer
             toolStripScriptSpeedCombox = new ToolStripComboBox();
             statusStrip1 = new StatusStrip();
             toolStripStatusLabel1 = new ToolStripStatusLabel();
+            trackContextMenu = new ContextMenuStrip(components);
+            trackCtxMenuAddKeyItem = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -74,6 +76,7 @@ namespace FEngViewer
             scriptContextMenu.SuspendLayout();
             toolStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
+            trackContextMenu.SuspendLayout();
             SuspendLayout();
             // 
             // splitContainer1
@@ -129,6 +132,7 @@ namespace FEngViewer
             trackEditorControl.Location = new System.Drawing.Point(0, 564);
             trackEditorControl.MinimumSize = new System.Drawing.Size(649, 150);
             trackEditorControl.Name = "trackEditorControl";
+            trackEditorControl.SelectedNode = null;
             trackEditorControl.Size = new System.Drawing.Size(649, 150);
             trackEditorControl.TabIndex = 5;
             // 
@@ -265,13 +269,13 @@ namespace FEngViewer
             scriptContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
             scriptContextMenu.Items.AddRange(new ToolStripItem[] { toggleScriptItem });
             scriptContextMenu.Name = "scriptContextMenu";
-            scriptContextMenu.Size = new System.Drawing.Size(181, 26);
+            scriptContextMenu.Size = new System.Drawing.Size(202, 26);
             // 
             // toggleScriptItem
             // 
             toggleScriptItem.Name = "toggleScriptItem";
-            toggleScriptItem.Size = new System.Drawing.Size(180, 22);
-            toggleScriptItem.Text = "toolStripMenuItem1";
+            toggleScriptItem.Size = new System.Drawing.Size(201, 22);
+            toggleScriptItem.Text = "ToggleScriptPlaceholder";
             toggleScriptItem.Click += toggleScriptItem_Click;
             // 
             // toolStrip1
@@ -326,6 +330,19 @@ namespace FEngViewer
             toolStripStatusLabel1.Size = new System.Drawing.Size(113, 17);
             toolStripStatusLabel1.Text = "Testing, testing, 123!";
             // 
+            // trackContextMenu
+            // 
+            trackContextMenu.Items.AddRange(new ToolStripItem[] { trackCtxMenuAddKeyItem });
+            trackContextMenu.Name = "trackContextMenu";
+            trackContextMenu.Size = new System.Drawing.Size(181, 48);
+            // 
+            // trackCtxMenuAddKeyItem
+            // 
+            trackCtxMenuAddKeyItem.Name = "trackCtxMenuAddKeyItem";
+            trackCtxMenuAddKeyItem.Size = new System.Drawing.Size(180, 22);
+            trackCtxMenuAddKeyItem.Text = "Add Key";
+            trackCtxMenuAddKeyItem.Click += trackCtxMenuAddKeyItem_Click;
+            // 
             // PackageView
             // 
             AutoScaleMode = AutoScaleMode.Inherit;
@@ -358,6 +375,7 @@ namespace FEngViewer
             toolStrip1.PerformLayout();
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
+            trackContextMenu.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -391,5 +409,7 @@ namespace FEngViewer
         private ToolStripLabel toolStripLabel1;
         private Panel viewOutputControlPanel;
         private TrackEditorControl trackEditorControl;
+        private ContextMenuStrip trackContextMenu;
+        private ToolStripMenuItem trackCtxMenuAddKeyItem;
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -242,15 +243,9 @@ public partial class PackageView : Form
         }
     }
 
-    private void CreateTrackNode(TreeNode scriptNode, Track track, string name)
+    private static void PopulateTrackTreeNode(TreeNode trackTreeNode, Track track)
     {
-        if (track == null)
-            return;
-
-        var trackTreeNode = scriptNode.Nodes.Add(name);
-        trackTreeNode.ImageKey = trackTreeNode.SelectedImageKey = "TreeItem_ScriptTrack";
-        trackTreeNode.Tag = track;
-
+        trackTreeNode.Nodes.Clear();
         void AddNodeKey(int time, TrackNode trackNode)
         {
             var nodeTreeNode = trackTreeNode.Nodes.Add($"T={time}: {trackNode.GetValue()}");
@@ -279,6 +274,18 @@ public partial class PackageView : Form
             default:
                 throw new NotImplementedException($"Unsupported: {track.GetType()}");
         }
+    }
+
+    private void CreateTrackNode(TreeNode scriptNode, Track track, string name)
+    {
+        if (track == null)
+            return;
+
+        var trackTreeNode = scriptNode.Nodes.Add(name);
+        trackTreeNode.ImageKey = trackTreeNode.SelectedImageKey = "TreeItem_ScriptTrack";
+        trackTreeNode.Tag = track;
+
+        PopulateTrackTreeNode(trackTreeNode, track);
     }
 
     private void CreateMessageResponsesList(TreeNodeCollection collection, IHaveMessageResponses responsesContainer)
@@ -514,6 +521,10 @@ public partial class PackageView : Form
 
             scriptContextMenu.Show(treeView1, ctxPoint);
         }
+        else if (hit_node?.Tag is Track)
+        {
+            trackContextMenu.Show(treeView1, ctxPoint);
+        }
     }
 
     private void toggleScriptItem_Click(object sender, EventArgs e)
@@ -585,5 +596,53 @@ public partial class PackageView : Form
             toolStripPausePlayButton.Text = toolStripPausePlayButton.ToolTipText = "Play";
             toolStripPausePlayButton.Image = Resources.Action_Play;
         }
+    }
+
+    private void trackCtxMenuAddKeyItem_Click(object sender, EventArgs e)
+    {
+        if (treeView1.SelectedNode?.Tag is Track track)
+        {
+            if (track.Length == 0)
+            {
+                MessageBox.Show("Before adding keys, you need to increase the track's length.", "Track Issue",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                using var form = new NewKeyForm(track);
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    switch (track)
+                    {
+                        case ColorTrack colorTrack:
+                            AddNodeToTrack(colorTrack, form.NewKeyTime, (Color4) TrackHelpers.SubtractKeys((Color4)form.NewKeyValue, colorTrack.BaseKey));
+                            break;
+                        case Vector3Track vector3Track:
+                            AddNodeToTrack(vector3Track, form.NewKeyTime, (Vector3) TrackHelpers.SubtractKeys((Vector3)form.NewKeyValue, vector3Track.BaseKey));
+                            break;
+                        case Vector2Track vector2Track:
+                            AddNodeToTrack(vector2Track, form.NewKeyTime, (Vector2) TrackHelpers.SubtractKeys((Vector2)form.NewKeyValue, vector2Track.BaseKey));
+                            break;
+                        case QuaternionTrack quaternionTrack:
+                            AddNodeToTrack(quaternionTrack, form.NewKeyTime, (Quaternion) TrackHelpers.SubtractKeys((Quaternion)form.NewKeyValue, quaternionTrack.BaseKey));
+                            break;
+                        default:
+                            throw new Exception();
+                    }
+
+                    PopulateTrackTreeNode(treeView1.SelectedNode, track);
+                }
+            }
+        }
+    }
+
+    private static void AddNodeToTrack<TTrackValue>(ITrack<TTrackValue> track, int time, TTrackValue value) where TTrackValue : struct
+    {
+        // TODO: this is an affront to God. fix this
+        var node = new TrackNode<TTrackValue> { Time = time, Val = value };
+        Debug.Assert(track.DeltaKeys.All(dk => dk.Time != time));
+        track.DeltaKeys.AddLast(node);
+        track.DeltaKeys = new LinkedList<TrackNode<TTrackValue>>(track.DeltaKeys.OrderBy(dk => dk.Time));
+        track.InterpAction &= 0x7F;
     }
 }
