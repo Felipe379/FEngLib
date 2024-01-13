@@ -267,29 +267,30 @@ public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTr
     {
         CurrentScript = script;
         CurrentScriptTime = script == null ? -1 : 0;
-        LoadProperties();
-    }
-
-    protected virtual void LoadProperties()
-    {
-        Color = FrontendObject.Data.Color;
-        Pivot = FrontendObject.Data.Pivot;
-        Position = FrontendObject.Data.Position;
-        Rotation = FrontendObject.Data.Rotation;
-        Size = FrontendObject.Data.Size;
     }
 
     protected virtual void ApplyScript(TScript script, TScriptTracks tracks)
     {
         if (tracks.Color is { } colorTrack)
             Color = InterpolateHelper(colorTrack);
+        else
+            Color = FrontendObject.Data.Color;
         if (tracks.Pivot is { } pivotTrack)
             Pivot = InterpolateHelper(pivotTrack);
+        else
+            Pivot = FrontendObject.Data.Pivot;
         if (tracks.Position is { } positionTrack)
             Position = InterpolateHelper(positionTrack);
+        else
+            Position = FrontendObject.Data.Position;
         if (tracks.Rotation is { } rotationTrack)
             Rotation = InterpolateHelper(rotationTrack);
-        if (tracks.Size is { } sizeTrack) Size = InterpolateHelper(sizeTrack);
+        else
+            Rotation = FrontendObject.Data.Rotation;
+        if (tracks.Size is { } sizeTrack)
+            Size = InterpolateHelper(sizeTrack);
+        else
+            Size = FrontendObject.Data.Size;
     }
 
     protected T InterpolateHelper<T>(Track<T> track) where T : struct
