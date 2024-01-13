@@ -34,10 +34,13 @@ public class GLRenderTreeRenderer
     private List<RenderTreeNode> _treeRootNodes;
     private bool _justForcedTime;
 
+    private Color4 _backgroundColor;
+
     public GLRenderTreeRenderer(OpenGL gl, ITextureProvider textureProvider)
     {
         _gl = gl;
         _textureProvider = textureProvider;
+        _backgroundColor = new Color4(0, 0, 0, 0);
     }
 
     public RenderTreeNode SelectedNode { get; private set; }
@@ -123,6 +126,9 @@ public class GLRenderTreeRenderer
         // disable depth
         _gl.DepthMask(0);
 
+        Vector4 bgColor = _backgroundColor;
+        _gl.ClearColor(bgColor.X, bgColor.Y, bgColor.Z, bgColor.W);
+
         var dt = (_stopwatch.ElapsedMilliseconds - _lastRenderTime);
         int renderDt;
 
@@ -154,8 +160,7 @@ public class GLRenderTreeRenderer
 
     public void SetBackgroundColor(Color4 color)
     {
-        Vector4 colorV = color;
-        _gl.ClearColor(colorV.X, colorV.Y, colorV.Z, colorV.W);
+        _backgroundColor = color;
     }
 
     private void DoNodeRender(int dt, bool shouldUpdateNodes)

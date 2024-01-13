@@ -541,14 +541,12 @@ public partial class PackageView : Form
     {
         if (sender == radioBgBlack)
         {
-            viewOutput.BackgroundColor = new Color4(0, 0, 0, 255);
+            viewOutput.BackgroundColor = new Color4(0, 0, 0, 0);
         }
         else if (sender == radioBgGreen)
         {
             viewOutput.BackgroundColor = new Color4(0, 255, 0, 255);
         }
-
-        Render();
     }
 
     private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
