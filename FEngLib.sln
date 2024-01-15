@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29728.190
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34316.72
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FEngLib", "FEngLib\FEngLib.csproj", "{52976D61-7019-4B7C-B939-835E35739063}"
 EndProject
@@ -9,11 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FEngCli", "FEngCli\FEngCli.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FEngTestBench", "FEngTestBench\FEngTestBench.csproj", "{A6E4B7E2-A217-4EE5-B2A4-9CFCF7ABE084}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FEngRender", "FEngRender\FEngRender.csproj", "{CBCF4BDA-B2F5-490C-9ECF-69E0EDC0D3CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FEngRender", "FEngRender\FEngRender.csproj", "{CBCF4BDA-B2F5-490C-9ECF-69E0EDC0D3CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FEngViewer", "FEngViewer\FEngViewer.csproj", "{41331FD7-E2D2-4CA7-86D8-774F03DB6409}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FEngViewer", "FEngViewer\FEngViewer.csproj", "{41331FD7-E2D2-4CA7-86D8-774F03DB6409}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FEngRender.GL", "FEngRender.GL\FEngRender.GL.csproj", "{7A41DB9F-2F8C-4F8F-8296-814FCD953318}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FEngRender.GL", "FEngRender.GL\FEngRender.GL.csproj", "{7A41DB9F-2F8C-4F8F-8296-814FCD953318}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FEngViewer.WPF", "FEngViewer.WPF\FEngViewer.WPF.csproj", "{BEE932FE-EF6F-4289-969A-15A86CC5DAB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{7A41DB9F-2F8C-4F8F-8296-814FCD953318}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A41DB9F-2F8C-4F8F-8296-814FCD953318}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A41DB9F-2F8C-4F8F-8296-814FCD953318}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEE932FE-EF6F-4289-969A-15A86CC5DAB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEE932FE-EF6F-4289-969A-15A86CC5DAB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEE932FE-EF6F-4289-969A-15A86CC5DAB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEE932FE-EF6F-4289-969A-15A86CC5DAB5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
