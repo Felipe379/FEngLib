@@ -352,13 +352,31 @@ public partial class PackageView : Form
 		}
 	}
 
+	private int CountChildren(IObject<ObjectData> feObject)
+	{
+		var objects = _currentPackage.Objects.Where(x => feObject?.NameHash == x.Parent?.NameHash && feObject?.Guid == x.Parent?.Guid).ToList();
+		var count = objects.Count;
+
+		foreach (var item in objects.Where(x => x is Group))
+			count += CountChildren(item);
+
+		return count;
+	}
+
 	private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
 	{
-		if (e.Node?.Tag is RenderTreeNode viewNode)
+		if (e.Node == _rootNode)
+		{
+			LblChildsCount.Text = "Children: " + _currentPackage.Objects.Where(x => x.Parent == null).Count().ToString("D5") + " | Total: " + CountChildren(null);
+		}
+		else if (e.Node?.Tag is RenderTreeNode viewNode)
 		{
 			viewOutput.SelectedNode = viewNode;
 			var wrappedObject = viewNode.GetObject();
-			LblItemIndex.Text = "Index: " + _currentPackage.Objects.IndexOf(wrappedObject).ToString("D4");
+			LblItemIndex.Text = "Index: " + _currentPackage.Objects.IndexOf(wrappedObject).ToString("D5");
+			if (wrappedObject is Group)
+				LblChildsCount.Text = "Children: " + _currentPackage.Objects.Where(x => wrappedObject.NameHash == x.Parent?.NameHash && wrappedObject.Guid == x.Parent?.Guid).Count().ToString("D5")
+					 + " | Total: " + CountChildren(wrappedObject);
 			objectPropertyGrid.SelectedObject = wrappedObject switch
 			{
 				Text t => new TextObjectViewWrapper(t, AppService.Instance.HashResolver),
@@ -382,6 +400,7 @@ public partial class PackageView : Form
 			objectPropertyGrid.SelectedObject = null;
 #endif
 			LblItemIndex.Text = null;
+			LblChildsCount.Text = null;
 		}
 		Render();
 	}
@@ -927,5 +946,60 @@ public partial class PackageView : Form
 #if DEBUG
 		Text += $" - Debug";
 #endif
+	}
+
+	private void orderGroupToolStripMenu_Click(object sender, EventArgs e)
+	{
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
+		OrderGroups(selectedObject, false);
+
+		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
+	}
+
+	private void orderGroupChildsToolStripMenu_Click(object sender, EventArgs e)
+	{
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
+		OrderGroups(selectedObject, true);
+
+		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
+	}
+
+	private void OrderGroups(IObject<ObjectData> node, bool orderChilds)
+	{
+		if (node is null || node is not Group)
+			return;
+
+		var feObjects = _currentPackage.Objects
+			.Where(x => x.Parent?.NameHash == node.NameHash && x.Parent?.Guid == node.Guid)
+			.OrderBy(x => x.Name, new NaturalStringComparer()).ThenBy(x => x.NameHash).ThenBy(x => x.Guid)
+			.ToList();
+
+		foreach (var feObject in feObjects)
+		{
+			_currentPackage.Objects.Remove(feObject);
+		}
+
+		var parentIndex = _currentPackage.Objects.IndexOf(node) + 1;
+
+		_currentPackage.Objects.InsertRange(parentIndex, feObjects);
+
+		foreach (var item in feObjects)
+		{
+			if (item is Group)
+			{
+				_packageViewExtensions.MoveChildren(item);
+
+				if (orderChilds)
+					OrderGroups(item, true);
+			}
+		}
 	}
 }

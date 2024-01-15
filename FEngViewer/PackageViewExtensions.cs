@@ -200,7 +200,7 @@ namespace FEngViewer
 			inputForm.Input = defaultInput;
 			inputForm.CreateChildren = isGroup;
 			if (inputForm.ShowDialog() != DialogResult.OK)
-				return (null, 0, false);
+				return (null, null, false);
 
 			var input = string.Empty;
 			uint inputHash = 0;

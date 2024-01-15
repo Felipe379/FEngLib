@@ -49,6 +49,8 @@ namespace FEngViewer
 			this.cutToolStripMenuItem = new ToolStripMenuItem();
 			this.pasteToolStripMenuItem = new ToolStripMenuItem();
 			this.deleteToolStripMenuItem = new ToolStripMenuItem();
+			this.orderGroupToolStripMenu = new ToolStripMenuItem();
+			this.orderGroupChildsToolStripMenu = new ToolStripMenuItem();
 			this.scriptContextMenu = new ContextMenuStrip(this.components);
 			this.toggleScriptMenuItem = new ToolStripMenuItem();
 			this.renameScriptMenuItem = new ToolStripMenuItem();
@@ -62,6 +64,8 @@ namespace FEngViewer
 			this.TxtSearch = new TextBox();
 			this.objectPropertyGrid = new PropertyGrid();
 			this.treeView1 = new TreeView();
+			this.groupBox1 = new GroupBox();
+			this.LblChildsCount = new Label();
 			this.LblItemIndex = new Label();
 			this.viewerContextMenu = new ContextMenuStrip(this.components);
 			this.backgroundColorMenuItem = new ToolStripMenuItem();
@@ -70,6 +74,7 @@ namespace FEngViewer
 			this.scriptContextMenu.SuspendLayout();
 			this.tableLayoutPanel1.SuspendLayout();
 			this.tableLayoutPanel2.SuspendLayout();
+			this.groupBox1.SuspendLayout();
 			this.viewerContextMenu.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -145,15 +150,15 @@ namespace FEngViewer
 			// objectContextMenu
 			// 
 			this.objectContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
-			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.renameToolStripMenuItem, this.moveUpToolStripMenuItem, this.moveDownToolStripMenuItem, this.duplicateToolStripMenuItem, this.copyToolStripMenuItem, this.cutToolStripMenuItem, this.pasteToolStripMenuItem, this.deleteToolStripMenuItem });
+			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.renameToolStripMenuItem, this.moveUpToolStripMenuItem, this.moveDownToolStripMenuItem, this.duplicateToolStripMenuItem, this.copyToolStripMenuItem, this.cutToolStripMenuItem, this.pasteToolStripMenuItem, this.deleteToolStripMenuItem, this.orderGroupToolStripMenu, this.orderGroupChildsToolStripMenu });
 			this.objectContextMenu.Name = "objectContextMenu";
-			this.objectContextMenu.Size = new System.Drawing.Size(203, 180);
+			this.objectContextMenu.Size = new System.Drawing.Size(209, 246);
 			// 
 			// renameToolStripMenuItem
 			// 
 			this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
 			this.renameToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.R;
-			this.renameToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.renameToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.renameToolStripMenuItem.Text = "Rename";
 			this.renameToolStripMenuItem.Click += this.renameToolStripMenuItem_Click;
 			// 
@@ -161,7 +166,7 @@ namespace FEngViewer
 			// 
 			this.moveUpToolStripMenuItem.Name = "moveUpToolStripMenuItem";
 			this.moveUpToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Up;
-			this.moveUpToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.moveUpToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.moveUpToolStripMenuItem.Text = "Move up";
 			this.moveUpToolStripMenuItem.Click += this.moveUpToolStripMenuItem_Click;
 			// 
@@ -169,14 +174,14 @@ namespace FEngViewer
 			// 
 			this.moveDownToolStripMenuItem.Name = "moveDownToolStripMenuItem";
 			this.moveDownToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.Down;
-			this.moveDownToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.moveDownToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.moveDownToolStripMenuItem.Text = "Move down";
 			this.moveDownToolStripMenuItem.Click += this.moveDownToolStripMenuItem_Click;
 			// 
 			// duplicateToolStripMenuItem
 			// 
 			this.duplicateToolStripMenuItem.Name = "duplicateToolStripMenuItem";
-			this.duplicateToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.duplicateToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.duplicateToolStripMenuItem.Text = "Duplicate";
 			this.duplicateToolStripMenuItem.Click += this.duplicateToolStripMenuItem_Click;
 			// 
@@ -184,7 +189,7 @@ namespace FEngViewer
 			// 
 			this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
 			this.copyToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.C;
-			this.copyToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.copyToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.copyToolStripMenuItem.Text = "Copy";
 			this.copyToolStripMenuItem.Click += this.copyToolStripMenuItem_Click;
 			// 
@@ -192,7 +197,7 @@ namespace FEngViewer
 			// 
 			this.cutToolStripMenuItem.Name = "cutToolStripMenuItem";
 			this.cutToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.X;
-			this.cutToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.cutToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.cutToolStripMenuItem.Text = "Cut";
 			this.cutToolStripMenuItem.Click += this.cutToolStripMenuItem_Click;
 			// 
@@ -200,7 +205,7 @@ namespace FEngViewer
 			// 
 			this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
 			this.pasteToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.V;
-			this.pasteToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.pasteToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.pasteToolStripMenuItem.Text = "Paste";
 			this.pasteToolStripMenuItem.Click += this.pasteToolStripMenuItem_Click;
 			// 
@@ -208,9 +213,23 @@ namespace FEngViewer
 			// 
 			this.deleteToolStripMenuItem.Name = "deleteToolStripMenuItem";
 			this.deleteToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.D;
-			this.deleteToolStripMenuItem.Size = new System.Drawing.Size(202, 22);
+			this.deleteToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.deleteToolStripMenuItem.Text = "Delete";
 			this.deleteToolStripMenuItem.Click += this.deleteToolStripMenuItem_Click;
+			// 
+			// orderGroupToolStripMenu
+			// 
+			this.orderGroupToolStripMenu.Name = "orderGroupToolStripMenu";
+			this.orderGroupToolStripMenu.Size = new System.Drawing.Size(208, 22);
+			this.orderGroupToolStripMenu.Text = "Order group";
+			this.orderGroupToolStripMenu.Click += this.orderGroupToolStripMenu_Click;
+			// 
+			// orderGroupChildsToolStripMenu
+			// 
+			this.orderGroupChildsToolStripMenu.Name = "orderGroupChildsToolStripMenu";
+			this.orderGroupChildsToolStripMenu.Size = new System.Drawing.Size(208, 22);
+			this.orderGroupChildsToolStripMenu.Text = "Order group and children";
+			this.orderGroupChildsToolStripMenu.Click += this.orderGroupChildsToolStripMenu_Click;
 			// 
 			// scriptContextMenu
 			// 
@@ -251,7 +270,7 @@ namespace FEngViewer
 			// 
 			this.LblDetails.AutoSize = true;
 			this.tableLayoutPanel1.SetColumnSpan(this.LblDetails, 3);
-			this.LblDetails.Location = new System.Drawing.Point(3, 805);
+			this.LblDetails.Location = new System.Drawing.Point(3, 761);
 			this.LblDetails.Name = "LblDetails";
 			this.LblDetails.Size = new System.Drawing.Size(136, 15);
 			this.LblDetails.TabIndex = 5;
@@ -272,7 +291,7 @@ namespace FEngViewer
 			this.tableLayoutPanel1.Controls.Add(this.LblDetails, 0, 3);
 			this.tableLayoutPanel1.Controls.Add(this.objectPropertyGrid, 3, 0);
 			this.tableLayoutPanel1.Controls.Add(this.treeView1, 0, 1);
-			this.tableLayoutPanel1.Controls.Add(this.LblItemIndex, 3, 3);
+			this.tableLayoutPanel1.Controls.Add(this.groupBox1, 3, 3);
 			this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 27);
 			this.tableLayoutPanel1.Name = "tableLayoutPanel1";
 			this.tableLayoutPanel1.RowCount = 4;
@@ -340,7 +359,7 @@ namespace FEngViewer
 			this.objectPropertyGrid.Location = new System.Drawing.Point(1056, 3);
 			this.objectPropertyGrid.Name = "objectPropertyGrid";
 			this.tableLayoutPanel1.SetRowSpan(this.objectPropertyGrid, 3);
-			this.objectPropertyGrid.Size = new System.Drawing.Size(401, 799);
+			this.objectPropertyGrid.Size = new System.Drawing.Size(401, 755);
 			this.objectPropertyGrid.TabIndex = 5;
 			// 
 			// treeView1
@@ -349,31 +368,53 @@ namespace FEngViewer
 			this.treeView1.Location = new System.Drawing.Point(3, 67);
 			this.treeView1.Name = "treeView1";
 			this.tableLayoutPanel1.SetRowSpan(this.treeView1, 2);
-			this.treeView1.Size = new System.Drawing.Size(401, 735);
+			this.treeView1.Size = new System.Drawing.Size(401, 691);
 			this.treeView1.TabIndex = 2;
 			this.treeView1.AfterSelect += this.treeView1_AfterSelect;
 			this.treeView1.MouseDown += this.treeView1_MouseDown;
+			// 
+			// groupBox1
+			// 
+			this.groupBox1.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+			this.groupBox1.AutoSize = true;
+			this.groupBox1.Controls.Add(this.LblChildsCount);
+			this.groupBox1.Controls.Add(this.LblItemIndex);
+			this.groupBox1.Location = new System.Drawing.Point(1056, 764);
+			this.groupBox1.Name = "groupBox1";
+			this.groupBox1.Size = new System.Drawing.Size(401, 53);
+			this.groupBox1.TabIndex = 9;
+			this.groupBox1.TabStop = false;
+			// 
+			// LblChildsCount
+			// 
+			this.LblChildsCount.AutoSize = true;
+			this.LblChildsCount.Location = new System.Drawing.Point(6, 19);
+			this.LblChildsCount.Name = "LblChildsCount";
+			this.LblChildsCount.Size = new System.Drawing.Size(88, 15);
+			this.LblChildsCount.TabIndex = 1;
+			this.LblChildsCount.Text = "Children: 00000";
 			// 
 			// LblItemIndex
 			// 
 			this.LblItemIndex.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 			this.LblItemIndex.AutoSize = true;
-			this.LblItemIndex.Location = new System.Drawing.Point(1444, 805);
+			this.LblItemIndex.Location = new System.Drawing.Point(323, 19);
 			this.LblItemIndex.Name = "LblItemIndex";
-			this.LblItemIndex.Size = new System.Drawing.Size(13, 15);
-			this.LblItemIndex.TabIndex = 9;
-			this.LblItemIndex.Text = "0";
+			this.LblItemIndex.Size = new System.Drawing.Size(72, 15);
+			this.LblItemIndex.TabIndex = 0;
+			this.LblItemIndex.Text = "Index: 00000";
+			this.LblItemIndex.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
 			// viewerContextMenu
 			// 
 			this.viewerContextMenu.Items.AddRange(new ToolStripItem[] { this.backgroundColorMenuItem });
 			this.viewerContextMenu.Name = "viewerContextMenu";
-			this.viewerContextMenu.Size = new System.Drawing.Size(181, 48);
+			this.viewerContextMenu.Size = new System.Drawing.Size(169, 26);
 			// 
 			// backgroundColorMenuItem
 			// 
 			this.backgroundColorMenuItem.Name = "backgroundColorMenuItem";
-			this.backgroundColorMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.backgroundColorMenuItem.Size = new System.Drawing.Size(168, 22);
 			this.backgroundColorMenuItem.Text = "Background color";
 			this.backgroundColorMenuItem.Click += this.backgroundColorMenuItem_Click;
 			// 
@@ -396,6 +437,8 @@ namespace FEngViewer
 			this.tableLayoutPanel1.PerformLayout();
 			this.tableLayoutPanel2.ResumeLayout(false);
 			this.tableLayoutPanel2.PerformLayout();
+			this.groupBox1.ResumeLayout(false);
+			this.groupBox1.PerformLayout();
 			this.viewerContextMenu.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
@@ -433,9 +476,13 @@ namespace FEngViewer
 		private ToolStripMenuItem renameScriptMenuItem;
 		private ToolStripMenuItem moveUpScriptMenuItem;
 		private ToolStripMenuItem moveDownScriptMenuItem;
-		private Label LblItemIndex;
 		private Button BtnBackgroundColorPicker;
 		private ContextMenuStrip viewerContextMenu;
 		private ToolStripMenuItem backgroundColorMenuItem;
+		private ToolStripMenuItem orderGroupToolStripMenu;
+		private ToolStripMenuItem orderGroupChildsToolStripMenu;
+		private GroupBox groupBox1;
+		private Label LblChildsCount;
+		private Label LblItemIndex;
 	}
 }
