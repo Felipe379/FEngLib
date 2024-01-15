@@ -70,7 +70,7 @@ public class RenderTree : IEnumerable<RenderTreeNode>
             .Where(o => o.GetObjectType() == ObjectType.Group)
             .ToDictionary(
                 o => o.Guid,
-                o => new List<IObject<ObjectData>>());
+                o => new List<IObject<BaseObjectData>>());
 
         // Build up children mapping
         foreach (var frontendObject in package.Objects.Where(o => o.Parent != null))
@@ -78,7 +78,7 @@ public class RenderTree : IEnumerable<RenderTreeNode>
             childrenDict[frontendObject.Parent.Guid].Add(frontendObject);
         }
 
-        void GenerateNodes(IEnumerable<IObject<ObjectData>> frontendObjects, IList<RenderTreeNode> nodeList)
+        void GenerateNodes(IEnumerable<IObject<BaseObjectData>> frontendObjects, IList<RenderTreeNode> nodeList)
         {
             foreach (var frontendObject in frontendObjects)
             {

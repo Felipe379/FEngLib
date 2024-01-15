@@ -4,7 +4,7 @@ namespace FEngLib.Objects.Tags;
 
 public class ObjectDataTag : ObjectTag
 {
-    public ObjectDataTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ObjectDataTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 

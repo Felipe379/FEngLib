@@ -9,7 +9,7 @@ namespace FEngLib.Scripts;
 
 public class ScriptTagStream : TagStream
 {
-    public ScriptTagStream(BinaryReader reader, long length, IObject<ObjectData> frontendObject,
+    public ScriptTagStream(BinaryReader reader, long length, IObject<BaseObjectData> frontendObject,
         ScriptProcessingContext scriptProcessingContext) : base(
         reader, length)
     {
@@ -17,7 +17,7 @@ public class ScriptTagStream : TagStream
         ScriptProcessingContext = scriptProcessingContext;
     }
 
-    private IObject<ObjectData> FrontendObject { get; }
+    private IObject<BaseObjectData> FrontendObject { get; }
     private ScriptProcessingContext ScriptProcessingContext { get; }
 
     public override Tag NextTag()

@@ -6,7 +6,7 @@ namespace FEngLib.Chunks;
 
 public class FrontendObjectContainerChunk : FrontendObjectChunk
 {
-    public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
+    public override IObject<BaseObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         return readerState.ChunkReader.ReadFrontendObjectChunks(FrontendObject, readerState.CurrentChunkBlock.Size);
     }
@@ -16,7 +16,7 @@ public class FrontendObjectContainerChunk : FrontendObjectChunk
         return FrontendChunkType.FrontendObjectContainer;
     }
 
-    public FrontendObjectContainerChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public FrontendObjectContainerChunk(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 }

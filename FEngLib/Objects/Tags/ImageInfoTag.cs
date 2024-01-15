@@ -4,7 +4,7 @@ namespace FEngLib.Objects.Tags;
 
 public class ImageInfoTag : ObjectTag
 {
-    public ImageInfoTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ImageInfoTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 

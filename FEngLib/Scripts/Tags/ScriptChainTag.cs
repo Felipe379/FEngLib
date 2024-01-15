@@ -5,7 +5,7 @@ namespace FEngLib.Scripts.Tags;
 
 public class ScriptChainTag : ScriptTag
 {
-    public ScriptChainTag(IObject<ObjectData> frontendObject, ScriptProcessingContext scriptProcessingContext) : base(
+    public ScriptChainTag(IObject<BaseObjectData> frontendObject, ScriptProcessingContext scriptProcessingContext) : base(
         frontendObject, scriptProcessingContext)
     {
     }

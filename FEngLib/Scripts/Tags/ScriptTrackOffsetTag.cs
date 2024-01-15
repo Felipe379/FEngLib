@@ -5,7 +5,7 @@ namespace FEngLib.Scripts.Tags;
 
 public class ScriptTrackOffsetTag : ScriptTag
 {
-    public ScriptTrackOffsetTag(IObject<ObjectData> frontendObject, ScriptProcessingContext scriptProcessingContext) :
+    public ScriptTrackOffsetTag(IObject<BaseObjectData> frontendObject, ScriptProcessingContext scriptProcessingContext) :
         base(frontendObject,
             scriptProcessingContext)
     {

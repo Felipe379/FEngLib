@@ -10,11 +10,11 @@ namespace FEngLib.Chunks;
 
 public class ObjectDataChunk : FrontendObjectChunk
 {
-    public ObjectDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ObjectDataChunk(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 
-    public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
+    public override IObject<BaseObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var newFrontendObject = FrontendObject;
         var tagStream = new ObjectTagStream(reader, readerState.CurrentChunkBlock.Size, newFrontendObject);
@@ -28,7 +28,7 @@ public class ObjectDataChunk : FrontendObjectChunk
         return newFrontendObject;
     }
 
-    private IObject<ObjectData> ProcessTag(Package package, IObject<ObjectData> frontendObject, Tag tag)
+    private IObject<BaseObjectData> ProcessTag(Package package, IObject<BaseObjectData> frontendObject, Tag tag)
     {
         switch (tag)
         {
@@ -82,7 +82,7 @@ public class ObjectDataChunk : FrontendObjectChunk
         return frontendObject;
     }
 
-    private void ProcessObjectParentTag(Package package, IObject<ObjectData> frontendObject,
+    private void ProcessObjectParentTag(Package package, IObject<BaseObjectData> frontendObject,
         ObjectParentTag objectParentTag)
     {
         frontendObject.Parent = package.FindObjectByGuid(objectParentTag.ParentId);
@@ -130,9 +130,9 @@ public class ObjectDataChunk : FrontendObjectChunk
         return frontendString;
     }
 
-    private IObject<ObjectData> ProcessObjectTypeTag(ObjectTypeTag objectTypeTag)
+    private IObject<BaseObjectData> ProcessObjectTypeTag(ObjectTypeTag objectTypeTag)
     {
-        IObject<ObjectData> newInstance = objectTypeTag.Type switch
+        IObject<BaseObjectData> newInstance = objectTypeTag.Type switch
         {
             ObjectType.Image => new Image(null),
             ObjectType.Group => new Group(null),
@@ -152,7 +152,7 @@ public class ObjectDataChunk : FrontendObjectChunk
         image.ImageFlags = imageInfoTag.ImageFlags;
     }
 
-    private void ProcessObjectReferenceTag(Package package, IObject<ObjectData> frontendObject,
+    private void ProcessObjectReferenceTag(Package package, IObject<BaseObjectData> frontendObject,
         ObjectReferenceTag objectReferenceTag)
     {
         frontendObject.Flags = objectReferenceTag.Flags;

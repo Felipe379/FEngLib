@@ -14,7 +14,7 @@ public enum TextFormat : uint
 
 public class Text : BaseObject
 {
-    public Text(ObjectData data) : base(data)
+    public Text(CommonObjectData data) : base(data)
     {
     }
 
@@ -33,6 +33,6 @@ public class Text : BaseObject
 
     public override void InitializeData()
     {
-        Data = new ObjectData();
+        Data = new CommonObjectData();
     }
 }

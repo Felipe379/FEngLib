@@ -2,7 +2,7 @@
 
 public class SimpleImage : BaseObject
 {
-    public SimpleImage(ObjectData data) : base(data)
+    public SimpleImage(CommonObjectData data) : base(data)
     {
     }
 
@@ -13,6 +13,6 @@ public class SimpleImage : BaseObject
 
     public override void InitializeData()
     {
-        Data = new ObjectData();
+        Data = new CommonObjectData();
     }
 }

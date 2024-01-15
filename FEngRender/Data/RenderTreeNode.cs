@@ -27,7 +27,7 @@ public abstract class RenderTreeNode
     /// <param name="deltaMs">The time (in milliseconds) that has passed since the last frame render.</param>
     public abstract void Update(RenderContext context, int deltaMs);
 
-    public abstract IObject<ObjectData> GetObject();
+    public abstract IObject<BaseObjectData> GetObject();
 
     public abstract Script GetCurrentScript();
 
@@ -80,9 +80,9 @@ public abstract class RenderTreeNode
 }
 
 public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTreeNode
-    where TObject : IObject<ObjectData>, IScriptedObject<TScript>
+    where TObject : IObject<BaseObjectData>, IScriptedObject<TScript>
     where TScript : Script<TScriptTracks>
-    where TScriptTracks : ScriptTracks, new()
+    where TScriptTracks : BaseScriptTracks, new()
 {
     protected RenderTreeNode(TObject frontendObject)
     {
@@ -250,7 +250,7 @@ public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTr
 
     public override Script GetCurrentScript() => CurrentScript;
 
-    public override IObject<ObjectData> GetObject() => FrontendObject;
+    public override IObject<BaseObjectData> GetObject() => FrontendObject;
 
     public sealed override void SetCurrentScript(uint? id)
     {
@@ -299,8 +299,8 @@ public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTr
     }
 }
 
-public abstract class RenderTreeNode<TObject> : RenderTreeNode<TObject, BaseObjectScript, ScriptTracks>
-    where TObject : IObject<ObjectData>, IScriptedObject<BaseObjectScript>
+public abstract class RenderTreeNode<TObject> : RenderTreeNode<TObject, CommonScript, CommonScriptTracks>
+    where TObject : IObject<CommonObjectData>, IScriptedObject<CommonScript>
 {
     protected RenderTreeNode(TObject frontendObject) : base(frontendObject)
     {

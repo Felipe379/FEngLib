@@ -4,10 +4,10 @@ namespace FEngLib.Objects;
 
 public abstract class ObjectTag : Tag
 {
-    protected ObjectTag(IObject<ObjectData> frontendObject)
+    protected ObjectTag(IObject<BaseObjectData> frontendObject)
     {
         FrontendObject = frontendObject;
     }
 
-    protected IObject<ObjectData> FrontendObject { get; }
+    protected IObject<BaseObjectData> FrontendObject { get; }
 }

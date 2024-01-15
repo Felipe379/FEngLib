@@ -5,7 +5,7 @@ namespace FEngLib.Objects.Tags;
 
 public class ObjectReferenceTag : ObjectTag
 {
-    public ObjectReferenceTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ObjectReferenceTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 

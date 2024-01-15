@@ -4,7 +4,7 @@ namespace FEngLib.Objects.Tags;
 
 public class StringBufferMaxWidthTag : ObjectTag
 {
-    public StringBufferMaxWidthTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public StringBufferMaxWidthTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 

@@ -5,7 +5,7 @@ using FEngLib.Utils;
 
 namespace FEngLib.Objects;
 
-public class ImageData : ObjectData
+public class ImageData : BaseObjectData
 {
     public Vector2 UpperLeft { get; set; }
     public Vector2 LowerRight { get; set; }
@@ -27,7 +27,7 @@ public class ImageData : ObjectData
     }
 }
 
-public class ImageScriptTracks : ScriptTracks
+public class ImageScriptTracks : BaseScriptTracks
 {
     public Vector2Track UpperLeft { get; set; }
     public Vector2Track LowerRight { get; set; }

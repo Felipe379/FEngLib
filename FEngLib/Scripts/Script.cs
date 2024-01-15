@@ -2,7 +2,7 @@
 
 namespace FEngLib.Scripts;
 
-public class ScriptTracks
+public abstract class BaseScriptTracks
 {
     public ColorTrack Color { get; set; }
     public Vector3Track Pivot { get; set; }
@@ -28,10 +28,10 @@ public abstract class Script
     // public List<Track> Tracks { get; }
     public List<Event> Events { get; }
 
-    public abstract ScriptTracks GetTracks();
+    public abstract BaseScriptTracks GetTracks();
 }
 
-public abstract class Script<TTracks> : Script where TTracks : ScriptTracks, new()
+public abstract class Script<TTracks> : Script where TTracks : BaseScriptTracks, new()
 {
     protected Script()
     {
@@ -40,7 +40,7 @@ public abstract class Script<TTracks> : Script where TTracks : ScriptTracks, new
 
     public TTracks Tracks { get; protected init; }
 
-    public override ScriptTracks GetTracks()
+    public override BaseScriptTracks GetTracks()
     {
         return Tracks;
     }

@@ -2,7 +2,7 @@
 
 public class Movie : BaseObject
 {
-    public Movie(ObjectData data) : base(data)
+    public Movie(CommonObjectData data) : base(data)
     {
     }
 
@@ -13,6 +13,6 @@ public class Movie : BaseObject
 
     public override void InitializeData()
     {
-        Data = new ObjectData();
+        Data = new CommonObjectData();
     }
 }

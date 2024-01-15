@@ -4,7 +4,7 @@ namespace FEngLib.Objects.Tags;
 
 public class StringBufferLengthTag : ObjectTag
 {
-    public StringBufferLengthTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public StringBufferLengthTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 

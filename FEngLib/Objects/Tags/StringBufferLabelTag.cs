@@ -4,7 +4,7 @@ namespace FEngLib.Objects.Tags;
 
 public class StringBufferLabelTag : ObjectTag
 {
-    public StringBufferLabelTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public StringBufferLabelTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 

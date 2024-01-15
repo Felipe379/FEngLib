@@ -15,7 +15,7 @@ namespace FEngLib.Objects;
 /// For objects where the ObjD chunk contains extra data (e.g. images),
 /// inherit from this class to represent the extra values in that chunk. 
 /// </summary>
-public class ObjectData : IBinaryAccess
+public abstract class BaseObjectData : IBinaryAccess
 {
     public Color4 Color { get; set; }
     public Vector3 Pivot { get; set; }
@@ -51,7 +51,7 @@ public class ObjectData : IBinaryAccess
 /// A type inheriting from ObjectData,
 /// representing the contents of an ObjD chunk for this object.
 /// </typeparam>
-public interface IObject<out TData> : IScriptedObject, IHaveMessageResponses where TData : ObjectData
+public interface IObject<out TData> : IScriptedObject, IHaveMessageResponses where TData : BaseObjectData
 {
     TData Data { get; }
     ObjectFlags Flags { get; set; }
@@ -59,7 +59,7 @@ public interface IObject<out TData> : IScriptedObject, IHaveMessageResponses whe
     string Name { get; set; }
     uint NameHash { get; set; }
     uint Guid { get; set; }
-    IObject<ObjectData> Parent { get; set; }
+    IObject<BaseObjectData> Parent { get; set; }
     ObjectType GetObjectType();
 
     void InitializeData();
@@ -91,30 +91,44 @@ public interface IScriptedObject<out TScript> : IScriptedObject where TScript : 
     new TScript FindScript(uint id);
 }
 
-public class BaseObjectScript : Script<ScriptTracks>
+/// <summary>
+/// A script track set containing just the standard parameter tracks.
+/// </summary>
+public sealed class CommonScriptTracks : BaseScriptTracks
+{}
+
+/// <summary>
+/// A script containing just the standard parameter tracks.
+/// </summary>
+public sealed class CommonScript : Script<CommonScriptTracks>
 {
 }
 
 /// <summary>
-/// All objects that don't have any extra attributes in their ObjD chunk's SA tag should inherit from this.
+/// An object data class containing just the standard parameters.
 /// </summary>
-public abstract class BaseObject : BaseObject<ObjectData, BaseObjectScript>
+public sealed class CommonObjectData : BaseObjectData {}
+
+/// <summary>
+/// Base class for objects that do not have any additional parameters.
+/// </summary>
+public abstract class BaseObject : BaseObject<CommonObjectData, CommonScript>
 {
-    protected BaseObject(ObjectData data) : base(data)
+    protected BaseObject(CommonObjectData data) : base(data)
     {
     }
 }
 
 /// <summary>
-/// All objects that have extra data in their ObjD chunk's SA tag should inherit from this base class.
+/// Base class for objects that have additional parameters beyond the standard set (Color, Pivot, etc.)
 /// </summary>
 /// <typeparam name="TData">
-/// A type inheriting from ObjectData that represents any additional attributes relevant for this object type.
+/// The <see cref="BaseObjectData"/> type used by the object.
 /// </typeparam>
 /// <typeparam name="TScript"></typeparam>
 [DebuggerDisplay("{GetObjectType()}: {Guid,h} (parent: {Parent?.Guid,h})")]
 public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObject<TScript>
-    where TData : ObjectData where TScript : Script, new()
+    where TData : BaseObjectData, new() where TScript : Script, new()
 {
     protected BaseObject(TData data)
     {
@@ -131,7 +145,7 @@ public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObje
     public string Name { get; set; }
     public uint NameHash { get; set; }
     public uint Guid { get; set; }
-    public IObject<ObjectData> Parent { get; set; }
+    public IObject<BaseObjectData> Parent { get; set; }
     public List<MessageResponse> MessageResponses { get; }
 
     public abstract void InitializeData();

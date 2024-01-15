@@ -6,7 +6,7 @@ namespace FEngLib.Scripts.Tags;
 
 public class ScriptKeyTrackTag : ScriptTag
 {
-    public ScriptKeyTrackTag(IObject<ObjectData> frontendObject, ScriptProcessingContext scriptProcessingContext) :
+    public ScriptKeyTrackTag(IObject<BaseObjectData> frontendObject, ScriptProcessingContext scriptProcessingContext) :
         base(frontendObject,
             scriptProcessingContext)
     {

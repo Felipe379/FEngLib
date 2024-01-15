@@ -8,11 +8,11 @@ namespace FEngLib.Chunks;
 
 public class MessageResponsesDataChunk : FrontendObjectChunk
 {
-    public MessageResponsesDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public MessageResponsesDataChunk(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 
-    public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
+    public override IObject<BaseObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var tagProcessor = new MessageResponseTagProcessor();
         TagStream tagStream = new MessageTagStream(reader,

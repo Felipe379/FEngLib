@@ -126,7 +126,7 @@ public class FrontendChunkReader
             Package.Objects.Add(frontendObject);
      */
 
-    public IObject<ObjectData> ReadFrontendObjectChunks(IObject<ObjectData> frontendObject, long length)
+    public IObject<BaseObjectData> ReadFrontendObjectChunks(IObject<BaseObjectData> frontendObject, long length)
     {
         var endPos = Reader.BaseStream.Position + length;
 

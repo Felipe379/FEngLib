@@ -7,13 +7,13 @@ namespace FEngLib.Objects.Tags;
 
 public class ObjectTagStream : TagStream
 {
-    public ObjectTagStream(BinaryReader reader, long length, IObject<ObjectData> o) : base(
+    public ObjectTagStream(BinaryReader reader, long length, IObject<BaseObjectData> o) : base(
         reader, length)
     {
         Object = o;
     }
 
-    public IObject<ObjectData> Object { get; set; }
+    public IObject<BaseObjectData> Object { get; set; }
 
     public override Tag NextTag()
     {

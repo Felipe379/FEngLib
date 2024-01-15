@@ -2,7 +2,7 @@
 
 public class Group : BaseObject
 {
-    public Group(ObjectData data) : base(data)
+    public Group(CommonObjectData data) : base(data)
     {
     }
 
@@ -13,6 +13,6 @@ public class Group : BaseObject
 
     public override void InitializeData()
     {
-        Data = new ObjectData();
+        Data = new CommonObjectData();
     }
 }

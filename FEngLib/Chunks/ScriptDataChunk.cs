@@ -10,11 +10,11 @@ namespace FEngLib.Chunks;
 
 public class ScriptDataChunk : FrontendObjectChunk
 {
-    public ScriptDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public ScriptDataChunk(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 
-    public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
+    public override IObject<BaseObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var ctx = new ScriptProcessingContext(FrontendObject.CreateScript());
         var tagStream = new ScriptTagStream(reader,

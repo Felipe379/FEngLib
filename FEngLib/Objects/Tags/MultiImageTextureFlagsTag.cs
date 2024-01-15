@@ -5,7 +5,7 @@ namespace FEngLib.Objects.Tags;
 
 public class MultiImageTextureFlagsTag : ObjectTag
 {
-    public MultiImageTextureFlagsTag(IObject<ObjectData> frontendObject) : base(frontendObject)
+    public MultiImageTextureFlagsTag(IObject<BaseObjectData> frontendObject) : base(frontendObject)
     {
     }
 
