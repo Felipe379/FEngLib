@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using FEngLib.Objects;
 using FEngLib.Packages;
 using FEngLib.Scripts;
@@ -25,6 +27,132 @@ public class ScriptDataChunk : FrontendObjectChunk
             var tag = tagStream.NextTag();
             ProcessTag(ctx, tag);
         }
+
+        Debug.Assert(ctx.Tracks.Count == 0 ||
+                     (ctx.Tracks.Any(t => t.Offset is null) ^ ctx.Tracks.Any(t => t.Offset is not null)));
+
+        if (ctx.Tracks.Any(t => t.Offset is null))
+        {
+            for (var index = 0; index < ctx.Tracks.Count; index++)
+            {
+                var tempTrack = ctx.Tracks[index];
+                ProcessTrackWithoutOffset(ctx.Script, index, tempTrack.Track);
+            }
+        }
+        else
+        {
+            foreach (var tempTrack in ctx.Tracks)
+            {
+                ProcessTrackWithOffset(ctx.Script, tempTrack.Offset!.Value, tempTrack.Track);
+            }
+        }
+
+        //foreach (var tempTrack in ctx.Tracks)
+        //{
+        //    var offset = scriptTrackOffsetTag.Offset;
+        //    var currentTrack = ctx.CurrentTrack.Track;
+        //    var script = ctx.Script;
+
+        //    if (offset <= 14)
+        //    {
+        //        switch (offset)
+        //        {
+        //            case 0:
+        //                script.SetTrack(BaseScriptTrackIds.Color, (ColorTrack)currentTrack);
+        //                break;
+        //            case 4:
+        //                script.SetTrack(BaseScriptTrackIds.Pivot, (Vector3Track)currentTrack);
+        //                break;
+        //            case 7:
+        //                script.SetTrack(BaseScriptTrackIds.Position, (Vector3Track)currentTrack);
+        //                break;
+        //            case 10:
+        //                script.SetTrack(BaseScriptTrackIds.Rotation, (QuaternionTrack)currentTrack);
+        //                break;
+        //            case 14:
+        //                script.SetTrack(BaseScriptTrackIds.Size, (Vector3Track)currentTrack);
+        //                break;
+        //            default:
+        //                throw new IndexOutOfRangeException($"Unsupported general track offset: {offset}");
+        //        }
+        //    }
+        //    else if (script is ImageScript imageScript)
+        //    {
+        //        switch (offset)
+        //        {
+        //            case 17:
+        //                imageScript.SetTrack(ImageScriptTrackIds.UpperLeft, (Vector2Track)currentTrack);
+        //                break;
+        //            case 19:
+        //                imageScript.SetTrack(ImageScriptTrackIds.LowerRight, (Vector2Track)currentTrack);
+        //                break;
+        //            default:
+        //                switch (script)
+        //                {
+        //                    case MultiImageScript multiImageScript:
+        //                        switch (offset)
+        //                        {
+        //                            case 21:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft1, (Vector2Track)currentTrack);
+        //                                break;
+        //                            case 23:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft2, (Vector2Track)currentTrack);
+        //                                break;
+        //                            case 25:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft3, (Vector2Track)currentTrack);
+        //                                break;
+        //                            case 27:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight1, (Vector2Track)currentTrack);
+        //                                break;
+        //                            case 29:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight2, (Vector2Track)currentTrack);
+        //                                break;
+        //                            case 31:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight3, (Vector2Track)currentTrack);
+        //                                break;
+        //                            case 33:
+        //                                multiImageScript.SetTrack(MultiImageScriptTrackIds.PivotRotation, (Vector3Track)currentTrack);
+        //                                break;
+        //                            default:
+        //                                throw new IndexOutOfRangeException(
+        //                                    $"Unsupported MultiImage track offset: {offset}");
+        //                        }
+
+        //                        break;
+        //                    case ColoredImageScript coloredImageScript:
+        //                        switch (offset)
+        //                        {
+        //                            case 21:
+        //                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopLeft, (ColorTrack)currentTrack);
+        //                                break;
+        //                            case 25:
+        //                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopRight, (ColorTrack)currentTrack);
+        //                                break;
+        //                            case 29:
+        //                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomRight, (ColorTrack)currentTrack);
+        //                                break;
+        //                            case 33:
+        //                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomLeft, (ColorTrack)currentTrack);
+        //                                break;
+        //                            default:
+        //                                throw new IndexOutOfRangeException(
+        //                                    $"Unsupported ColoredImage track offset: {offset}");
+        //                        }
+
+        //                        break;
+        //                    default:
+        //                        throw new IndexOutOfRangeException($"Unsupported Image track offset: {offset}");
+        //                }
+
+        //                break;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        throw new NotImplementedException(
+        //            $"Track offset > 14 with an unexpected script type ({script.GetType()}) ...");
+        //    }
+        //}
 
         return FrontendObject;
     }
@@ -66,28 +194,123 @@ public class ScriptDataChunk : FrontendObjectChunk
 
     private void ProcessScriptTrackOffsetTag(ScriptProcessingContext ctx, ScriptTrackOffsetTag scriptTrackOffsetTag)
     {
-        var offset = scriptTrackOffsetTag.Offset;
-        var currentTrack = ctx.CurrentTrack;
-        var script = ctx.Script;
+        ctx.CurrentTrack.Offset = scriptTrackOffsetTag.Offset;
+    }
 
+    private void ProcessScriptKeyTrackTag(ScriptProcessingContext ctx, ScriptKeyTrackTag scriptKeyTrackTag)
+    {
+        var paramType = (TrackParamType)scriptKeyTrackTag.ParamType;
+        Track newTrack = paramType switch
+        {
+            TrackParamType.Vector2 => new Vector2Track(),
+            TrackParamType.Vector3 => new Vector3Track(),
+            TrackParamType.Quaternion => new QuaternionTrack(),
+            TrackParamType.Color => new ColorTrack(),
+            _ => throw new ArgumentOutOfRangeException($"Unsupported parameter type: {paramType}")
+        };
+
+        newTrack.Length = scriptKeyTrackTag.Length;
+        newTrack.InterpType = (TrackInterpolationMethod)scriptKeyTrackTag.InterpType;
+        newTrack.InterpAction = scriptKeyTrackTag.InterpAction;
+
+        ctx.Tracks.Add(ctx.CurrentTrack = new TempTrack(newTrack));
+    }
+
+    private void ProcessScriptHeaderTag(ScriptProcessingContext ctx,
+        ScriptHeaderTag scriptHeaderTag)
+    {
+        ctx.Script.Id = scriptHeaderTag.Id;
+        ctx.Script.Flags = scriptHeaderTag.Flags;
+        ctx.Script.Length = scriptHeaderTag.Length;
+    }
+
+    private static void ProcessTrackWithoutOffset(Script script, int index, Track track)
+    {
+        if (index <= 4)
+        {
+            switch (index)
+            {
+                case 0:
+                    script.SetTrack(BaseScriptTrackIds.Color, (ColorTrack)track);
+                    break;
+                case 1:
+                    script.SetTrack(BaseScriptTrackIds.Pivot, (Vector3Track)track);
+                    break;
+                case 2:
+                    script.SetTrack(BaseScriptTrackIds.Position, (Vector3Track)track);
+                    break;
+                case 3:
+                    script.SetTrack(BaseScriptTrackIds.Rotation, (QuaternionTrack)track);
+                    break;
+                case 4:
+                    script.SetTrack(BaseScriptTrackIds.Size, (Vector3Track)track);
+                    break;
+            }
+        }
+        else if (script is ImageScript imageScript)
+        {
+            switch (index)
+            {
+                case 5:
+                    imageScript.SetTrack(ImageScriptTrackIds.UpperLeft, (Vector2Track)track);
+                    break;
+                case 6:
+                    imageScript.SetTrack(ImageScriptTrackIds.LowerRight, (Vector2Track)track);
+                    break;
+                default:
+                    if (script is ColoredImageScript coloredImageScript)
+                    {
+                        switch (index)
+                        {
+                            case 7:
+                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopLeft, (ColorTrack)track);
+                                break;
+                            case 8:
+                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopRight, (ColorTrack)track);
+                                break;
+                            case 9:
+                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomRight, (ColorTrack)track);
+                                break;
+                            case 10:
+                                coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomLeft, (ColorTrack)track);
+                                break;
+                            default:
+                                throw new Exception($"Can't handle track index {index} for script type {script.GetType()}");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception($"Can't handle track index {index} for script type {script.GetType()}");
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            throw new Exception($"Can't handle track index {index} for script type {script.GetType()}");
+        }
+    }
+
+    private static void ProcessTrackWithOffset(Script script, uint offset, Track track)
+    {
         if (offset <= 14)
         {
             switch (offset)
             {
                 case 0:
-                    script.SetTrack(BaseScriptTrackIds.Color, (ColorTrack)currentTrack);
+                    script.SetTrack(BaseScriptTrackIds.Color, (ColorTrack)track);
                     break;
                 case 4:
-                    script.SetTrack(BaseScriptTrackIds.Pivot, (Vector3Track)currentTrack);
+                    script.SetTrack(BaseScriptTrackIds.Pivot, (Vector3Track)track);
                     break;
                 case 7:
-                    script.SetTrack(BaseScriptTrackIds.Position, (Vector3Track)currentTrack);
+                    script.SetTrack(BaseScriptTrackIds.Position, (Vector3Track)track);
                     break;
                 case 10:
-                    script.SetTrack(BaseScriptTrackIds.Rotation, (QuaternionTrack)currentTrack);
+                    script.SetTrack(BaseScriptTrackIds.Rotation, (QuaternionTrack)track);
                     break;
                 case 14:
-                    script.SetTrack(BaseScriptTrackIds.Size, (Vector3Track)currentTrack);
+                    script.SetTrack(BaseScriptTrackIds.Size, (Vector3Track)track);
                     break;
                 default:
                     throw new IndexOutOfRangeException($"Unsupported general track offset: {offset}");
@@ -98,10 +321,10 @@ public class ScriptDataChunk : FrontendObjectChunk
             switch (offset)
             {
                 case 17:
-                    imageScript.SetTrack(ImageScriptTrackIds.UpperLeft, (Vector2Track)currentTrack);
+                    imageScript.SetTrack(ImageScriptTrackIds.UpperLeft, (Vector2Track)track);
                     break;
                 case 19:
-                    imageScript.SetTrack(ImageScriptTrackIds.LowerRight, (Vector2Track)currentTrack);
+                    imageScript.SetTrack(ImageScriptTrackIds.LowerRight, (Vector2Track)track);
                     break;
                 default:
                     switch (script)
@@ -110,25 +333,25 @@ public class ScriptDataChunk : FrontendObjectChunk
                             switch (offset)
                             {
                                 case 21:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft1, (Vector2Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft1, (Vector2Track)track);
                                     break;
                                 case 23:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft2, (Vector2Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft2, (Vector2Track)track);
                                     break;
                                 case 25:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft3, (Vector2Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft3, (Vector2Track)track);
                                     break;
                                 case 27:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight1, (Vector2Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight1, (Vector2Track)track);
                                     break;
                                 case 29:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight2, (Vector2Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight2, (Vector2Track)track);
                                     break;
                                 case 31:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight3, (Vector2Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight3, (Vector2Track)track);
                                     break;
                                 case 33:
-                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.PivotRotation, (Vector3Track)currentTrack);
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.PivotRotation, (Vector3Track)track);
                                     break;
                                 default:
                                     throw new IndexOutOfRangeException(
@@ -140,16 +363,16 @@ public class ScriptDataChunk : FrontendObjectChunk
                             switch (offset)
                             {
                                 case 21:
-                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopLeft, (ColorTrack)currentTrack);
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopLeft, (ColorTrack)track);
                                     break;
                                 case 25:
-                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopRight, (ColorTrack)currentTrack);
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopRight, (ColorTrack)track);
                                     break;
                                 case 29:
-                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomRight, (ColorTrack)currentTrack);
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomRight, (ColorTrack)track);
                                     break;
                                 case 33:
-                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomLeft, (ColorTrack)currentTrack);
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomLeft, (ColorTrack)track);
                                     break;
                                 default:
                                     throw new IndexOutOfRangeException(
@@ -169,32 +392,5 @@ public class ScriptDataChunk : FrontendObjectChunk
             throw new NotImplementedException(
                 $"Track offset > 14 with an unexpected script type ({script.GetType()}) ...");
         }
-    }
-
-    private void ProcessScriptKeyTrackTag(ScriptProcessingContext ctx, ScriptKeyTrackTag scriptKeyTrackTag)
-    {
-        var paramType = (TrackParamType)scriptKeyTrackTag.ParamType;
-        Track newTrack = paramType switch
-        {
-            TrackParamType.Vector2 => new Vector2Track(),
-            TrackParamType.Vector3 => new Vector3Track(),
-            TrackParamType.Quaternion => new QuaternionTrack(),
-            TrackParamType.Color => new ColorTrack(),
-            _ => throw new ArgumentOutOfRangeException($"Unsupported parameter type: {paramType}")
-        };
-
-        newTrack.Length = scriptKeyTrackTag.Length;
-        newTrack.InterpType = (TrackInterpolationMethod)scriptKeyTrackTag.InterpType;
-        newTrack.InterpAction = scriptKeyTrackTag.InterpAction;
-
-        ctx.CurrentTrack = newTrack;
-    }
-
-    private void ProcessScriptHeaderTag(ScriptProcessingContext ctx,
-        ScriptHeaderTag scriptHeaderTag)
-    {
-        ctx.Script.Id = scriptHeaderTag.Id;
-        ctx.Script.Flags = scriptHeaderTag.Flags;
-        ctx.Script.Length = scriptHeaderTag.Length;
     }
 }

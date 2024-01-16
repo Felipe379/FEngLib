@@ -15,7 +15,7 @@ public class ScriptKeyNodeTag : ScriptTag
         ushort id,
         ushort length)
     {
-        var track = ScriptProcessingContext.CurrentTrack;
+        var track = ScriptProcessingContext.CurrentTrack.Track;
         var keyDataSize = track.GetParamSize() + 4u;
 
         if (length % keyDataSize != 0)
