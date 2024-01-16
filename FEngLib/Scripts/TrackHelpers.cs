@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using FEngLib.Objects;
 using FEngLib.Structures;
@@ -16,57 +17,58 @@ public static class TrackHelpers
     /// </summary>
     /// <param name="script">The script to retrieve tracks from.</param>
     /// <returns>The script's tracks.</returns>
-    public static IEnumerable<Track> GetAllTracks(Script script)
+    public static IEnumerable<(TrackId TrackId, Track Track)> GetAllTracks(Script script)
     {
-        var scriptTracks = script.GetTracks();
+        return script.Tracks.OrderBy(e => e.Key).Select(e => (e.Key, e.Value));
+        //var scriptTracks = script.GetTracks();
 
-        // Base tracks
-        if (scriptTracks.Color is { } colorTrack)
-            yield return colorTrack;
-        if (scriptTracks.Pivot is { } pivotTrack)
-            yield return pivotTrack;
-        if (scriptTracks.Position is { } positionTrack)
-            yield return positionTrack;
-        if (scriptTracks.Rotation is { } rotationTrack)
-            yield return rotationTrack;
-        if (scriptTracks.Size is { } sizeTrack)
-            yield return sizeTrack;
-        if (scriptTracks is ImageScriptTracks imageScriptTracks)
-        {
-            if (imageScriptTracks.UpperLeft is { } upperLeftTrack)
-                yield return upperLeftTrack;
-            if (imageScriptTracks.LowerRight is { } lowerRightTrack)
-                yield return lowerRightTrack;
+        //// Base tracks
+        //if (scriptTracks.Color is { } colorTrack)
+        //    yield return colorTrack;
+        //if (scriptTracks.Pivot is { } pivotTrack)
+        //    yield return pivotTrack;
+        //if (scriptTracks.Position is { } positionTrack)
+        //    yield return positionTrack;
+        //if (scriptTracks.Rotation is { } rotationTrack)
+        //    yield return rotationTrack;
+        //if (scriptTracks.Size is { } sizeTrack)
+        //    yield return sizeTrack;
+        //if (scriptTracks is ImageScriptTracks imageScriptTracks)
+        //{
+        //    if (imageScriptTracks.UpperLeft is { } upperLeftTrack)
+        //        yield return upperLeftTrack;
+        //    if (imageScriptTracks.LowerRight is { } lowerRightTrack)
+        //        yield return lowerRightTrack;
 
-            if (imageScriptTracks is MultiImageScriptTracks multiImageScriptTracks)
-            {
-                if (multiImageScriptTracks.TopLeft1 is { } topLeft1Track)
-                    yield return topLeft1Track;
-                if (multiImageScriptTracks.TopLeft2 is { } topLeft2Track)
-                    yield return topLeft2Track;
-                if (multiImageScriptTracks.TopLeft3 is { } topLeft3Track)
-                    yield return topLeft3Track;
-                if (multiImageScriptTracks.BottomRight1 is { } bottomRight1Track)
-                    yield return bottomRight1Track;
-                if (multiImageScriptTracks.BottomRight2 is { } bottomRight2Track)
-                    yield return bottomRight2Track;
-                if (multiImageScriptTracks.BottomRight3 is { } bottomRight3Track)
-                    yield return bottomRight3Track;
-                if (multiImageScriptTracks.PivotRotation is { } pivotRotationTrack)
-                    yield return pivotRotationTrack;
-            }
-            else if (imageScriptTracks is ColoredImageScriptTracks coloredImageScriptTracks)
-            {
-                if (coloredImageScriptTracks.TopLeft is { } topLeftTrack)
-                    yield return topLeftTrack;
-                if (coloredImageScriptTracks.TopRight is { } topRightTrack)
-                    yield return topRightTrack;
-                if (coloredImageScriptTracks.BottomRight is { } bottomRightTrack)
-                    yield return bottomRightTrack;
-                if (coloredImageScriptTracks.BottomLeft is { } bottomLeftTrack)
-                    yield return bottomLeftTrack;
-            }
-        }
+        //    if (imageScriptTracks is MultiImageScript multiImageScriptTracks)
+        //    {
+        //        if (multiImageScriptTracks.TopLeft1 is { } topLeft1Track)
+        //            yield return topLeft1Track;
+        //        if (multiImageScriptTracks.TopLeft2 is { } topLeft2Track)
+        //            yield return topLeft2Track;
+        //        if (multiImageScriptTracks.TopLeft3 is { } topLeft3Track)
+        //            yield return topLeft3Track;
+        //        if (multiImageScriptTracks.BottomRight1 is { } bottomRight1Track)
+        //            yield return bottomRight1Track;
+        //        if (multiImageScriptTracks.BottomRight2 is { } bottomRight2Track)
+        //            yield return bottomRight2Track;
+        //        if (multiImageScriptTracks.BottomRight3 is { } bottomRight3Track)
+        //            yield return bottomRight3Track;
+        //        if (multiImageScriptTracks.PivotRotation is { } pivotRotationTrack)
+        //            yield return pivotRotationTrack;
+        //    }
+        //    else if (imageScriptTracks is ColoredImageScriptTracks coloredImageScriptTracks)
+        //    {
+        //        if (coloredImageScriptTracks.TopLeft is { } topLeftTrack)
+        //            yield return topLeftTrack;
+        //        if (coloredImageScriptTracks.TopRight is { } topRightTrack)
+        //            yield return topRightTrack;
+        //        if (coloredImageScriptTracks.BottomRight is { } bottomRightTrack)
+        //            yield return bottomRightTrack;
+        //        if (coloredImageScriptTracks.BottomLeft is { } bottomLeftTrack)
+        //            yield return bottomLeftTrack;
+        //    }
+        //}
     }
 
     /// <summary>

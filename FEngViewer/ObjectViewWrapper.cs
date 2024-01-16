@@ -13,7 +13,12 @@ using JetBrains.Annotations;
 
 namespace FEngViewer;
 
-public abstract class ObjectViewWrapper<TObject> where TObject : class, IObject<ObjectData>
+public abstract class ObjectViewWrapper
+{
+    public abstract IObject<BaseObjectData> GetObject();
+}
+
+public abstract class ObjectViewWrapper<TObject> : ObjectViewWrapper where TObject : class, IObject<BaseObjectData>
 {
     protected ObjectViewWrapper(TObject wrappedObject)
     {
@@ -21,6 +26,11 @@ public abstract class ObjectViewWrapper<TObject> where TObject : class, IObject<
     }
 
     [NotNull] protected TObject WrappedObject { get; }
+
+    public override IObject<BaseObjectData> GetObject()
+    {
+        return WrappedObject;
+    }
 
     #region Basic object properties
 
@@ -238,9 +248,9 @@ public abstract class ObjectViewWrapper<TObject> where TObject : class, IObject<
     #endregion
 }
 
-public class DefaultObjectViewWrapper : ObjectViewWrapper<IObject<ObjectData>>
+public class DefaultObjectViewWrapper : ObjectViewWrapper<IObject<BaseObjectData>>
 {
-    public DefaultObjectViewWrapper(IObject<ObjectData> wrappedObject) : base(wrappedObject)
+    public DefaultObjectViewWrapper(IObject<BaseObjectData> wrappedObject) : base(wrappedObject)
     {
     }
 

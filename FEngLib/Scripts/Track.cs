@@ -115,6 +115,11 @@ public abstract class Track<TValue> : Track, ITrack<TValue> where TValue : struc
         }
     }
 
+    public TValue GetInterpolatedValue(int time)
+    {
+        return TrackHelpers.Interpolate(this, time);
+    }
+
     protected abstract TValue ReadKey(BinaryReader binaryReader);
     protected abstract void WriteKey(BinaryWriter binaryWriter, TValue value);
 }

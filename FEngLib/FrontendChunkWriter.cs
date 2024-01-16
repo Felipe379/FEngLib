@@ -248,7 +248,7 @@ public class FrontendChunkWriter
 
                             if (script.ChainedId is { } chainedId) bw.WriteTag(ScriptChain, bw => bw.Write(chainedId));
 
-                            foreach (var (track, offset) in tracks)
+                            foreach (var (offset, track) in tracks)
                             {
                                 bw.WriteTag(ScriptKeyTrack, bw =>
                                 {
@@ -295,59 +295,34 @@ public class FrontendChunkWriter
         });
     }
 
-    private List<(Track track, uint offset)> GetScriptTracks(Script script)
+    private static Dictionary<TrackId, uint> _trackIdToOffsetDictionary = new()
     {
-        var scriptTracks = script.GetTracks();
-        var tracks = new List<(Track track, uint offset)>();
+        { BaseScriptTrackIds.Color, 0 },
+        { BaseScriptTrackIds.Pivot, 4 },
+        { BaseScriptTrackIds.Position, 7 },
+        { BaseScriptTrackIds.Rotation, 10 },
+        { BaseScriptTrackIds.Size, 14 },
+        { ImageScriptTrackIds.UpperLeft, 17 },
+        { ImageScriptTrackIds.LowerRight, 19 },
+        { MultiImageScriptTrackIds.TopLeft1, 21 },
+        { MultiImageScriptTrackIds.TopLeft2, 23 },
+        { MultiImageScriptTrackIds.TopLeft3, 25 },
+        { MultiImageScriptTrackIds.BottomRight1, 27 },
+        { MultiImageScriptTrackIds.BottomRight2, 29 },
+        { MultiImageScriptTrackIds.BottomRight3, 31 },
+        { MultiImageScriptTrackIds.PivotRotation, 33 },
+        { ColoredImageScriptTrackIds.TopLeft, 21 },
+        { ColoredImageScriptTrackIds.TopRight, 25 },
+        { ColoredImageScriptTrackIds.BottomRight, 29 },
+        { ColoredImageScriptTrackIds.BottomLeft, 33 },
+    };
 
-        if (scriptTracks.Color is { } colorTrack)
-            tracks.Add((colorTrack, 0));
-        if (scriptTracks.Pivot is { } pivotTrack)
-            tracks.Add((pivotTrack, 4));
-        if (scriptTracks.Position is { } positionTrack)
-            tracks.Add((positionTrack, 7));
-        if (scriptTracks.Rotation is { } rotationTrack)
-            tracks.Add((rotationTrack, 10));
-        if (scriptTracks.Size is { } sizeTrack)
-            tracks.Add((sizeTrack, 14));
-
-        if (scriptTracks is ImageScriptTracks imageScriptTracks)
-        {
-            if (imageScriptTracks.UpperLeft is { } upperLeft)
-                tracks.Add((upperLeft, 17));
-            if (imageScriptTracks.LowerRight is { } lowerRight)
-                tracks.Add((lowerRight, 19));
-            if (imageScriptTracks is MultiImageScriptTracks multiImageScriptTracks)
-            {
-                if (multiImageScriptTracks.TopLeft1 is { } topLeft1)
-                    tracks.Add((topLeft1, 21));
-                if (multiImageScriptTracks.TopLeft2 is { } topLeft2)
-                    tracks.Add((topLeft2, 23));
-                if (multiImageScriptTracks.TopLeft3 is { } topLeft3)
-                    tracks.Add((topLeft3, 25));
-                if (multiImageScriptTracks.BottomRight1 is { } bottomRight1)
-                    tracks.Add((bottomRight1, 27));
-                if (multiImageScriptTracks.BottomRight2 is { } bottomRight2)
-                    tracks.Add((bottomRight2, 29));
-                if (multiImageScriptTracks.BottomRight3 is { } bottomRight3)
-                    tracks.Add((bottomRight3, 31));
-                if (multiImageScriptTracks.PivotRotation is { } pivotRotation)
-                    tracks.Add((pivotRotation, 33));
-            }
-            else if (imageScriptTracks is ColoredImageScriptTracks coloredImageScriptTracks)
-            {
-                if (coloredImageScriptTracks.TopLeft is { } topLeft)
-                    tracks.Add((topLeft, 21));
-                if (coloredImageScriptTracks.TopRight is { } topRight)
-                    tracks.Add((topRight, 25));
-                if (coloredImageScriptTracks.BottomRight is { } bottomRight)
-                    tracks.Add((bottomRight, 29));
-                if (coloredImageScriptTracks.BottomLeft is { } bottomLeft)
-                    tracks.Add((bottomLeft, 33));
-            }
-        }
-
-        return tracks;
+    private static List<(uint Offset, Track Track)> GetScriptTracks(Script script)
+    {
+        return script.Tracks
+            .Select(e => (Offset: _trackIdToOffsetDictionary[e.Key], Track: e.Value))
+            .OrderBy(e => e.Offset)
+            .ToList();
     }
 
     private void WriteMsgChunks(BinaryWriter writer)

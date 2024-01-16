@@ -91,16 +91,16 @@ public interface IScriptedObject<out TScript> : IScriptedObject where TScript : 
     new TScript FindScript(uint id);
 }
 
-/// <summary>
-/// A script track set containing just the standard parameter tracks.
-/// </summary>
-public sealed class CommonScriptTracks : BaseScriptTracks
-{}
+///// <summary>
+///// A script track set containing just the standard parameter tracks.
+///// </summary>
+//public sealed class CommonScriptTracks : BaseScriptTracks
+//{}
 
 /// <summary>
 /// A script containing just the standard parameter tracks.
 /// </summary>
-public sealed class CommonScript : Script<CommonScriptTracks>
+public sealed class CommonScript : Script
 {
 }
 

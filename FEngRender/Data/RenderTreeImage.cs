@@ -5,9 +5,9 @@ using FEngLib.Structures;
 
 namespace FEngRender.Data;
 
-public abstract class RenderTreeImage<TImage, TScriptTracks> : RenderTreeNode<TImage, ImageScript<TScriptTracks>, TScriptTracks>
-    where TImage : IImage<ImageData>, IScriptedObject<ImageScript<TScriptTracks>>
-    where TScriptTracks : ImageScriptTracks, new()
+public abstract class RenderTreeImage<TImage, TScript> : RenderTreeNode<TImage, TScript>
+    where TImage : IImage<ImageData>, IScriptedObject<TScript>
+    where TScript: ImageScript, new()
 {
     public Vector2 UpperLeft { get; set; }
     public Vector2 LowerRight { get; set; }
@@ -16,29 +16,33 @@ public abstract class RenderTreeImage<TImage, TScriptTracks> : RenderTreeNode<TI
     {
     }
 
-    protected override void ApplyScript(ImageScript<TScriptTracks> script, TScriptTracks tracks)
+    protected override void ApplyScript(TScript script)
     {
-        base.ApplyScript(script, tracks);
+        base.ApplyScript(script);
 
-        if (tracks.UpperLeft is { } upperLeftTrack)
-            UpperLeft = InterpolateHelper(upperLeftTrack);
-        else
-            UpperLeft = FrontendObject.Data.UpperLeft;
-        if (tracks.LowerRight is { } lowerRightTrack)
-            LowerRight = InterpolateHelper(lowerRightTrack);
-        else
-            LowerRight = FrontendObject.Data.LowerRight;
+        //if (tracks.UpperLeft is { } upperLeftTrack)
+        //    UpperLeft = InterpolateHelper(upperLeftTrack);
+        //else
+        //    UpperLeft = FrontendObject.Data.UpperLeft;
+        UpperLeft = InterpolateHelper(script.GetTrack(ImageScriptTrackIds.UpperLeft),
+            () => FrontendObject.Data.UpperLeft);
+        //if (tracks.LowerRight is { } lowerRightTrack)
+        //    LowerRight = InterpolateHelper(lowerRightTrack);
+        //else
+        //    LowerRight = FrontendObject.Data.LowerRight;
+        LowerRight = InterpolateHelper(script.GetTrack(ImageScriptTrackIds.LowerRight),
+            () => FrontendObject.Data.LowerRight);
     }
 }
 
-public class RenderTreeImage : RenderTreeImage<Image, ImageScriptTracks>
+public class RenderTreeImage : RenderTreeImage<Image, ImageScript>
 {
     public RenderTreeImage(Image frontendObject) : base(frontendObject)
     {
     }
 }
 
-public class RenderTreeColoredImage : RenderTreeImage<ColoredImage, ColoredImageScriptTracks>
+public class RenderTreeColoredImage : RenderTreeImage<ColoredImage, ColoredImageScript>
 {
     public Color4 TopLeft { get; set; }
     public Color4 TopRight { get; set; }
@@ -49,30 +53,41 @@ public class RenderTreeColoredImage : RenderTreeImage<ColoredImage, ColoredImage
     {
     }
 
-    protected override void ApplyScript(ImageScript<ColoredImageScriptTracks> script, ColoredImageScriptTracks tracks)
+    protected override void ApplyScript(ColoredImageScript script)
     {
-        base.ApplyScript(script, tracks);
+        base.ApplyScript(script);
 
-        if (tracks.TopLeft is { } topLeftTrack)
-            TopLeft = InterpolateHelper(topLeftTrack);
-        else
-            TopLeft = FrontendObject.Data.TopLeft;
-        if (tracks.TopRight is { } topRightTrack)
-            TopRight = InterpolateHelper(topRightTrack);
-        else
-            TopRight = FrontendObject.Data.TopRight;
-        if (tracks.BottomRight is { } bottomRightTrack)
-            BottomRight = InterpolateHelper(bottomRightTrack);
-        else
-            BottomRight = FrontendObject.Data.BottomRight;
-        if (tracks.BottomLeft is { } bottomLeftTrack)
-            BottomLeft = InterpolateHelper(bottomLeftTrack);
-        else
-            BottomLeft = FrontendObject.Data.BottomLeft;
+        //if (tracks.TopLeft is { } topLeftTrack)
+        //    TopLeft = InterpolateHelper(topLeftTrack);
+        //else
+        //    TopLeft = FrontendObject.Data.TopLeft;
+        TopLeft = InterpolateHelper(script.GetTrack(ColoredImageScriptTrackIds.TopLeft),
+            () => FrontendObject.Data.TopLeft);
+        //if (tracks.TopRight is { } topRightTrack)
+        //    TopRight = InterpolateHelper(topRightTrack);
+        //else
+        //    TopRight = FrontendObject.Data.TopRight;
+
+        TopRight = InterpolateHelper(script.GetTrack(ColoredImageScriptTrackIds.TopRight),
+            () => FrontendObject.Data.TopRight);
+        //if (tracks.BottomRight is { } bottomRightTrack)
+        //    BottomRight = InterpolateHelper(bottomRightTrack);
+        //else
+        //    BottomRight = FrontendObject.Data.BottomRight;
+
+        BottomRight = InterpolateHelper(script.GetTrack(ColoredImageScriptTrackIds.BottomRight),
+            () => FrontendObject.Data.BottomRight);
+        //if (tracks.BottomLeft is { } bottomLeftTrack)
+        //    BottomLeft = InterpolateHelper(bottomLeftTrack);
+        //else
+        //    BottomLeft = FrontendObject.Data.BottomLeft;
+
+        BottomLeft = InterpolateHelper(script.GetTrack(ColoredImageScriptTrackIds.BottomLeft),
+            () => FrontendObject.Data.BottomLeft);
     }
 }
 
-public class RenderTreeMultiImage : RenderTreeImage<MultiImage, MultiImageScriptTracks>
+public class RenderTreeMultiImage : RenderTreeImage<MultiImage, MultiImageScript>
 {
     public Vector2 TopLeft1 { get; set; }
     public Vector2 TopLeft2 { get; set; }
@@ -86,38 +101,54 @@ public class RenderTreeMultiImage : RenderTreeImage<MultiImage, MultiImageScript
     {
     }
 
-    protected override void ApplyScript(ImageScript<MultiImageScriptTracks> script, MultiImageScriptTracks tracks)
+    protected override void ApplyScript(MultiImageScript script)
     {
-        base.ApplyScript(script, tracks);
+        base.ApplyScript(script);
 
-        if (tracks.TopLeft1 is { } topLeft1Track)
-            TopLeft1 = InterpolateHelper(topLeft1Track);
-        else
-            TopLeft1 = FrontendObject.Data.TopLeft1;
-        if (tracks.TopLeft2 is { } topLeft2Track)
-            TopLeft2 = InterpolateHelper(topLeft2Track);
-        else
-            TopLeft2 = FrontendObject.Data.TopLeft2;
-        if (tracks.TopLeft3 is { } topLeft3Track)
-            TopLeft3 = InterpolateHelper(topLeft3Track);
-        else
-            TopLeft3 = FrontendObject.Data.TopLeft3;
-        if (tracks.BottomRight1 is { } bottomRight1Track)
-            BottomRight1 = InterpolateHelper(bottomRight1Track);
-        else
-            BottomRight1 = FrontendObject.Data.BottomRight1;
-        if (tracks.BottomRight2 is { } bottomRight2Track)
-            BottomRight2 = InterpolateHelper(bottomRight2Track);
-        else
-            BottomRight2 = FrontendObject.Data.BottomRight2;
-        if (tracks.BottomRight3 is { } bottomRight3Track)
-            BottomRight3 = InterpolateHelper(bottomRight3Track);
-        else
-            BottomRight3 = FrontendObject.Data.BottomRight3;
-        if (tracks.PivotRotation is { } pivotRotationTrack)
-            PivotRotation = InterpolateHelper(pivotRotationTrack);
-        else
-            PivotRotation = FrontendObject.Data.PivotRotation;
+        //if (tracks.TopLeft1 is { } topLeft1Track)
+        //    TopLeft1 = InterpolateHelper(topLeft1Track);
+        //else
+        //    TopLeft1 = FrontendObject.Data.TopLeft1;
+        TopLeft1 = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.TopLeft1),
+            () => FrontendObject.Data.TopLeft1);
+        //if (tracks.TopLeft2 is { } topLeft2Track)
+        //    TopLeft2 = InterpolateHelper(topLeft2Track);
+        //else
+        //    TopLeft2 = FrontendObject.Data.TopLeft2;
+        TopLeft2 = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.TopLeft2),
+            () => FrontendObject.Data.TopLeft2);
+        //if (tracks.TopLeft3 is { } topLeft3Track)
+        //    TopLeft3 = InterpolateHelper(topLeft3Track);
+        //else
+        //    TopLeft3 = FrontendObject.Data.TopLeft3;
+        TopLeft3 = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.TopLeft3),
+            () => FrontendObject.Data.TopLeft3);
+        //if (tracks.BottomRight1 is { } bottomRight1Track)
+        //    BottomRight1 = InterpolateHelper(bottomRight1Track);
+        //else
+        //    BottomRight1 = FrontendObject.Data.BottomRight1;
+        BottomRight1 = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.BottomRight1),
+            () => FrontendObject.Data.BottomRight1);
+        //if (tracks.BottomRight2 is { } bottomRight2Track)
+        //    BottomRight2 = InterpolateHelper(bottomRight2Track);
+        //else
+        //    BottomRight2 = FrontendObject.Data.BottomRight2;
+
+        BottomRight2 = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.BottomRight2),
+            () => FrontendObject.Data.BottomRight2);
+        //if (tracks.BottomRight3 is { } bottomRight3Track)
+        //    BottomRight3 = InterpolateHelper(bottomRight3Track);
+        //else
+        //    BottomRight3 = FrontendObject.Data.BottomRight3;
+        BottomRight3 = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.BottomRight3),
+            () => FrontendObject.Data.BottomRight3);
+        //if (tracks.PivotRotation is { } pivotRotationTrack)
+        //    PivotRotation = InterpolateHelper(pivotRotationTrack);
+        //else
+        //    PivotRotation = FrontendObject.Data.PivotRotation;
+
+        PivotRotation = InterpolateHelper(script.GetTrack(MultiImageScriptTrackIds.PivotRotation),
+            () => FrontendObject.Data.PivotRotation);
     }
 }
 

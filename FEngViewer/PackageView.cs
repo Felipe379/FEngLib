@@ -88,6 +88,32 @@ public partial class PackageView : Form
             trackEditorControl.SelectedNode.SetScriptTime(time);
             viewOutput.RefreshInstant();
         };
+
+        objectPropertyGrid.PropertyValueChanged += ObjectPropertyGridOnPropertyValueChanged;
+    }
+
+    private void ObjectPropertyGridOnPropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+    {
+        var pg = (PropertyGrid)s;
+        if (pg.SelectedObject is ObjectViewWrapper fngObjectWrapper)
+        {
+            var fngObject = fngObjectWrapper.GetObject();
+
+            PopulateTreeView(_currentPackage, _currentRenderTree);
+            treeView1.SelectedNode = treeView1.Nodes.Find(GetFngObjectTreeKey(fngObject), true).Single();
+        }
+        else if (pg.SelectedObject is ScriptViewWrapper fngScriptWrapper)
+        {
+            var fngObject = fngScriptWrapper.GetWrappedObject();
+            var fngScript = fngScriptWrapper.GetWrappedScript();
+            PopulateTreeView(_currentPackage, _currentRenderTree);
+            treeView1.SelectedNode = treeView1.Nodes.Find(GetFngScriptTreeKey(fngObject, fngScript), true).Single();
+        }
+        //else if (pg.SelectedObject is ITrackDeltaKeyViewWrapper deltaKeyWrapper)
+        //{
+        //    var deltaKeyNode = deltaKeyWrapper.GetWrappedTrackNode();
+        //    PopulateTreeView(_currentPackage, _currentRenderTree);
+        //}
     }
 
     private void PackageView_Load(object sender, EventArgs e)
@@ -178,37 +204,42 @@ public partial class PackageView : Form
         };
 
         // var nodeText = $"{feObj.Name ?? feObj.NameHash.ToString("X")}";
-        var nodeText = feObj.Name ?? _objHashList.Lookup(feObj.NameHash);
-
-        if (nodeImageKey == null)
-        {
-            nodeText = feObj.GetObjectType() + " " + nodeText;
-        }
-
+        var nodeText = GetFngObjectName(feObj);
         var objTreeNode = collection.Add("");
         objTreeNode.Tag = viewNode;
-        objTreeNode.Name = nodeText;
+        objTreeNode.Name = GetFngObjectTreeKey(feObj);
         if (nodeImageKey != null) objTreeNode.ImageKey = objTreeNode.SelectedImageKey = nodeImageKey;
         objTreeNode.NodeFont = new Font(treeView1.Font, feObj.Name == null ? FontStyle.Regular : FontStyle.Bold);
         objTreeNode.Text = nodeText;
 
         var scriptsTreeNode = objTreeNode.Nodes.Add("Scripts");
         scriptsTreeNode.ImageKey = scriptsTreeNode.SelectedImageKey = "TreeItem_Script";
-        foreach (var script in feObj.GetScripts()) CreateScriptTreeNode(scriptsTreeNode.Nodes, script);
+        foreach (var script in feObj.GetScripts()) CreateScriptTreeNode(scriptsTreeNode.Nodes, feObj, script);
 
         CreateMessageResponsesList(objTreeNode.Nodes, feObj);
         return objTreeNode;
     }
 
-    private void CreateScriptTreeNode(TreeNodeCollection collection, Script script)
+    private static string GetFngObjectName(IObject<BaseObjectData> feObj)
     {
-        var nodeText = script.Name ?? _scriptHashList.Lookup(script.Id);
+        return feObj.Name ?? _objHashList.Lookup(feObj.NameHash);
+    }
+
+    private static string GetFngObjectTreeKey(IObject<BaseObjectData> feObj)
+    {
+        return $"0x{feObj.Guid:X}";
+    }
+
+    private void CreateScriptTreeNode(TreeNodeCollection collection, IObject<BaseObjectData> obj, Script script)
+    {
+        var nodeText = GetFngScriptName(script);
         var node = collection.Add("");
         // ReSharper disable once LocalizableElement
         node.ImageKey = node.SelectedImageKey = "TreeItem_Script";
         node.Tag = script;
         node.NodeFont = new Font(treeView1.Font, script.Name == null ? FontStyle.Regular : FontStyle.Bold);
         node.Text = nodeText;
+        node.Name = GetFngScriptTreeKey(obj, script);
 
         foreach (var scriptEvent in script.Events)
         {
@@ -217,30 +248,44 @@ public partial class PackageView : Form
             eventNode.ImageKey = eventNode.SelectedImageKey = "TreeItem_ScriptEvent";
         }
 
-        var scriptTracks = script.GetTracks();
-
-        CreateTrackNode(node, scriptTracks.Color, "Color");
-        CreateTrackNode(node, scriptTracks.Pivot, "Pivot");
-        CreateTrackNode(node, scriptTracks.Position, "Position");
-        CreateTrackNode(node, scriptTracks.Rotation, "Rotation");
-        CreateTrackNode(node, scriptTracks.Size, "Size");
-
-        if (scriptTracks is ImageScriptTracks imageScriptTracks)
+        foreach (var (trackId, track) in TrackHelpers.GetAllTracks(script))
         {
-            CreateTrackNode(node, imageScriptTracks.UpperLeft, "UpperLeft");
-            CreateTrackNode(node, imageScriptTracks.LowerRight, "LowerRight");
-
-            if (imageScriptTracks is MultiImageScriptTracks multiImageScriptTracks)
-            {
-                CreateTrackNode(node, multiImageScriptTracks.TopLeft1, "TopLeft1");
-                CreateTrackNode(node, multiImageScriptTracks.TopLeft2, "TopLeft2");
-                CreateTrackNode(node, multiImageScriptTracks.TopLeft3, "TopLeft3");
-                CreateTrackNode(node, multiImageScriptTracks.BottomRight1, "BottomRight1");
-                CreateTrackNode(node, multiImageScriptTracks.BottomRight2, "BottomRight2");
-                CreateTrackNode(node, multiImageScriptTracks.BottomRight3, "BottomRight3");
-                CreateTrackNode(node, multiImageScriptTracks.PivotRotation, "PivotRotation");
-            }
+            CreateTrackNode(node, trackId, track);
         }
+
+        //var scriptTracks = script.GetTracks();
+
+        //CreateTrackNode(node, scriptTracks.Color, "Color");
+        //CreateTrackNode(node, scriptTracks.Pivot, "Pivot");
+        //CreateTrackNode(node, scriptTracks.Position, "Position");
+        //CreateTrackNode(node, scriptTracks.Rotation, "Rotation");
+        //CreateTrackNode(node, scriptTracks.Size, "Size");
+
+        //if (scriptTracks is ImageScriptTracks imageScriptTracks)
+        //{
+        //    CreateTrackNode(node, imageScriptTracks.UpperLeft, "UpperLeft");
+        //    CreateTrackNode(node, imageScriptTracks.LowerRight, "LowerRight");
+
+        //    if (imageScriptTracks is MultiImageScriptTracks multiImageScriptTracks)
+        //    {
+        //        CreateTrackNode(node, multiImageScriptTracks.TopLeft1, "TopLeft1");
+        //        CreateTrackNode(node, multiImageScriptTracks.TopLeft2, "TopLeft2");
+        //        CreateTrackNode(node, multiImageScriptTracks.TopLeft3, "TopLeft3");
+        //        CreateTrackNode(node, multiImageScriptTracks.BottomRight1, "BottomRight1");
+        //        CreateTrackNode(node, multiImageScriptTracks.BottomRight2, "BottomRight2");
+        //        CreateTrackNode(node, multiImageScriptTracks.BottomRight3, "BottomRight3");
+        //        CreateTrackNode(node, multiImageScriptTracks.PivotRotation, "PivotRotation");
+        //    }
+        //}
+    }
+
+    private static string GetFngScriptName(Script script)
+    {
+        return script.Name ?? _scriptHashList.Lookup(script.Id);
+    }
+    private static string GetFngScriptTreeKey(IObject<BaseObjectData> obj, Script script)
+    {
+        return $"0x{obj.Guid:X}_script_0x{script.Id:X}";
     }
 
     private static void PopulateTrackTreeNode(TreeNode trackTreeNode, Track track)
@@ -276,14 +321,16 @@ public partial class PackageView : Form
         }
     }
 
-    private void CreateTrackNode(TreeNode scriptNode, Track track, string name)
+    record TrackTag(TrackId TrackId, Track Track);
+
+    private void CreateTrackNode(TreeNode scriptNode, TrackId trackId, Track track)
     {
         if (track == null)
             return;
 
-        var trackTreeNode = scriptNode.Nodes.Add(name);
+        var trackTreeNode = scriptNode.Nodes.Add(trackId.Name);
         trackTreeNode.ImageKey = trackTreeNode.SelectedImageKey = "TreeItem_ScriptTrack";
-        trackTreeNode.Tag = track;
+        trackTreeNode.Tag = new TrackTag(trackId, track);
 
         PopulateTrackTreeNode(trackTreeNode, track);
     }
@@ -371,9 +418,10 @@ public partial class PackageView : Form
                 objectPropertyGrid.SelectedObject =
                     new ScriptViewWrapper(script, scriptAssociatedNode.GetObject(), _scriptHashList);
             }
-            else if (e.Node?.Tag is Track track)
+            else if (e.Node?.Tag is TrackTag trackTag)
             {
                 var trackAssociatedScript = (Script)e.Node.Parent.Tag;
+                var track = trackTag.Track;
                 if (track is ColorTrack colorTrack)
                     objectPropertyGrid.SelectedObject = new ColorTrackViewWrapper(colorTrack, trackAssociatedScript);
                 else if (track is Vector3Track vector3Track)
@@ -383,7 +431,7 @@ public partial class PackageView : Form
             }
             else if (e.Node?.Tag is TrackNode trackNode)
             {
-                var trackNodeAssociatedTrack = (Track)e.Node.Parent.Tag;
+                var trackNodeAssociatedTrack = ((TrackTag)e.Node.Parent.Tag).Track;
                 if (trackNodeAssociatedTrack is ColorTrack colorTrack)
                     objectPropertyGrid.SelectedObject =
                         new ColorDeltaKeyViewWrapper(colorTrack, (TrackNode<Color4>)trackNode);
@@ -613,16 +661,16 @@ public partial class PackageView : Form
                     switch (track)
                     {
                         case ColorTrack colorTrack:
-                            AddNodeToTrack(colorTrack, form.NewKeyTime, (Color4) TrackHelpers.SubtractKeys((Color4)form.NewKeyValue, colorTrack.BaseKey));
+                            AddNodeToTrack(colorTrack, form.NewKeyTime, (Color4)TrackHelpers.SubtractKeys((Color4)form.NewKeyValue, colorTrack.BaseKey));
                             break;
                         case Vector3Track vector3Track:
-                            AddNodeToTrack(vector3Track, form.NewKeyTime, (Vector3) TrackHelpers.SubtractKeys((Vector3)form.NewKeyValue, vector3Track.BaseKey));
+                            AddNodeToTrack(vector3Track, form.NewKeyTime, (Vector3)TrackHelpers.SubtractKeys((Vector3)form.NewKeyValue, vector3Track.BaseKey));
                             break;
                         case Vector2Track vector2Track:
-                            AddNodeToTrack(vector2Track, form.NewKeyTime, (Vector2) TrackHelpers.SubtractKeys((Vector2)form.NewKeyValue, vector2Track.BaseKey));
+                            AddNodeToTrack(vector2Track, form.NewKeyTime, (Vector2)TrackHelpers.SubtractKeys((Vector2)form.NewKeyValue, vector2Track.BaseKey));
                             break;
                         case QuaternionTrack quaternionTrack:
-                            AddNodeToTrack(quaternionTrack, form.NewKeyTime, (Quaternion) TrackHelpers.SubtractKeys((Quaternion)form.NewKeyValue, quaternionTrack.BaseKey));
+                            AddNodeToTrack(quaternionTrack, form.NewKeyTime, (Quaternion)TrackHelpers.SubtractKeys((Quaternion)form.NewKeyValue, quaternionTrack.BaseKey));
                             break;
                         default:
                             throw new Exception();

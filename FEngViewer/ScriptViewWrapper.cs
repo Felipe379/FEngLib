@@ -15,7 +15,7 @@ internal class ScriptViewWrapper
 {
     private readonly HashList _scriptHashList;
 
-    public ScriptViewWrapper(Script wrappedScript, IObject<ObjectData> wrappedObject, HashList scriptHashList)
+    public ScriptViewWrapper(Script wrappedScript, IObject<BaseObjectData> wrappedObject, HashList scriptHashList)
     {
         _scriptHashList = scriptHashList;
         WrappedScript = wrappedScript;
@@ -23,7 +23,7 @@ internal class ScriptViewWrapper
     }
 
     protected Script WrappedScript { get; }
-    protected IObject<ObjectData> WrappedObject { get; }
+    protected IObject<BaseObjectData> WrappedObject { get; }
 
     [Category("Meta")]
     [Description("The hash of the script's UPPERCASE NAME.")]
@@ -37,7 +37,7 @@ internal class ScriptViewWrapper
         get => WrappedScript.Length;
         set
         {
-            if (value < TrackHelpers.GetAllTracks(WrappedScript).Max(t => t.Length))
+            if (value < TrackHelpers.GetAllTracks(WrappedScript).Max(t => t.Track.Length))
             {
                 throw new Exception("Script length must be greater than or equal to all track lengths.");
             }
@@ -72,9 +72,14 @@ internal class ScriptViewWrapper
         }
     }
 
-    public IObject<ObjectData> GetWrappedObject()
+    public IObject<BaseObjectData> GetWrappedObject()
     {
         return WrappedObject;
+    }
+
+    public Script GetWrappedScript()
+    {
+        return WrappedScript;
     }
 
     // This is an abomination of API design, but it works, so I'm keeping it!

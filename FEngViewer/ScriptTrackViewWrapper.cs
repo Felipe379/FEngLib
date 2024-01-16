@@ -134,7 +134,13 @@ public class Vector3TrackViewWrapper : ScriptTrackViewWrapper<Vector3Track, Vect
     }
 }
 
-public abstract class TrackDeltaKeyViewWrapper<TTrack, TTrackValue> : TrackKeyHolder<TTrackValue>
+public interface ITrackDeltaKeyViewWrapper
+{
+    Track GetWrappedTrack();
+    TrackNode GetWrappedTrackNode();
+}
+
+public abstract class TrackDeltaKeyViewWrapper<TTrack, TTrackValue> : TrackKeyHolder<TTrackValue>, ITrackDeltaKeyViewWrapper
     where TTrackValue : struct where TTrack : Track<TTrackValue>
 {
     protected TrackDeltaKeyViewWrapper(TTrack track, TrackNode<TTrackValue> trackNode)
@@ -145,6 +151,16 @@ public abstract class TrackDeltaKeyViewWrapper<TTrack, TTrackValue> : TrackKeyHo
 
     protected TTrack Track { get; }
     protected TrackNode<TTrackValue> TrackNode { get; }
+
+    public Track GetWrappedTrack()
+    {
+        return Track;
+    }
+
+    public TrackNode GetWrappedTrackNode()
+    {
+        return TrackNode;
+    }
 
     [Category("Properties")]
     [DisplayName("Time")]

@@ -42,18 +42,25 @@ public class MultiImageData : ImageData
     }
 }
 
-public class MultiImageScriptTracks : ImageScriptTracks
+public class MultiImageScript : ImageScript, IScript<MultiImageScript>
 {
-    public Vector2Track TopLeft1 { get; set; }
-    public Vector2Track TopLeft2 { get; set; }
-    public Vector2Track TopLeft3 { get; set; }
-    public Vector2Track BottomRight1 { get; set; }
-    public Vector2Track BottomRight2 { get; set; }
-    public Vector2Track BottomRight3 { get; set; }
-    public Vector3Track PivotRotation { get; set; }
+    public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<MultiImageScript, TTrackValue> id) where TTrackValue : struct
+    {
+        return GetTrackInternal<TTrackValue>(id);
+    }
+
+    public void SetTrack<TTrackValue>(TrackId<MultiImageScript, TTrackValue> id, Track<TTrackValue> track) where TTrackValue : struct
+    {
+        SetTrackInternal(id, track);
+    }
+
+    public void RemoveTrack<TTrackValue>(TrackId<MultiImageScript, TTrackValue> id) where TTrackValue : struct
+    {
+        RemoveTrackInternal(id);
+    }
 }
 
-public class MultiImage : Image<MultiImageData, ImageScript<MultiImageScriptTracks>>
+public class MultiImage : Image<MultiImageData, MultiImageScript>
 {
     public MultiImage(MultiImageData data) : base(data)
     {

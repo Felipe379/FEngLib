@@ -27,17 +27,31 @@ public class ImageData : BaseObjectData
     }
 }
 
-public class ImageScriptTracks : BaseScriptTracks
+//public class ImageScriptTracks : BaseScriptTracks
+//{
+//    public Vector2Track UpperLeft { get; set; }
+//    public Vector2Track LowerRight { get; set; }
+//}
+
+public class ImageScript : Script, IScript<ImageScript>
 {
-    public Vector2Track UpperLeft { get; set; }
-    public Vector2Track LowerRight { get; set; }
+    public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<ImageScript, TTrackValue> id) where TTrackValue : struct
+    {
+        return GetTrackInternal<TTrackValue>(id);
+    }
+
+    public void SetTrack<TTrackValue>(TrackId<ImageScript, TTrackValue> id, Track<TTrackValue> track) where TTrackValue : struct
+    {
+        SetTrackInternal(id, track);
+    }
+
+    public void RemoveTrack<TTrackValue>(TrackId<ImageScript, TTrackValue> id) where TTrackValue : struct
+    {
+        RemoveTrackInternal(id);
+    }
 }
 
-public class ImageScript<TTracks> : Script<TTracks> where TTracks : ImageScriptTracks, new()
-{
-}
-
-public class Image : Image<ImageData, ImageScript<ImageScriptTracks>>
+public class Image : Image<ImageData, ImageScript>
 {
     public Image(ImageData data) : base(data)
     {

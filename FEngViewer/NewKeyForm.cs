@@ -59,6 +59,7 @@ namespace FEngViewer
         {
             keyTimeTrackBar.Minimum = 0;
             keyTimeTrackBar.Maximum = (int)_track.Length;
+            keyTimeTrackBar.Value = (int) _track.Length;
             keyTimeTrackBar.ValueChanged += KeyTimeTrackBarOnValueChanged;
             keyTimeTrackBar.Value = 0;
         }

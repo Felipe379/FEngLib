@@ -79,10 +79,9 @@ public abstract class RenderTreeNode
     }
 }
 
-public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTreeNode
+public abstract class RenderTreeNode<TObject, TScript> : RenderTreeNode
     where TObject : IObject<BaseObjectData>, IScriptedObject<TScript>
-    where TScript : Script<TScriptTracks>
-    where TScriptTracks : BaseScriptTracks, new()
+    where TScript : Script
 {
     protected RenderTreeNode(TObject frontendObject)
     {
@@ -150,7 +149,7 @@ public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTr
             // TODO: Add an "executing" condition so we can pause playback
             if (CurrentScript.ChainedId is { } chainedScriptId)
             {
-                ApplyScript(CurrentScript, CurrentScript.Tracks);
+                ApplyScript(CurrentScript);
 
                 //Debug.WriteLine("Script 0x{0:X} has ended, starting chained script 0x{1:X}", CurrentScript.Id, chainedScriptId);
                 var chainedScript = FrontendObject.FindScript(chainedScriptId) ??
@@ -217,7 +216,7 @@ public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTr
         // TODO: Add an "executing" condition so we can pause playback
         if (currentScriptTimeInit != CurrentScriptTime || currentScriptTimeInit != CurrentScript.Length + 1)
         {
-            ApplyScript(CurrentScript, CurrentScript.Tracks);
+            ApplyScript(CurrentScript);
         }
 
         var scaleMatrix = Matrix4x4.CreateScale(Size);
@@ -269,37 +268,53 @@ public abstract class RenderTreeNode<TObject, TScript, TScriptTracks> : RenderTr
         CurrentScriptTime = script == null ? -1 : 0;
     }
 
-    protected virtual void ApplyScript(TScript script, TScriptTracks tracks)
+    protected virtual void ApplyScript(TScript script)
     {
-        if (tracks.Color is { } colorTrack)
-            Color = InterpolateHelper(colorTrack);
-        else
-            Color = FrontendObject.Data.Color;
-        if (tracks.Pivot is { } pivotTrack)
-            Pivot = InterpolateHelper(pivotTrack);
-        else
-            Pivot = FrontendObject.Data.Pivot;
-        if (tracks.Position is { } positionTrack)
-            Position = InterpolateHelper(positionTrack);
-        else
-            Position = FrontendObject.Data.Position;
-        if (tracks.Rotation is { } rotationTrack)
-            Rotation = InterpolateHelper(rotationTrack);
-        else
-            Rotation = FrontendObject.Data.Rotation;
-        if (tracks.Size is { } sizeTrack)
-            Size = InterpolateHelper(sizeTrack);
-        else
-            Size = FrontendObject.Data.Size;
+        //if (tracks.Color is { } colorTrack)
+        //    Color = InterpolateHelper(colorTrack);
+        //else
+        //    Color = FrontendObject.Data.Color;
+
+        Color = InterpolateHelper(script.GetTrack(BaseScriptTrackIds.Color), () => FrontendObject.Data.Color);
+
+        //if (tracks.Pivot is { } pivotTrack)
+        //    Pivot = InterpolateHelper(pivotTrack);
+        //else
+        //    Pivot = FrontendObject.Data.Pivot;
+        Pivot = InterpolateHelper(script.GetTrack(BaseScriptTrackIds.Pivot), () => FrontendObject.Data.Pivot);
+
+        //if (tracks.Position is { } positionTrack)
+        //    Position = InterpolateHelper(positionTrack);
+        //else
+        //    Position = FrontendObject.Data.Position;
+
+        Position = InterpolateHelper(script.GetTrack(BaseScriptTrackIds.Position), () => FrontendObject.Data.Position);
+
+        //if (tracks.Rotation is { } rotationTrack)
+        //    Rotation = InterpolateHelper(rotationTrack);
+        //else
+        //    Rotation = FrontendObject.Data.Rotation;
+
+        Rotation = InterpolateHelper(script.GetTrack(BaseScriptTrackIds.Rotation), () => FrontendObject.Data.Rotation);
+        //if (tracks.Size is { } sizeTrack)
+        //    Size = InterpolateHelper(sizeTrack);
+        //else
+        //    Size = FrontendObject.Data.Size;
+        Size = InterpolateHelper(script.GetTrack(BaseScriptTrackIds.Size), () => FrontendObject.Data.Size);
     }
 
-    protected T InterpolateHelper<T>(Track<T> track) where T : struct
+    protected TTrackValue InterpolateHelper<TTrackValue>(Track<TTrackValue> track, Func<TTrackValue> fallbackAccessor) where TTrackValue : struct
     {
-        return TrackHelpers.Interpolate(track, CurrentScriptTime);
+        return track?.GetInterpolatedValue(CurrentScriptTime) ?? fallbackAccessor();
     }
+
+    //protected T InterpolateHelper<T>(Track<T> track) where T : struct
+    //{
+    //    return TrackHelpers.Interpolate(track, CurrentScriptTime);
+    //}
 }
 
-public abstract class RenderTreeNode<TObject> : RenderTreeNode<TObject, CommonScript, CommonScriptTracks>
+public abstract class RenderTreeNode<TObject> : RenderTreeNode<TObject, CommonScript>
     where TObject : IObject<CommonObjectData>, IScriptedObject<CommonScript>
 {
     protected RenderTreeNode(TObject frontendObject) : base(frontendObject)

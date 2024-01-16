@@ -68,64 +68,67 @@ public class ScriptDataChunk : FrontendObjectChunk
     {
         var offset = scriptTrackOffsetTag.Offset;
         var currentTrack = ctx.CurrentTrack;
-        var genericTracks = ctx.Script.GetTracks();
+        var script = ctx.Script;
 
         if (offset <= 14)
+        {
             switch (offset)
             {
                 case 0:
-                    genericTracks.Color = (ColorTrack)currentTrack;
+                    script.SetTrack(BaseScriptTrackIds.Color, (ColorTrack)currentTrack);
                     break;
                 case 4:
-                    genericTracks.Pivot = (Vector3Track)currentTrack;
+                    script.SetTrack(BaseScriptTrackIds.Pivot, (Vector3Track)currentTrack);
                     break;
                 case 7:
-                    genericTracks.Position = (Vector3Track)currentTrack;
+                    script.SetTrack(BaseScriptTrackIds.Position, (Vector3Track)currentTrack);
                     break;
                 case 10:
-                    genericTracks.Rotation = (QuaternionTrack)currentTrack;
+                    script.SetTrack(BaseScriptTrackIds.Rotation, (QuaternionTrack)currentTrack);
                     break;
                 case 14:
-                    genericTracks.Size = (Vector3Track)currentTrack;
+                    script.SetTrack(BaseScriptTrackIds.Size, (Vector3Track)currentTrack);
                     break;
                 default:
                     throw new IndexOutOfRangeException($"Unsupported general track offset: {offset}");
             }
-        else if (genericTracks is ImageScriptTracks imageScriptTracks)
+        }
+        else if (script is ImageScript imageScript)
+        {
             switch (offset)
             {
                 case 17:
-                    imageScriptTracks.UpperLeft = (Vector2Track)currentTrack;
+                    imageScript.SetTrack(ImageScriptTrackIds.UpperLeft, (Vector2Track)currentTrack);
                     break;
                 case 19:
-                    imageScriptTracks.LowerRight = (Vector2Track)currentTrack;
+                    imageScript.SetTrack(ImageScriptTrackIds.LowerRight, (Vector2Track)currentTrack);
                     break;
                 default:
-                    switch (genericTracks)
+                    switch (script)
                     {
-                        case MultiImageScriptTracks multiImageScriptTracks:
+                        case MultiImageScript multiImageScript:
                             switch (offset)
                             {
                                 case 21:
-                                    multiImageScriptTracks.TopLeft1 = (Vector2Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft1, (Vector2Track)currentTrack);
                                     break;
                                 case 23:
-                                    multiImageScriptTracks.TopLeft2 = (Vector2Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft2, (Vector2Track)currentTrack);
                                     break;
                                 case 25:
-                                    multiImageScriptTracks.TopLeft3 = (Vector2Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.TopLeft3, (Vector2Track)currentTrack);
                                     break;
                                 case 27:
-                                    multiImageScriptTracks.BottomRight1 = (Vector2Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight1, (Vector2Track)currentTrack);
                                     break;
                                 case 29:
-                                    multiImageScriptTracks.BottomRight2 = (Vector2Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight2, (Vector2Track)currentTrack);
                                     break;
                                 case 31:
-                                    multiImageScriptTracks.BottomRight3 = (Vector2Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.BottomRight3, (Vector2Track)currentTrack);
                                     break;
                                 case 33:
-                                    multiImageScriptTracks.PivotRotation = (Vector3Track)currentTrack;
+                                    multiImageScript.SetTrack(MultiImageScriptTrackIds.PivotRotation, (Vector3Track)currentTrack);
                                     break;
                                 default:
                                     throw new IndexOutOfRangeException(
@@ -133,20 +136,20 @@ public class ScriptDataChunk : FrontendObjectChunk
                             }
 
                             break;
-                        case ColoredImageScriptTracks coloredImageScriptTracks:
+                        case ColoredImageScript coloredImageScript:
                             switch (offset)
                             {
                                 case 21:
-                                    coloredImageScriptTracks.TopLeft = (ColorTrack)currentTrack;
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopLeft, (ColorTrack)currentTrack);
                                     break;
                                 case 25:
-                                    coloredImageScriptTracks.TopRight = (ColorTrack)currentTrack;
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.TopRight, (ColorTrack)currentTrack);
                                     break;
                                 case 29:
-                                    coloredImageScriptTracks.BottomRight = (ColorTrack)currentTrack;
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomRight, (ColorTrack)currentTrack);
                                     break;
                                 case 33:
-                                    coloredImageScriptTracks.BottomLeft = (ColorTrack)currentTrack;
+                                    coloredImageScript.SetTrack(ColoredImageScriptTrackIds.BottomLeft, (ColorTrack)currentTrack);
                                     break;
                                 default:
                                     throw new IndexOutOfRangeException(
@@ -160,9 +163,12 @@ public class ScriptDataChunk : FrontendObjectChunk
 
                     break;
             }
+        }
         else
+        {
             throw new NotImplementedException(
-                $"Track offset > 14 with an unexpected object type ({FrontendObject.GetObjectType()}) ...");
+                $"Track offset > 14 with an unexpected script type ({script.GetType()}) ...");
+        }
     }
 
     private void ProcessScriptKeyTrackTag(ScriptProcessingContext ctx, ScriptKeyTrackTag scriptKeyTrackTag)

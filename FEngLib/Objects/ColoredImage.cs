@@ -31,15 +31,25 @@ public class ColoredImageData : ImageData
     }
 }
 
-public class ColoredImageScriptTracks : ImageScriptTracks
+public class ColoredImageScript : ImageScript, IScript<ColoredImageScript>
 {
-    public ColorTrack TopLeft { get; set; }
-    public ColorTrack TopRight { get; set; }
-    public ColorTrack BottomRight { get; set; }
-    public ColorTrack BottomLeft { get; set; }
+    public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<ColoredImageScript, TTrackValue> id) where TTrackValue : struct
+    {
+        return GetTrackInternal<TTrackValue>(id);
+    }
+
+    public void SetTrack<TTrackValue>(TrackId<ColoredImageScript, TTrackValue> id, Track<TTrackValue> track) where TTrackValue : struct
+    {
+        SetTrackInternal(id, track);
+    }
+
+    public void RemoveTrack<TTrackValue>(TrackId<ColoredImageScript, TTrackValue> id) where TTrackValue : struct
+    {
+        RemoveTrackInternal(id);
+    }
 }
 
-public class ColoredImage : Image<ColoredImageData, ImageScript<ColoredImageScriptTracks>>
+public class ColoredImage : Image<ColoredImageData, ColoredImageScript>
 {
     public ColoredImage(ColoredImageData data) : base(data)
     {
