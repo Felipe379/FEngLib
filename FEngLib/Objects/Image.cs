@@ -5,7 +5,7 @@ using FEngLib.Utils;
 
 namespace FEngLib.Objects;
 
-public class ImageData : BaseObjectData
+public abstract class BaseImageData : BaseObjectData
 {
     public Vector2 UpperLeft { get; set; }
     public Vector2 LowerRight { get; set; }
@@ -27,31 +27,37 @@ public class ImageData : BaseObjectData
     }
 }
 
+public sealed class ImageData : BaseImageData
+{}
+
 //public class ImageScriptTracks : BaseScriptTracks
 //{
 //    public Vector2Track UpperLeft { get; set; }
 //    public Vector2Track LowerRight { get; set; }
 //}
 
-public class ImageScript : Script, IScript<ImageScript>
+public abstract class BaseImageScript : Script, IScript<BaseImageScript>
 {
-    public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<ImageScript, TTrackValue> id) where TTrackValue : struct
+    public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<BaseImageScript, TTrackValue> id) where TTrackValue : struct
     {
         return GetTrackInternal<TTrackValue>(id);
     }
 
-    public void SetTrack<TTrackValue>(TrackId<ImageScript, TTrackValue> id, Track<TTrackValue> track) where TTrackValue : struct
+    public void SetTrack<TTrackValue>(TrackId<BaseImageScript, TTrackValue> id, Track<TTrackValue> track) where TTrackValue : struct
     {
         SetTrackInternal(id, track);
     }
 
-    public void RemoveTrack<TTrackValue>(TrackId<ImageScript, TTrackValue> id) where TTrackValue : struct
+    public void RemoveTrack<TTrackValue>(TrackId<BaseImageScript, TTrackValue> id) where TTrackValue : struct
     {
         RemoveTrackInternal(id);
     }
 }
 
-public class Image : Image<ImageData, ImageScript>
+public sealed class ImageScript : BaseImageScript
+{}
+
+public class Image : BaseImage<ImageData, ImageScript>
 {
     public Image(ImageData data) : base(data)
     {
@@ -63,15 +69,15 @@ public class Image : Image<ImageData, ImageScript>
     }
 }
 
-public interface IImage<out TData> : IObject<TData> where TData : ImageData
+public interface IImage<out TData> : IObject<TData> where TData : BaseImageData
 {
     uint ImageFlags { get; set; }
 }
 
-public abstract class Image<TData, TScript> : BaseObject<TData, TScript>, IImage<TData>
-    where TData : ImageData, new() where TScript : Script, new()
+public abstract class BaseImage<TData, TScript> : BaseObject<TData, TScript>, IImage<TData>
+    where TData : BaseImageData, new() where TScript : Script, new()
 {
-    protected Image(TData data) : base(data)
+    protected BaseImage(TData data) : base(data)
     {
         Data = data;
     }

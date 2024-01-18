@@ -313,7 +313,7 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
     }
 }
 
-public abstract class ImageObjectViewWrapper<TImage> : ObjectViewWrapper<TImage> where TImage : class, IImage<ImageData>
+public abstract class ImageObjectViewWrapper<TImage> : ObjectViewWrapper<TImage> where TImage : class, IImage<BaseImageData>
 {
     protected ImageObjectViewWrapper(TImage wrappedObject) : base(wrappedObject)
     {

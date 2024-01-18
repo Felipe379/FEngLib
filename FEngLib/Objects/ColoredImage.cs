@@ -5,7 +5,7 @@ using FEngLib.Utils;
 
 namespace FEngLib.Objects;
 
-public class ColoredImageData : ImageData
+public sealed class ColoredImageData : BaseImageData
 {
     public Color4 TopLeft { get; set; }
     public Color4 TopRight { get; set; }
@@ -31,7 +31,7 @@ public class ColoredImageData : ImageData
     }
 }
 
-public class ColoredImageScript : ImageScript, IScript<ColoredImageScript>
+public sealed class ColoredImageScript : BaseImageScript, IScript<ColoredImageScript>
 {
     public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<ColoredImageScript, TTrackValue> id) where TTrackValue : struct
     {
@@ -49,7 +49,7 @@ public class ColoredImageScript : ImageScript, IScript<ColoredImageScript>
     }
 }
 
-public class ColoredImage : Image<ColoredImageData, ColoredImageScript>
+public sealed class ColoredImage : BaseImage<ColoredImageData, ColoredImageScript>
 {
     public ColoredImage(ColoredImageData data) : base(data)
     {

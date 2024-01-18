@@ -63,8 +63,8 @@ public static class BaseScriptTrackIds
 
 public static class ImageScriptTrackIds
 {
-    public static readonly TrackId<ImageScript, Vector2> UpperLeft = new(17, nameof(UpperLeft));
-    public static readonly TrackId<ImageScript, Vector2> LowerRight = new(19, nameof(LowerRight));
+    public static readonly TrackId<BaseImageScript, Vector2> UpperLeft = new(17, nameof(UpperLeft));
+    public static readonly TrackId<BaseImageScript, Vector2> LowerRight = new(19, nameof(LowerRight));
 }
 
 public static class MultiImageScriptTrackIds

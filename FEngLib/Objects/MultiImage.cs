@@ -5,7 +5,7 @@ using FEngLib.Utils;
 
 namespace FEngLib.Objects;
 
-public class MultiImageData : ImageData
+public sealed class MultiImageData : BaseImageData
 {
     public Vector2 TopLeft1 { get; set; }
     public Vector2 TopLeft2 { get; set; }
@@ -42,7 +42,7 @@ public class MultiImageData : ImageData
     }
 }
 
-public class MultiImageScript : ImageScript, IScript<MultiImageScript>
+public sealed class MultiImageScript : BaseImageScript, IScript<MultiImageScript>
 {
     public Track<TTrackValue> GetTrack<TTrackValue>(TrackId<MultiImageScript, TTrackValue> id) where TTrackValue : struct
     {
@@ -60,7 +60,7 @@ public class MultiImageScript : ImageScript, IScript<MultiImageScript>
     }
 }
 
-public class MultiImage : Image<MultiImageData, MultiImageScript>
+public sealed class MultiImage : BaseImage<MultiImageData, MultiImageScript>
 {
     public MultiImage(MultiImageData data) : base(data)
     {

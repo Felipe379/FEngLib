@@ -140,7 +140,7 @@ public class ScriptDataChunk : FrontendObjectChunk
                     break;
             }
         }
-        else if (script is ImageScript imageScript)
+        else if (script is BaseImageScript imageScript)
         {
             switch (index)
             {
@@ -209,7 +209,7 @@ public class ScriptDataChunk : FrontendObjectChunk
                     throw new IndexOutOfRangeException($"Unsupported general track offset: {offset}");
             }
         }
-        else if (script is ImageScript imageScript)
+        else if (script is BaseImageScript imageScript)
         {
             switch (offset)
             {

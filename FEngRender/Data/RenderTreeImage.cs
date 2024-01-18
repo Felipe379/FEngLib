@@ -6,8 +6,8 @@ using FEngLib.Structures;
 namespace FEngRender.Data;
 
 public abstract class RenderTreeImage<TImage, TScript> : RenderTreeNode<TImage, TScript>
-    where TImage : IImage<ImageData>, IScriptedObject<TScript>
-    where TScript: ImageScript, new()
+    where TImage : IImage<BaseImageData>, IScriptedObject<TScript>
+    where TScript: BaseImageScript, new()
 {
     public Vector2 UpperLeft { get; set; }
     public Vector2 LowerRight { get; set; }
