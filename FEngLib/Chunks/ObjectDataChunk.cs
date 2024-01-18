@@ -85,7 +85,14 @@ public class ObjectDataChunk : FrontendObjectChunk
     private void ProcessObjectParentTag(Package package, IObject<BaseObjectData> frontendObject,
         ObjectParentTag objectParentTag)
     {
-        frontendObject.Parent = package.FindObjectByGuid(objectParentTag.ParentId);
+        if (package.FindObjectByGuid(objectParentTag.ParentId) is Group parentGroup)
+        {
+            frontendObject.Parent = parentGroup;
+        }
+        else
+        {
+            throw new Exception($"Specified parent object with GUID 0x{objectParentTag.ParentId:X} is not a group.");
+        }
     }
 
     private BaseObject ProcessStringBufferMaxWidthTag(Text frontendString,

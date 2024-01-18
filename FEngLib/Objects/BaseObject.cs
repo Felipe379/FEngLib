@@ -59,7 +59,7 @@ public interface IObject<out TData> : IScriptedObject, IHaveMessageResponses whe
     string Name { get; set; }
     uint NameHash { get; set; }
     uint Guid { get; set; }
-    IObject<BaseObjectData> Parent { get; set; }
+    Group Parent { get; set; }
     ObjectType GetObjectType();
 
     void InitializeData();
@@ -145,7 +145,7 @@ public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObje
     public string Name { get; set; }
     public uint NameHash { get; set; }
     public uint Guid { get; set; }
-    public IObject<BaseObjectData> Parent { get; set; }
+    public Group Parent { get; set; }
     public List<MessageResponse> MessageResponses { get; }
 
     public abstract void InitializeData();
