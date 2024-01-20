@@ -5,20 +5,22 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:FEngViewer.WPF.Views"
              xmlns:viewModels="clr-namespace:FEngViewer.WPF.ViewModels"
-             xmlns:packageView="clr-namespace:FEngViewer.WPF.ViewModels.PackageView"
              xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=PresentationFramework"
              xmlns:uiHelpers="clr-namespace:FEngViewer.WPF.UIHelpers"
              xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+             xmlns:wpf="clr-namespace:SharpGL.WPF;assembly=SharpGL.WPF"
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+             xmlns:controls="clr-namespace:FEngViewer.WPF.Controls"
              mc:Ignorable="d" 
              d:DesignHeight="640" d:DesignWidth="1280"
              d:DataContext="{d:DesignInstance viewModels:PackageViewModel, IsDesignTimeCreatable=True}">
     <Grid d:Background="White">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width=".75*"/>
-            <ColumnDefinition Width="2*"/>
-            <ColumnDefinition/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition MinWidth="640"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <TreeView ItemsSource="{Binding TreeRoots}">
+        <TreeView ItemsSource="{Binding TreeRoots}" Grid.Column="0">
             <TreeView.Resources>
                 <!-- Begin Styles -->
 
@@ -43,7 +45,7 @@
                 <!-- Begin Data Templates -->
 
                 <!-- Package (Root) -->
-                <HierarchicalDataTemplate DataType="{x:Type packageView:PackageFacade}" ItemsSource="{Binding TreeNodes}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:RenderPackageFacade}" ItemsSource="{Binding TreeNodes}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconFontAwesome Kind="ProjectDiagramSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
@@ -51,7 +53,7 @@
                 </HierarchicalDataTemplate>
 
                 <!-- Resource Requests -->
-                <HierarchicalDataTemplate DataType="{x:Type packageView:ResourceRequestFolder}" ItemsSource="{Binding Children}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:ResourceRequestFolder}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconFontAwesome Kind="FileArchiveSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
@@ -72,7 +74,7 @@
                     </StackPanel>
                 </DataTemplate>
 
-                <HierarchicalDataTemplate DataType="{x:Type packageView:MessageDefinitionsFolder}" ItemsSource="{Binding Children}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageDefinitionsFolder}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconFontAwesome Kind="EnvelopeSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
@@ -83,11 +85,11 @@
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageResponseViewModel}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconFontAwesome Kind="EnvelopeSolid" />
-                        <TextBlock Text="{Binding MessageName}"></TextBlock>
+                        <controls:EntityName Value="{Binding Name}" IsExplicit="{Binding IsNameExplicit}"></controls:EntityName>
                     </StackPanel>
                 </HierarchicalDataTemplate>
 
-                <HierarchicalDataTemplate DataType="{x:Type packageView:MessageResponsesFolder}" ItemsSource="{Binding Children}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageResponsesFolder}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
                         <iconPacks:PackIconFontAwesome Kind="ExclamationSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
@@ -95,42 +97,56 @@
                 </HierarchicalDataTemplate>
 
                 <!-- Objects -->
-                <HierarchicalDataTemplate DataType="{x:Type viewModels:GroupViewModel}" ItemsSource="{Binding TreeNodes}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:ObjectViewModel}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="LayerGroupSolid"></iconPacks:PackIconFontAwesome>
-                        <TextBlock Text="{Binding Facade.Name}">
-                            <TextBlock.Style>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Facade.IsNameExplicit}" Value="True">
-                                            <Setter Property="FontWeight" Value="Bold"></Setter>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <iconPacks:PackIconFontAwesome Kind="{Binding Icon}"></iconPacks:PackIconFontAwesome>
+                        <controls:EntityName Value="{Binding Name}" IsExplicit="{Binding IsNameExplicit}" />
                     </StackPanel>
                 </HierarchicalDataTemplate>
 
-                <HierarchicalDataTemplate DataType="{x:Type viewModels:ObjectViewModel}" ItemsSource="{Binding TreeNodes}">
+                <!-- Scripts -->
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:ScriptsFolder}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="{Binding TreeIcon}"></iconPacks:PackIconFontAwesome>
-                        <TextBlock Text="{Binding Facade.Name}">
-                            <TextBlock.Style>
-                                <Style TargetType="{x:Type TextBlock}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Facade.IsNameExplicit}" Value="True">
-                                            <Setter Property="FontWeight" Value="Bold"></Setter>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <iconPacks:FontAwesome Kind="CodeSolid"></iconPacks:FontAwesome>
+                        <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
                 </HierarchicalDataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:ScriptViewModel}" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:FontAwesome Kind="CodeSolid"></iconPacks:FontAwesome>
+                        <controls:EntityName Value="{Binding Name}" IsExplicit="{Binding IsNameExplicit}" />
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:ScriptEventsFolder}" ItemsSource="{Binding Children}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:FontAwesome Kind="BoltSolid"></iconPacks:FontAwesome>
+                        <TextBlock Text="{Binding Name}"></TextBlock>
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+                <DataTemplate DataType="{x:Type viewModels:ScriptEventViewModel}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:FontAwesome Kind="BoltSolid"></iconPacks:FontAwesome>
+                        <TextBlock>
+                            <Run Text="{Binding Time}"></Run><Run Text="ms: "/>
+                        </TextBlock>
+                        <controls:EntityName Value="{Binding Name}" IsExplicit="{Binding IsNameExplicit}"></controls:EntityName>
+                        <TextBlock Text=" -> "/>
+                        <controls:EntityName Value="{Binding TargetName}" IsExplicit="{Binding IsTargetNameExplicit}" />
+                        <!--<TextBlock Text="{Binding DisplayText}"></TextBlock>-->
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type viewModels:ScriptTrackViewModel}">
+                    <StackPanel Orientation="Horizontal">
+                        <iconPacks:FontAwesome Kind="SlidersHSolid"></iconPacks:FontAwesome>
+                        <TextBlock Text="{Binding Name}"></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
 
                 <!-- End Data Templates -->
             </TreeView.Resources>
         </TreeView>
+        <controls:PackageViewport Grid.Column="1" x:Name="PackageViewport" RenderTree="{Binding Facade.RenderTree}"></controls:PackageViewport>
+        <!--<wpf:OpenGLControl Grid.Column="1" Name="packageViewport" OpenGLInitialized="PackageViewport_OnOpenGLInitialized" OpenGLDraw="PackageViewport_OnOpenGLDraw"/>-->
+        <xctk:PropertyGrid Grid.Column="2"/>
     </Grid>
 </UserControl>

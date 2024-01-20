@@ -1,22 +1,57 @@
-﻿using FEngLib.Messaging;
+﻿using System.Numerics;
+using FEngLib.Messaging;
 using FEngLib.Messaging.Commands;
 using FEngLib.Objects;
 using FEngLib.Packages;
 using FEngLib.Scripts;
+using FEngRender.Data;
 
 namespace FEngViewer.WPF.ViewModels;
 
 public static class DummyData
 {
     public static Package TestPackage { get; }
+    public static RenderTree TestRenderTree { get; }
 
     static DummyData()
     {
-        var group = new Group(new ObjectData())
+        var group = new Group(new CommonObjectData())
         {
             Guid = 0x12344,
             Name = "TestGroup"
         };
+
+        var testScript1 = new CommonScript
+        {
+            Name = "TestObject1_Script1",
+            Events =
+            {
+                new Event
+                {
+                    EventId = 0x13377331,
+                    Target = 0x12346,
+                    Time = 100
+                }
+            },
+            Length = 1000
+        };
+
+        testScript1.SetTrack(BaseScriptTrackIds.Position, new Vector3Track
+        {
+            Length = 101,
+            BaseKey = Vector3.UnitX,
+            InterpAction = 0x1,
+            InterpType = TrackInterpolationMethod.Linear
+        });
+
+        var testImgScript = new ImageScript
+        {
+            Name = "CoolTestImage_Script1",
+            Length = 500
+        };
+
+        testImgScript.SetTrack(ImageScriptTrackIds.LowerRight, new Vector2Track());
+        testImgScript.SetTrack(ImageScriptTrackIds.UpperLeft, new Vector2Track());
 
         TestPackage = new Package
         {
@@ -94,15 +129,16 @@ public static class DummyData
             Objects =
             {
                 group,
-                new SimpleImage(new ObjectData())
+                new SimpleImage(new CommonObjectData())
                 {
                     Guid = 0x12345,
                     Name = "TestObject1",
                     Scripts =
                     {
-                        new BaseObjectScript
+                        testScript1,
+                        new CommonScript
                         {
-                            Name = "TestObject1_Script1",
+                            Id = 0x12345,
                             Events =
                             {
                                 new Event
@@ -112,17 +148,28 @@ public static class DummyData
                                     Time = 100
                                 }
                             },
-                            Length = 1000
-                        }
+                            Length = 1000,
+                        },
                     },
                     Parent = group
                 },
-                new Text(new ObjectData())
+                new Text(new CommonObjectData())
                 {
                     Guid = 0x12346,
                     NameHash = 0x41424344,
+                },
+                new Image(new ImageData())
+                {
+                    Guid = 0x12347,
+                    Parent = group,
+                    Name = "CoolTestImage",
+                    Scripts = { testImgScript }
                 }
             }
         };
+
+        TestRenderTree = RenderTree.Create(TestPackage);
+
+        //Movie movie = new Movie(new ImageData());
     }
 }

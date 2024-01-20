@@ -3,7 +3,7 @@ using System.Windows.Controls;
 
 namespace FEngViewer.WPF.UIHelpers;
 
-public interface INamedObject
+public interface INamedEntity
 {
     string Name { get; set; }
     bool IsNameExplicit { get; }

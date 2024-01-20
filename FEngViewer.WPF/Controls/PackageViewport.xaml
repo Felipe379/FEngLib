@@ -1,0 +1,11 @@
+﻿<UserControl x:Class="FEngViewer.WPF.Controls.PackageViewport"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FEngViewer.WPF.Controls"
+             xmlns:wpf="clr-namespace:SharpGL.WPF;assembly=SharpGL.WPF"
+             mc:Ignorable="d" 
+             d:DesignWidth="640" d:DesignHeight="480">
+    <wpf:OpenGLControl Name="GlControl" OpenGLInitialized="GlControl_OnOpenGLInitialized" OpenGLDraw="GlControl_OnOpenGLDraw"/>
+</UserControl>

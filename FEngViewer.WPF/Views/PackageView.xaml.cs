@@ -13,8 +13,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using FEngRender.GL;
 using FEngViewer.WPF.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
+using SharpGL.WPF;
 
 namespace FEngViewer.WPF.Views
 {
@@ -23,6 +25,8 @@ namespace FEngViewer.WPF.Views
     /// </summary>
     public partial class PackageView : UserControl
     {
+        private GLRenderTreeRenderer _glRenderTreeRenderer;
+
         public PackageView()
         {
             InitializeComponent();
@@ -30,6 +34,16 @@ namespace FEngViewer.WPF.Views
             {
                 DataContext = App.Current.Services.GetService<PackageViewModel>();
             }
+        }
+
+        private void PackageViewport_OnOpenGLDraw(object sender, OpenGLRoutedEventArgs args)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void PackageViewport_OnOpenGLInitialized(object sender, OpenGLRoutedEventArgs args)
+        {
+            throw new NotImplementedException();
         }
     }
 }

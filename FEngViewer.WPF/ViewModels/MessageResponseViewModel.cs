@@ -1,9 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using FEngLib.Messaging;
+using FEngViewer.WPF.UIHelpers;
 
 namespace FEngViewer.WPF.ViewModels;
 
-public class MessageResponseViewModel : ObservableObject
+public class MessageResponseViewModel : ObservableObject, INamedEntity
 {
     public MessageResponseViewModel(MessageResponse messageResponse)
     {
@@ -12,11 +13,23 @@ public class MessageResponseViewModel : ObservableObject
 
     public MessageResponse MessageResponse { get; }
 
-    public string MessageName
+    public string Name
     {
-        // TODO: implement hash resolution
-        get => $"0x{MessageResponse.Id:X}";
+        get
+        {
+            return $"0x{MessageResponse.Id:X}";
+        }
+        set
+        {
+            throw new NotImplementedException("Setting message names is currently not supported");
+        }
     }
 
-
+    public bool IsNameExplicit
+    {
+        get
+        {
+            return false;
+        }
+    }
 }

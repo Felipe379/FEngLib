@@ -4,9 +4,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using FEngLib.Messaging;
 using FEngLib.Objects;
 using FEngLib.Packages;
+using FEngRender.Data;
 using FEngViewer.WPF.UIHelpers;
 
-namespace FEngViewer.WPF.ViewModels.PackageView;
+namespace FEngViewer.WPF.ViewModels;
 
 public class ResourceRequestFolder : TreeFolder<ResourceRequestViewModel>
 {
@@ -22,15 +23,10 @@ public class MessageDefinitionsFolder : TreeFolder<MessageDefinitionViewModel>
     }
 }
 
-public class MessageResponsesFolder : TreeFolder<MessageResponseViewModel>
+public class RenderPackageFacade : ObservableObject
 {
-    public MessageResponsesFolder(ObservableCollection<MessageResponseViewModel> children) : base("Message Responses", children)
-    { }
-}
-
-public class PackageFacade : ObservableObject
-{
-    private Package _package;
+    private readonly Package _package;
+    public RenderTree RenderTree { get; }
 
     public ObservableCollection<ResourceRequestViewModel> ResourceRequests
     {
@@ -66,9 +62,11 @@ public class PackageFacade : ObservableObject
 
     public CompositeCollection TreeNodes { get; }
 
-    public PackageFacade(Package package)
+    public RenderPackageFacade(Package package, RenderTree renderTree)
     {
         _package = package;
+        RenderTree = renderTree;
+
         ResourceRequests = new SyncingObservableCollection<ResourceRequest, ResourceRequestViewModel>(
             package.ResourceRequests,
             rr => new ResourceRequestViewModel(rr),
@@ -87,37 +85,47 @@ public class PackageFacade : ObservableObject
         //    package.Objects,
         //    obj => ObjectToViewModel(package, obj),
         //    ovm => ovm.Facade.Object);
-        Objects = new ObservableCollection<ObjectViewModel>(
-            package.Objects
-                .Where(o => o.Parent is null)
-                .Select(o => ObjectToViewModel(package, o)));
+        //Objects = new ObservableCollection<ObjectViewModel>(
+        //    package.Objects
+        //        .Where(o => o.Parent is null)
+        //        .Select(o => ObjectToViewModel(package, o)));
+        Objects = new ObservableCollection<ObjectViewModel>(renderTree.Select(RenderNodeToViewModel));
 
         TreeNodes = new CompositeCollection
         {
-            new CollectionContainer
-            {
-                Collection = new object[]
-                {
-                    new ResourceRequestFolder(ResourceRequests),
-                    new MessageDefinitionsFolder(MessageDefinitions),
-                    new MessageResponsesFolder(MessageResponses)
-                }
-            },
+            new ResourceRequestFolder(ResourceRequests),
+            new MessageDefinitionsFolder(MessageDefinitions),
+            new MessageResponsesFolder(MessageResponses),
             new CollectionContainer { Collection = Objects }
         };
         //TreeNodes = new ObservableCollection<object>(treeNodes);
     }
 
-    private ObjectViewModel ObjectToViewModel(Package package, IObject<ObjectData> obj)
+    //private static ObjectViewModel ObjectToViewModel(Package package, IObject<BaseObjectData> obj)
+    //{
+    //    return obj switch
+    //    {
+    //        Group group => new GroupViewModel(
+    //            group,
+    //            package.Objects
+    //                .FindAll(o => ReferenceEquals(o.Parent, obj))
+    //                .Select(o => ObjectToViewModel(package, o))),
+    //        Text text => new TextViewModel(text),
+    //        SimpleImage simpleImage => new SimpleImageViewModel(simpleImage),
+    //        Image image => new ImageViewModel(image),
+    //        _ => throw new Exception($"Can't create view model for object of type: {obj.GetType()}")
+    //    };
+    //}
+
+    private static ObjectViewModel RenderNodeToViewModel(RenderTreeNode node)
     {
-        return obj switch
+        return node switch
         {
-            Group group => new GroupViewModel(
-                group,
-                package.Objects
-                    .FindAll(o => ReferenceEquals(o.Parent, obj))
-                    .Select(o => ObjectToViewModel(package, o))),
-            _ => new ObjectViewModel(obj)
+            RenderTreeGroup group => new GroupViewModel(group, group.Select(RenderNodeToViewModel)),
+            RenderTreeText text => new TextViewModel(text),
+            RenderTreeSimpleImage simpleImage => new SimpleImageViewModel(simpleImage),
+            RenderTreeImage image => new ImageViewModel(image),
+            _ => throw new Exception($"Can't create view model for node of type: {node.GetType()}")
         };
     }
 }
