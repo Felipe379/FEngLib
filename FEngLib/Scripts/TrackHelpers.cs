@@ -7,6 +7,8 @@ using FEngLib.Structures;
 
 namespace FEngLib.Scripts;
 
+public record TrackEntry(TrackId Id, Track Track);
+
 /// <summary>
 /// Provides useful helper functions for working with script tracks.
 /// </summary>
@@ -17,9 +19,9 @@ public static class TrackHelpers
     /// </summary>
     /// <param name="script">The script to retrieve tracks from.</param>
     /// <returns>The script's tracks.</returns>
-    public static IEnumerable<(TrackId TrackId, Track Track)> GetAllTracks(Script script)
+    public static IEnumerable<TrackEntry> GetAllTracks(Script script)
     {
-        return script.Tracks.OrderBy(e => e.Key).Select(e => (e.Key, e.Value));
+        return script.Tracks.OrderBy(e => e.Key).Select(e => new TrackEntry(e.Key, e.Value));
         //var scriptTracks = script.GetTracks();
 
         //// Base tracks

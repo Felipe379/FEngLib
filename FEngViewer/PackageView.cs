@@ -248,9 +248,9 @@ public partial class PackageView : Form
             eventNode.ImageKey = eventNode.SelectedImageKey = "TreeItem_ScriptEvent";
         }
 
-        foreach (var (trackId, track) in TrackHelpers.GetAllTracks(script))
+        foreach (var trackEntry in TrackHelpers.GetAllTracks(script))
         {
-            CreateTrackNode(node, trackId, track);
+            CreateTrackNode(node, trackEntry);
         }
 
         //var scriptTracks = script.GetTracks();
@@ -321,18 +321,14 @@ public partial class PackageView : Form
         }
     }
 
-    record TrackTag(TrackId TrackId, Track Track);
 
-    private void CreateTrackNode(TreeNode scriptNode, TrackId trackId, Track track)
+    private void CreateTrackNode(TreeNode scriptNode, TrackEntry trackEntry)
     {
-        if (track == null)
-            return;
-
-        var trackTreeNode = scriptNode.Nodes.Add(trackId.Name);
+        var trackTreeNode = scriptNode.Nodes.Add(trackEntry.Id.Name);
         trackTreeNode.ImageKey = trackTreeNode.SelectedImageKey = "TreeItem_ScriptTrack";
-        trackTreeNode.Tag = new TrackTag(trackId, track);
+        trackTreeNode.Tag = trackEntry;
 
-        PopulateTrackTreeNode(trackTreeNode, track);
+        PopulateTrackTreeNode(trackTreeNode, trackEntry.Track);
     }
 
     private void CreateMessageResponsesList(TreeNodeCollection collection, IHaveMessageResponses responsesContainer)
@@ -418,10 +414,10 @@ public partial class PackageView : Form
                 objectPropertyGrid.SelectedObject =
                     new ScriptViewWrapper(script, scriptAssociatedNode.GetObject(), _scriptHashList);
             }
-            else if (e.Node?.Tag is TrackTag trackTag)
+            else if (e.Node?.Tag is TrackEntry trackEntry)
             {
                 var trackAssociatedScript = (Script)e.Node.Parent.Tag;
-                var track = trackTag.Track;
+                var track = trackEntry.Track;
                 if (track is ColorTrack colorTrack)
                     objectPropertyGrid.SelectedObject = new ColorTrackViewWrapper(colorTrack, trackAssociatedScript);
                 else if (track is Vector3Track vector3Track)
@@ -431,7 +427,7 @@ public partial class PackageView : Form
             }
             else if (e.Node?.Tag is TrackNode trackNode)
             {
-                var trackNodeAssociatedTrack = ((TrackTag)e.Node.Parent.Tag).Track;
+                var trackNodeAssociatedTrack = ((TrackEntry)e.Node.Parent.Tag).Track;
                 if (trackNodeAssociatedTrack is ColorTrack colorTrack)
                     objectPropertyGrid.SelectedObject =
                         new ColorDeltaKeyViewWrapper(colorTrack, (TrackNode<Color4>)trackNode);
