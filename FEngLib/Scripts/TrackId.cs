@@ -24,6 +24,11 @@ public abstract class TrackId : IComparable<TrackId>
     {
         return Id.CompareTo(other.Id);
     }
+
+    public override string ToString()
+    {
+        return Name;
+}
 }
 
 public abstract class TrackId<TTrackValue> : TrackId where TTrackValue : struct
