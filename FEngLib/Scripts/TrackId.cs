@@ -28,10 +28,11 @@ public abstract class TrackId : IComparable<TrackId>
     public override string ToString()
     {
         return Name;
-}
+    }
 }
 
-public abstract class TrackId<TTrackValue> : TrackId where TTrackValue : struct
+public interface IIdentifyTrackWithValue<TValue> where TValue : struct { }
+public abstract class TrackId<TTrackValue> : TrackId, IIdentifyTrackWithValue<TTrackValue> where TTrackValue : struct
 {
     /// <summary>
     /// Internal constructor to prevent external tomfoolery
@@ -39,7 +40,9 @@ public abstract class TrackId<TTrackValue> : TrackId where TTrackValue : struct
     internal TrackId(uint id, string name) : base(id, name) {}
 }
 
-public sealed class TrackId<TScript, TTrackValue> : TrackId<TTrackValue> where TScript : Script where TTrackValue : struct
+public interface IIdentifyTrackForScript<in TScript> where TScript : Script {}
+
+public sealed class TrackId<TScript, TTrackValue> : TrackId<TTrackValue>, IIdentifyTrackForScript<TScript> where TScript : Script where TTrackValue : struct
 {
     /// <summary>
     /// Internal constructor to prevent external tomfoolery
