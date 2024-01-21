@@ -146,7 +146,6 @@
             </TreeView.Resources>
         </TreeView>
         <controls:PackageViewport Grid.Column="1" x:Name="PackageViewport" RenderTree="{Binding Facade.RenderTree}"></controls:PackageViewport>
-        <!--<wpf:OpenGLControl Grid.Column="1" Name="packageViewport" OpenGLInitialized="PackageViewport_OnOpenGLInitialized" OpenGLDraw="PackageViewport_OnOpenGLDraw"/>-->
         <xctk:PropertyGrid Grid.Column="2"/>
     </Grid>
 </UserControl>

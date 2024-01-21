@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace FEngViewer.WPF.Controls
     /// </summary>
     public partial class PackageViewport : UserControl
     {
-        private GLRenderTreeRenderer _renderer = null!;
+        private GLRenderTreeRenderer? _renderer;
         private TextureProvider _textureProvider;
 
         public static readonly DependencyProperty RenderTreeProperty = DependencyProperty.Register(nameof(RenderTree), typeof(RenderTree), typeof(PackageViewport), new PropertyMetadata(RenderTreeChangedCallback));
@@ -32,7 +33,7 @@ namespace FEngViewer.WPF.Controls
         {
             if (d is PackageViewport packageViewport)
             {
-                packageViewport._renderer.SetTree(packageViewport.RenderTree);
+                packageViewport._renderer?.SetTree(packageViewport.RenderTree);
             }
         }
 
@@ -45,8 +46,13 @@ namespace FEngViewer.WPF.Controls
         public PackageViewport()
         {
             InitializeComponent();
-            _textureProvider = new TextureProvider();
-            _textureProvider.LoadTextures(@"G:\Software\Games\NFS\Most Wanted (2005)\All FNGs\textures");
+            if (!DesignerProperties.GetIsInDesignMode(this))
+            {
+                GlControl.OpenGLInitialized += GlControl_OnOpenGLInitialized;
+                GlControl.OpenGLDraw += GlControl_OnOpenGLDraw;
+                _textureProvider = new TextureProvider();
+                _textureProvider.LoadTextures(@"G:\Software\Games\NFS\Most Wanted (2005)\All FNGs\textures");
+            }
         }
 
         private void GlControl_OnOpenGLInitialized(object sender, OpenGLRoutedEventArgs args)
@@ -57,7 +63,8 @@ namespace FEngViewer.WPF.Controls
 
         private void GlControl_OnOpenGLDraw(object sender, OpenGLRoutedEventArgs args)
         {
-            _renderer.Render(true, 1.0f);
+            if (!DesignerProperties.GetIsInDesignMode(this))
+                _renderer!.Render(true, 1.0f);
         }
     }
 }

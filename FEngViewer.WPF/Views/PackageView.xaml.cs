@@ -35,15 +35,5 @@ namespace FEngViewer.WPF.Views
                 DataContext = App.Current.Services.GetService<PackageViewModel>();
             }
         }
-
-        private void PackageViewport_OnOpenGLDraw(object sender, OpenGLRoutedEventArgs args)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void PackageViewport_OnOpenGLInitialized(object sender, OpenGLRoutedEventArgs args)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

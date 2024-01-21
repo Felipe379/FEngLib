@@ -7,5 +7,5 @@
              xmlns:wpf="clr-namespace:SharpGL.WPF;assembly=SharpGL.WPF"
              mc:Ignorable="d" 
              d:DesignWidth="640" d:DesignHeight="480">
-    <wpf:OpenGLControl Name="GlControl" OpenGLInitialized="GlControl_OnOpenGLInitialized" OpenGLDraw="GlControl_OnOpenGLDraw"/>
+    <wpf:OpenGLControl Name="GlControl"/>
 </UserControl>
