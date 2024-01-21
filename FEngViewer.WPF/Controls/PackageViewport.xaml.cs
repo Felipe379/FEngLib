@@ -63,8 +63,7 @@ namespace FEngViewer.WPF.Controls
 
         private void GlControl_OnOpenGLDraw(object sender, OpenGLRoutedEventArgs args)
         {
-            if (!DesignerProperties.GetIsInDesignMode(this))
-                _renderer!.Render(true, 1.0f);
+            _renderer?.Render(true, 1.0f);
         }
     }
 }
