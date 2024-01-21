@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FEngLib.Messaging;
@@ -18,8 +19,15 @@ public class ResourceRequestFolder : TreeFolder<ResourceRequestViewModel>
 
 public class MessageDefinitionsFolder : TreeFolder<MessageDefinitionViewModel>
 {
+    public ICollectionView ChildrenViewSource
+    {
+        get;
+    }
+
     public MessageDefinitionsFolder(ObservableCollection<MessageDefinitionViewModel> children) : base("Message Definitions", children)
     {
+        ChildrenViewSource = CollectionViewSource.GetDefaultView(children);
+        ChildrenViewSource.GroupDescriptions.Add(new PropertyGroupDescription(nameof(MessageDefinitionViewModel.Category)));
     }
 }
 

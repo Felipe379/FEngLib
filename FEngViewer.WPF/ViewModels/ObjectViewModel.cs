@@ -1,11 +1,16 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Numerics;
 using System.Windows.Data;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FEngLib.Messaging;
 using FEngLib.Objects;
 using FEngLib.Scripts;
 using FEngLib.Structures;
+using FEngLib.Utils;
 using FEngRender.Data;
 using FEngViewer.WPF.UIHelpers;
 using MahApps.Metro.IconPacks;
@@ -109,12 +114,26 @@ public class ScriptEventsFolder : TreeFolder<ScriptEventViewModel>
     }
 }
 
-public abstract class ScriptTrackViewModel : ObservableObject
+public abstract class ScriptTrackViewModel : ObservableObject, ICommandable
 {
+    private List<CommandableOption> _commands;
+
     protected ScriptTrackViewModel(TrackId id, Track track)
     {
         TrackId = id;
         Track = track;
+
+        _commands = new List<CommandableOption>
+        {
+            new CommandOption("Add Key", PackIconFontAwesomeKind.StopwatchSolid, new RelayCommand(() =>
+            {
+                Debugger.Break();
+            }, () => Length > 0)),
+            new CommandOption("Delete", PackIconFontAwesomeKind.TrashSolid, new RelayCommand(() =>
+            {
+                Debugger.Break();
+            }))
+        };
     }
 
     public string Name
@@ -125,8 +144,24 @@ public abstract class ScriptTrackViewModel : ObservableObject
         }
     }
 
+    public uint Length
+    {
+        get
+        {
+            return Track.Length;
+        }
+    }
+
     private TrackId TrackId { get; }
     private Track Track { get; }
+
+    public ICollection Commands
+    {
+        get
+        {
+            return _commands;
+        }
+    }
 }
 
 public abstract class ScriptTrackViewModel<TTrack> : ScriptTrackViewModel where TTrack : Track
@@ -164,8 +199,20 @@ public class ColorTrackViewModel : ScriptTrackViewModel<ColorTrack>
     }
 }
 
-public abstract class ScriptViewModel : ObservableObject, INamedEntity
+public class AddTrackOption : CommandOption
 {
+    public AddTrackOption(string label, PackIconFontAwesomeKind icon, RelayCommand command) : base(label, icon, command)
+    {
+    }
+}
+
+public abstract class ScriptViewModel : ObservableObject, INamedEntity, ICommandable
+{
+    private CommandOption _deleteCommand;
+    protected ObservableCollection<AddTrackOption> AddTrackCommands { get; }
+
+    private readonly CompositeCollection _commands;
+
     private Script Script { get; }
 
     public string Name
@@ -193,6 +240,14 @@ public abstract class ScriptViewModel : ObservableObject, INamedEntity
 
     public CompositeCollection Children { get; }
 
+    public ICollection Commands
+    {
+        get
+        {
+            return _commands;
+        }
+    }
+
     protected ScriptViewModel(Script script)
     {
         Script = script;
@@ -204,6 +259,32 @@ public abstract class ScriptViewModel : ObservableObject, INamedEntity
         {
             new ScriptEventsFolder(Events)
         };
+
+        AddTrackCommands = new ObservableCollection<AddTrackOption>();
+        _deleteCommand = new CommandOption("Delete", PackIconFontAwesomeKind.TrashSolid, new RelayCommand(ExecuteDeleteCommand, CanExecuteDeleteCommand));
+
+        _commands = new CompositeCollection
+        {
+            new MultiCommandOption("Add", PackIconFontAwesomeKind.PlusSolid, new CommandableOption[]
+            {
+                new MultiCommandOption("Track", PackIconFontAwesomeKind.SlidersHSolid, AddTrackCommands),
+                new CommandOption("Event", PackIconFontAwesomeKind.BoltSolid, new RelayCommand(() =>
+                {
+                    Debugger.Break();
+                }))
+            }),
+            _deleteCommand
+        };
+    }
+
+    private void ExecuteDeleteCommand()
+    {
+
+    }
+
+    private bool CanExecuteDeleteCommand()
+    {
+        return Script.Id != Hashing.BinHash("INIT");
     }
 }
 
@@ -222,6 +303,37 @@ public abstract class ScriptViewModel<TScript> : ScriptViewModel where TScript :
         Tracks = new ObservableCollection<ScriptTrackViewModel>(TrackHelpers.GetAllTracks(script)
             .Select(CreateScriptTrackViewModel));
         Children.Add(new CollectionContainer { Collection = Tracks });
+
+        AddTrackCommands.Add(CreateAddTrackOption(Script as Script, BaseScriptTrackIds.Color, () => new ColorTrack()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script as Script, BaseScriptTrackIds.Pivot, () => new Vector3Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script as Script, BaseScriptTrackIds.Position, () => new Vector3Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script as Script, BaseScriptTrackIds.Rotation, () => new QuaternionTrack()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script as Script, BaseScriptTrackIds.Size, () => new Vector3Track()));
+    }
+
+    protected AddTrackOption CreateAddTrackOption<TScriptBase, TValue>(
+        TScriptBase script, TrackId<TValue> trackId, Func<Track<TValue>> trackConstructor)
+        where TValue : struct
+        where TScriptBase : Script, IScript<TScriptBase>
+    {
+        if (trackId is not TrackId<TScriptBase, TValue> upcastedTrackId)
+            throw new ArgumentException("Invalid track ID for script/key type", nameof(trackId));
+
+        return new AddTrackOption(
+            trackId.Name,
+            PackIconFontAwesomeKind.SlidersHSolid,
+            new RelayCommand(
+                () =>
+                {
+                    var track = trackConstructor();
+                    script.SetTrack(upcastedTrackId, track);
+                    Tracks.Add(CreateScriptTrackViewModel(new TrackEntry(trackId, track)));
+                    foreach (var addTrackCommand in AddTrackCommands)
+                    {
+                        addTrackCommand.Command.NotifyCanExecuteChanged();
+                    }
+                },
+                () => script.GetTrack(upcastedTrackId) is null));
     }
 
     private static ScriptTrackViewModel CreateScriptTrackViewModel(TrackEntry trackEntry)
@@ -249,6 +361,8 @@ public abstract class BaseImageScriptViewModel<TScript> : ScriptViewModel<TScrip
 {
     protected BaseImageScriptViewModel(TScript script) : base(script)
     {
+        AddTrackCommands.Add(CreateAddTrackOption(Script as BaseImageScript, ImageScriptTrackIds.UpperLeft, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script as BaseImageScript, ImageScriptTrackIds.LowerRight, () => new Vector2Track()));
     }
 }
 
@@ -363,6 +477,7 @@ public abstract class BaseImageViewModel<TObject, TObjectData, TScript> : Object
 {
     protected BaseImageViewModel(RenderTreeNode<TObject, TScript> obj) : base(obj, obj.FrontendObject.Scripts)
     {
+
     }
 }
 

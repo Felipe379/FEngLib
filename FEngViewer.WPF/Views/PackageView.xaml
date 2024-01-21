@@ -14,6 +14,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="640" d:DesignWidth="1280"
              d:DataContext="{d:DesignInstance viewModels:PackageViewModel, IsDesignTimeCreatable=True}">
+    <UserControl.Resources>
+        <local:MessageTreeTemplateSelector x:Key="MessageTreeTemplateSelector"></local:MessageTreeTemplateSelector>
+    </UserControl.Resources>
     <Grid d:Background="White">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -47,7 +50,7 @@
                 <!-- Package (Root) -->
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:RenderPackageFacade}" ItemsSource="{Binding TreeNodes}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="ProjectDiagramSolid" />
+                        <iconPacks:FontAwesome Kind="ProjectDiagramSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
                 </HierarchicalDataTemplate>
@@ -55,7 +58,7 @@
                 <!-- Resource Requests -->
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:ResourceRequestFolder}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="FileArchiveSolid" />
+                        <iconPacks:FontAwesome Kind="FileArchiveSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
                 </HierarchicalDataTemplate>
@@ -67,16 +70,28 @@
                 </DataTemplate>
 
                 <!-- Message Definitions -->
-                <DataTemplate DataType="{x:Type viewModels:MessageDefinitionViewModel}">
+                <HierarchicalDataTemplate x:Key="MessageGroupDataTemplate" DataType="{x:Type CollectionViewGroup}" ItemsSource="{Binding Items}">
+                    <TextBlock Text="{Binding Name}"></TextBlock>
+                </HierarchicalDataTemplate>
+
+                <DataTemplate x:Key="MessageDataTemplate" DataType="{x:Type viewModels:MessageDefinitionViewModel}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="EnvelopeSolid" />
+                        <StackPanel.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Hello!" Command="{Binding TestCommand}"></MenuItem>
+                                <MenuItem Header="Hello!!" Command="{Binding TestCommand2}"></MenuItem>
+                            </ContextMenu>
+                        </StackPanel.ContextMenu>
+                        <iconPacks:FontAwesome Kind="EnvelopeSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
                 </DataTemplate>
 
-                <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageDefinitionsFolder}" ItemsSource="{Binding Children}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageDefinitionsFolder}" 
+                                          ItemsSource="{Binding ChildrenViewSource.Groups}" 
+                                          ItemTemplateSelector="{StaticResource MessageTreeTemplateSelector}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="EnvelopeSolid" />
+                        <iconPacks:FontAwesome Kind="EnvelopeSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
                 </HierarchicalDataTemplate>
@@ -84,14 +99,14 @@
                 <!-- Message Responses -->
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageResponseViewModel}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="EnvelopeSolid" />
+                        <iconPacks:FontAwesome Kind="EnvelopeSolid" />
                         <controls:EntityName Value="{Binding Name}" IsExplicit="{Binding IsNameExplicit}"></controls:EntityName>
                     </StackPanel>
                 </HierarchicalDataTemplate>
 
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:MessageResponsesFolder}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconFontAwesome Kind="ExclamationSolid" />
+                        <iconPacks:FontAwesome Kind="ExclamationSolid" />
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
                 </HierarchicalDataTemplate>
@@ -113,6 +128,9 @@
                 </HierarchicalDataTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type viewModels:ScriptViewModel}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
+                        <StackPanel.ContextMenu>
+                            <controls:CommandableContextMenu ItemsSource="{Binding Commands}" />
+                        </StackPanel.ContextMenu>
                         <iconPacks:FontAwesome Kind="CodeSolid"></iconPacks:FontAwesome>
                         <controls:EntityName Value="{Binding Name}" IsExplicit="{Binding IsNameExplicit}" />
                     </StackPanel>
@@ -137,6 +155,9 @@
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type viewModels:ScriptTrackViewModel}">
                     <StackPanel Orientation="Horizontal">
+                        <StackPanel.ContextMenu>
+                            <controls:CommandableContextMenu ItemsSource="{Binding Commands}" />
+                        </StackPanel.ContextMenu>
                         <iconPacks:FontAwesome Kind="SlidersHSolid"></iconPacks:FontAwesome>
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>

@@ -36,4 +36,16 @@ namespace FEngViewer.WPF.Views
             }
         }
     }
+
+    public class MessageTreeTemplateSelector : DataTemplateSelector
+    {
+        public override DataTemplate? SelectTemplate(object? item, DependencyObject container)
+        {
+            if (item is CollectionViewGroup)
+                return (DataTemplate)((FrameworkElement)container).FindResource("MessageGroupDataTemplate");
+            if (item is MessageDefinitionViewModel)
+                return (DataTemplate)((FrameworkElement)container).FindResource("MessageDataTemplate");
+            return base.SelectTemplate(item, container);
+        }
+    }
 }

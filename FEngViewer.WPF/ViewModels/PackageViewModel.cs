@@ -29,7 +29,7 @@ public class PackageViewModel : ObservableObject
     /// </summary>
     public PackageViewModel()
     {
-        if (DesignerProperties.GetIsInDesignMode(new DependencyObject()))
+        if (/*DesignerProperties.GetIsInDesignMode(new DependencyObject())*/true)
         {
             Facade = new RenderPackageFacade(DummyData.TestPackage, DummyData.TestRenderTree);
         }
