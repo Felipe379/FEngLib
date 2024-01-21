@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using FEngRender.Data;
 using FEngRender.GL;
 using SharpGL.WPF;
@@ -50,6 +51,13 @@ namespace FEngViewer.WPF.Controls
             {
                 GlControl.OpenGLInitialized += GlControl_OnOpenGLInitialized;
                 GlControl.OpenGLDraw += GlControl_OnOpenGLDraw;
+
+                // https://github.com/dwmkerr/sharpgl/issues/144
+                // TL;DR: WPF GLControl uses the wrong dispatcher timer and can't keep on schedule
+                var prop = GlControl.GetType().GetField("timer",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                prop.SetValue(GlControl, new DispatcherTimer(DispatcherPriority.Render));
+
                 _textureProvider = new TextureProvider();
                 _textureProvider.LoadTextures(@"G:\Software\Games\NFS\Most Wanted (2005)\All FNGs\textures");
             }
