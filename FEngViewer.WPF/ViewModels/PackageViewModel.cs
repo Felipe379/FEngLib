@@ -1,9 +1,14 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using FEngLib.Packages;
 using FEngRender.Data;
+using FEngViewer.WPF.UIHelpers;
+using Xceed.Wpf.Toolkit.PropertyGrid;
 
 namespace FEngViewer.WPF.ViewModels;
 
@@ -11,6 +16,8 @@ public class PackageViewModel : ObservableObject
 {
     private Package? _package;
     private RenderPackageFacade _facade;
+    private object? _currentEditingObject;
+    private PropertyDefinitionCollection? _currentEditingPropertyDefinitions;
 
     public RenderPackageFacade Facade
     {
@@ -22,6 +29,20 @@ public class PackageViewModel : ObservableObject
         }
     }
 
+    public ICommand SelectionChangedCommand { get; }
+
+    public object? CurrentEditingObject
+    {
+        get => _currentEditingObject;
+        set => SetProperty(ref _currentEditingObject, value);
+    }
+
+    public PropertyDefinitionCollection? CurrentEditingPropertyDefinitions
+    {
+        get => _currentEditingPropertyDefinitions;
+        set => SetProperty(ref _currentEditingPropertyDefinitions, value);
+    }
+
     public IList<object> TreeRoots => _facade != null ? new List<object> { _facade } : new List<object>();
 
     /// <summary>
@@ -29,6 +50,7 @@ public class PackageViewModel : ObservableObject
     /// </summary>
     public PackageViewModel()
     {
+        SelectionChangedCommand = new RelayCommand<object>(ExecuteSelectionChange);
         if (/*DesignerProperties.GetIsInDesignMode(new DependencyObject())*/true)
         {
             Facade = new RenderPackageFacade(DummyData.TestPackage, DummyData.TestRenderTree);
@@ -37,6 +59,19 @@ public class PackageViewModel : ObservableObject
         {
             Package package = LoadFile(@"D:\Games\NFS\Research\FNGs_ALL\mwfinal\BUSTED_OVERLAY.fng");
             Facade = new RenderPackageFacade(package, RenderTree.Create(package));
+        }
+    }
+
+    private void ExecuteSelectionChange(object? obj)
+    {
+        if (obj is IEditable editable)
+        {
+            CurrentEditingObject = editable;
+            CurrentEditingPropertyDefinitions = editable.GetPropertyDefinitions();
+        }
+        else
+        {
+            CurrentEditingObject = null;
         }
     }
 

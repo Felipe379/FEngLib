@@ -4,6 +4,7 @@ using FEngLib.Messaging.Commands;
 using FEngLib.Objects;
 using FEngLib.Packages;
 using FEngLib.Scripts;
+using FEngLib.Structures;
 using FEngRender.Data;
 
 namespace FEngViewer.WPF.ViewModels;
@@ -50,8 +51,46 @@ public static class DummyData
             Length = 500
         };
 
-        testImgScript.SetTrack(ImageScriptTrackIds.LowerRight, new Vector2Track());
+        testImgScript.SetTrack(ImageScriptTrackIds.LowerRight, new Vector2Track
+        {
+            BaseKey = Vector2.UnitX,
+            DeltaKeys = new LinkedList<TrackNode<Vector2>>(new []
+            {
+                new TrackNode<Vector2> { Time = 10, Val = -Vector2.UnitX },
+                new TrackNode<Vector2> { Time = 420, Val = new(-1, 1) }
+            })
+        });
         testImgScript.SetTrack(ImageScriptTrackIds.UpperLeft, new Vector2Track());
+
+        var testMultiImgScript = new MultiImageScript
+        {
+            Name = "Test MultiImage Script #1",
+            Length = 120
+        };
+        testMultiImgScript.SetTrack(MultiImageScriptTrackIds.BottomRight1, new Vector2Track());
+        testMultiImgScript.SetTrack(MultiImageScriptTrackIds.PivotRotation, new Vector3Track
+        {
+            BaseKey = Vector3.One,
+            DeltaKeys = new LinkedList<TrackNode<Vector3>>(new []
+            {
+                new TrackNode<Vector3> { Time = 50, }
+            })
+        });
+
+        var testColoredImgScript = new ColoredImageScript
+        {
+            Name = "Test ColoredImage Script #1",
+            Length = 1001
+        };
+        testColoredImgScript.SetTrack(ColoredImageScriptTrackIds.BottomLeft, new ColorTrack
+        {
+            BaseKey = new Color4(255, 0, 255, 255),
+            DeltaKeys = new LinkedList<TrackNode<Color4>>(new []
+            {
+                new TrackNode<Color4> { Time = 10, Val = new Color4(-20, 0, -50, -10) },
+                new TrackNode<Color4> { Time = 500, Val = new Color4(-10, 0, -40, 0) },
+            })
+        });
 
         TestPackage = new Package
         {
@@ -153,7 +192,10 @@ public static class DummyData
                     },
                     Parent = group
                 },
-                new Text(new CommonObjectData())
+                new Text(new CommonObjectData
+                {
+                    Color = new Color4(200, 0, 120, 160)
+                })
                 {
                     Guid = 0x12346,
                     NameHash = 0x41424344,
@@ -164,6 +206,19 @@ public static class DummyData
                     Parent = group,
                     Name = "CoolTestImage",
                     Scripts = { testImgScript }
+                },
+                new MultiImage(new MultiImageData())
+                {
+                    Guid = 0x12348,
+                    Name = "Test MultiImage",
+                    Scripts = { testMultiImgScript }
+                },
+                new ColoredImage(new ColoredImageData())
+                {
+                    Guid = 0x12348,
+                    Name = "Test ColoredImage",
+                    Scripts = { testColoredImgScript },
+                    Flags = ObjectFlags.ConsoleOnly | ObjectFlags.AffectAllScripts | ObjectFlags.IsButton
                 }
             }
         };

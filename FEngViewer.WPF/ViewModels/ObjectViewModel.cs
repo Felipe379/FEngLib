@@ -1,9 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FEngLib.Messaging;
@@ -14,6 +18,8 @@ using FEngLib.Utils;
 using FEngRender.Data;
 using FEngViewer.WPF.UIHelpers;
 using MahApps.Metro.IconPacks;
+using Xceed.Wpf.Toolkit.PropertyGrid;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace FEngViewer.WPF.ViewModels;
 
@@ -114,7 +120,7 @@ public class ScriptEventsFolder : TreeFolder<ScriptEventViewModel>
     }
 }
 
-public abstract class ScriptTrackViewModel : ObservableObject, ICommandable
+public abstract class ScriptTrackViewModel : ObservableObject, ICommandable, IEditable
 {
     private List<CommandableOption> _commands;
 
@@ -144,12 +150,22 @@ public abstract class ScriptTrackViewModel : ObservableObject, ICommandable
         }
     }
 
+    public TrackInterpolationMethod InterpType
+    {
+        get => Track.InterpType;
+        set
+        {
+            Track.InterpType = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public TrackParamType ParamType => Track.GetParamType();
+
     public uint Length
     {
-        get
-        {
-            return Track.Length;
-        }
+        get => Track.Length;
+        set => SetTrackLength(value);
     }
 
     private TrackId TrackId { get; }
@@ -162,37 +178,57 @@ public abstract class ScriptTrackViewModel : ObservableObject, ICommandable
             return _commands;
         }
     }
+
+    public PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.ScriptTrackProperties;
+    }
+
+    protected abstract void SetTrackLength(uint length);
 }
 
-public abstract class ScriptTrackViewModel<TTrack> : ScriptTrackViewModel where TTrack : Track
+public abstract class ScriptTrackViewModel<TValue, TTrack> : ScriptTrackViewModel where TTrack : Track<TValue> where TValue : struct
 {
+    protected TTrack Track { get; }
+
     protected ScriptTrackViewModel(TrackId id, TTrack track) : base(id, track)
     {
+        Track = track;
+    }
+
+    protected override void SetTrackLength(uint length)
+    {
+        if (length < Track.DeltaKeys.Max(dk => dk.Time))
+        {
+            throw new ArgumentException("Track must not end before a key begins", nameof(length));
+        }
+
+        Track.Length = length;
     }
 }
 
-public class Vector2TrackViewModel : ScriptTrackViewModel<Vector2Track>
+public class Vector2TrackViewModel : ScriptTrackViewModel<Vector2, Vector2Track>
 {
     public Vector2TrackViewModel(TrackId<Vector2> id, Vector2Track track) : base(id, track)
     {
     }
 }
 
-public class Vector3TrackViewModel : ScriptTrackViewModel<Vector3Track>
+public class Vector3TrackViewModel : ScriptTrackViewModel<Vector3, Vector3Track>
 {
     public Vector3TrackViewModel(TrackId<Vector3> id, Vector3Track track) : base(id, track)
     {
     }
 }
 
-public class QuaternionTrackViewModel : ScriptTrackViewModel<QuaternionTrack>
+public class QuaternionTrackViewModel : ScriptTrackViewModel<Quaternion, QuaternionTrack>
 {
     public QuaternionTrackViewModel(TrackId<Quaternion> id, QuaternionTrack track) : base(id, track)
     {
     }
 }
 
-public class ColorTrackViewModel : ScriptTrackViewModel<ColorTrack>
+public class ColorTrackViewModel : ScriptTrackViewModel<Color4, ColorTrack>
 {
     public ColorTrackViewModel(TrackId<Color4> id, ColorTrack track) : base(id, track)
     {
@@ -206,7 +242,7 @@ public class AddTrackOption : CommandOption
     }
 }
 
-public abstract class ScriptViewModel : ObservableObject, INamedEntity, ICommandable
+public abstract class ScriptViewModel : ObservableObject, INamedEntity, ICommandable, IEditable
 {
     private CommandOption _deleteCommand;
     protected ObservableCollection<AddTrackOption> AddTrackCommands { get; }
@@ -248,6 +284,52 @@ public abstract class ScriptViewModel : ObservableObject, INamedEntity, ICommand
         }
     }
 
+    public uint NameHash
+    {
+        get
+        {
+            return Script.Id;
+        }
+    }
+
+    public bool LoopingEnabled
+    {
+        get => (Script.Flags & 1) == 1;
+        set
+        {
+            if (value)
+            {
+                SetProperty(
+                    Script.Flags,
+                    Script.Flags | 1u,
+                    Script,
+                    (s, f) => s.Flags = f);
+            }
+            else
+            {
+                SetProperty(
+                    Script.Flags,
+                    Script.Flags & ~1u,
+                    Script,
+                    (s, f) => s.Flags = f);
+            }
+        }
+    }
+
+    public uint Length
+    {
+        get => Script.Length;
+        set
+        {
+            if (value < Script.Tracks.Values.Max(t => t.Length))
+            {
+                throw new ArgumentException("Script cannot be shorter than longest track", nameof(value));
+            }
+
+            SetProperty(Script.Length, value, Script, (s, l) => s.Length = l);
+        }
+    }
+
     protected ScriptViewModel(Script script)
     {
         Script = script;
@@ -275,6 +357,11 @@ public abstract class ScriptViewModel : ObservableObject, INamedEntity, ICommand
             }),
             _deleteCommand
         };
+    }
+
+    public PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.ScriptProperties;
     }
 
     private void ExecuteDeleteCommand()
@@ -373,6 +460,31 @@ public class ImageScriptViewModel : BaseImageScriptViewModel<ImageScript>
     }
 }
 
+public class MultiImageScriptViewModel : BaseImageScriptViewModel<MultiImageScript>
+{
+    public MultiImageScriptViewModel(MultiImageScript script) : base(script)
+    {
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.TopLeft1, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.TopLeft2, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.TopLeft3, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.BottomRight1, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.BottomRight2, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.BottomRight3, () => new Vector2Track()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, MultiImageScriptTrackIds.PivotRotation, () => new Vector3Track()));
+    }
+}
+
+public class ColoredImageScriptViewModel : BaseImageScriptViewModel<ColoredImageScript>
+{
+    public ColoredImageScriptViewModel(ColoredImageScript script) : base(script)
+    {
+        AddTrackCommands.Add(CreateAddTrackOption(Script, ColoredImageScriptTrackIds.TopLeft, () => new ColorTrack()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, ColoredImageScriptTrackIds.TopRight, () => new ColorTrack()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, ColoredImageScriptTrackIds.BottomRight, () => new ColorTrack()));
+        AddTrackCommands.Add(CreateAddTrackOption(Script, ColoredImageScriptTrackIds.BottomLeft, () => new ColorTrack()));
+    }
+}
+
 public class ScriptsFolder : TreeFolder<ScriptViewModel>
 {
     public ScriptsFolder(ObservableCollection<ScriptViewModel> children) : base("Scripts", children)
@@ -380,18 +492,466 @@ public class ScriptsFolder : TreeFolder<ScriptViewModel>
     }
 }
 
-public abstract class ObjectViewModel : ObservableObject, INamedEntity
+public static class EditorPropertyDefinitions
+{
+    public static readonly PropertyDefinitionCollection BaseObjectProperties;
+    public static readonly PropertyDefinitionCollection ScriptProperties;
+    public static readonly PropertyDefinitionCollection ScriptTrackProperties;
+
+    static EditorPropertyDefinitions()
+    {
+        BaseObjectProperties = new PropertyDefinitionCollection
+        {
+            new PropertyDefinition
+            {
+                Category = "Meta",
+                DisplayName = "GUID",
+                TargetProperties = { nameof(ObjectViewModel.Guid) }
+            },
+            new PropertyDefinition
+            {
+                Category = "Meta",
+                DisplayName = "Name Hash",
+                TargetProperties = { nameof(ObjectViewModel.NameHash) }
+            },
+            new PropertyDefinition
+            {
+                Category = "Object Data",
+                DisplayName = "Color",
+                TargetProperties = { nameof(ObjectViewModel.Color) },
+            },
+            new PropertyDefinition
+            {
+                Category = "Object Data",
+                DisplayName = "Pivot",
+                TargetProperties = { nameof(ObjectViewModel.Pivot) },
+                IsExpandable = true
+            },
+            new PropertyDefinition
+            {
+                Category = "Object Data",
+                DisplayName = "Position",
+                TargetProperties = { nameof(ObjectViewModel.Position) },
+                IsExpandable = true
+            },
+            new PropertyDefinition
+            {
+                Category = "Object Data",
+                DisplayName = "Rotation",
+                TargetProperties = { nameof(ObjectViewModel.Rotation) },
+                IsExpandable = true
+            },
+            new PropertyDefinition
+            {
+                Category = "Object Data",
+                DisplayName = "Size",
+                TargetProperties = { nameof(ObjectViewModel.Size) },
+                IsExpandable = true
+            }
+        };
+
+        ScriptProperties = new PropertyDefinitionCollection
+        {
+            new PropertyDefinition
+            {
+                Category = "Meta",
+                DisplayName = "Name Hash",
+                TargetProperties = { nameof(ScriptViewModel.NameHash) }
+            },
+            new PropertyDefinition
+            {
+                Category = "Script Data",
+                DisplayName = "Length",
+                Description = "The length of the script, in milliseconds.",
+                TargetProperties = { nameof(ScriptViewModel.Length) }
+            },
+            new PropertyDefinition
+            {
+                Category = "Script Data",
+                DisplayName = "Looping",
+                Description = "Whether the script should restart immediately after finishing.",
+                TargetProperties = { nameof(ScriptViewModel.LoopingEnabled) }
+            }
+        };
+
+        ScriptTrackProperties = new PropertyDefinitionCollection
+        {
+            new PropertyDefinition
+            {
+                Category = "Meta",
+                DisplayName = "Parameter Type",
+                TargetProperties = { nameof(ScriptTrackViewModel.ParamType) }
+            },
+            new PropertyDefinition
+            {
+                Category = "Track Data",
+                DisplayName = "Interpolation Method",
+                Description = "The interpolation strategy to use for the track. Unless you have a REALLY GOOD REASON to change this, LEAVE IT ALONE.",
+                TargetProperties = { nameof(ScriptTrackViewModel.InterpType) }
+            },
+            new PropertyDefinition
+            {
+                Category = "Track Data",
+                DisplayName = "Length",
+                Description = "The length of the track, in milliseconds.",
+                TargetProperties = { nameof(ScriptTrackViewModel.Length) }
+            },
+        };
+    }
+
+    private static PropertyDefinitionCollection MergeCollections(params PropertyDefinitionCollection[] collections)
+    {
+        var merged = new PropertyDefinitionCollection();
+        foreach (var propertyDefinition in collections.SelectMany(c => c))
+        {
+            merged.Add(propertyDefinition);
+        }
+
+        return merged;
+    }
+}
+
+public class ObjectFlagsWrapper : ObservableObject
+{
+    private readonly IObject<BaseObjectData> _obj;
+
+    public bool Invisible
+    {
+        get => GetFlag(ObjectFlags.Invisible);
+        set => UpdateFlag(ObjectFlags.Invisible, value);
+    }
+
+    public bool PCOnly
+    {
+        get => GetFlag(ObjectFlags.PCOnly);
+        set => UpdateFlag(ObjectFlags.PCOnly, value);
+    }
+
+    public bool ConsoleOnly
+    {
+        get => GetFlag(ObjectFlags.ConsoleOnly);
+        set => UpdateFlag(ObjectFlags.ConsoleOnly, value);
+    }
+
+    public bool MouseObject
+    {
+        get => GetFlag(ObjectFlags.MouseObject);
+        set => UpdateFlag(ObjectFlags.MouseObject, value);
+    }
+
+    public bool SaveStaticTracks
+    {
+        get => GetFlag(ObjectFlags.SaveStaticTracks);
+        set => UpdateFlag(ObjectFlags.SaveStaticTracks, value);
+    }
+
+    public bool DontNavigate
+    {
+        get => GetFlag(ObjectFlags.DontNavigate);
+        set => UpdateFlag(ObjectFlags.DontNavigate, value);
+    }
+
+    public bool UsesLibraryObject
+    {
+        get => GetFlag(ObjectFlags.UsesLibraryObject);
+        set => UpdateFlag(ObjectFlags.UsesLibraryObject, value);
+    }
+
+    public bool CodeSuppliedResource
+    {
+        get => GetFlag(ObjectFlags.CodeSuppliedResource);
+        set => UpdateFlag(ObjectFlags.CodeSuppliedResource, value);
+    }
+
+    public bool IgnoreButton
+    {
+        get => GetFlag(ObjectFlags.IgnoreButton);
+        set => UpdateFlag(ObjectFlags.IgnoreButton, value);
+    }
+
+    public bool ObjectLocked
+    {
+        get => GetFlag(ObjectFlags.ObjectLocked);
+        set => UpdateFlag(ObjectFlags.ObjectLocked, value);
+    }
+
+    public bool HideInEdit
+    {
+        get => GetFlag(ObjectFlags.HideInEdit);
+        set => UpdateFlag(ObjectFlags.HideInEdit, value);
+    }
+
+    public bool IsButton
+    {
+        get => GetFlag(ObjectFlags.IsButton);
+        set => UpdateFlag(ObjectFlags.IsButton, value);
+    }
+
+    public bool PerspectiveProjection
+    {
+        get => GetFlag(ObjectFlags.PerspectiveProjection);
+        set => UpdateFlag(ObjectFlags.PerspectiveProjection, value);
+    }
+
+    public bool AffectAllScripts
+    {
+        get => GetFlag(ObjectFlags.AffectAllScripts);
+        set => UpdateFlag(ObjectFlags.AffectAllScripts, value);
+    }
+
+    public ObjectFlagsWrapper(IObject<BaseObjectData> obj)
+    {
+        _obj = obj;
+    }
+
+    private bool GetFlag(ObjectFlags flag)
+    {
+        return (_obj.Flags & flag) == flag;
+    }
+
+    private void UpdateFlag(ObjectFlags flag, bool value, [CallerMemberName] string? flagName = null)
+    {
+        var newFlags = _obj.Flags;
+        if (value)
+            newFlags |= flag;
+        else
+            newFlags &= ~flag;
+        SetProperty(_obj.Flags, newFlags, _obj, (o, f) => o.Flags = f, flagName);
+    }
+
+    public override string ToString()
+    {
+        return _obj.Flags.ToString();
+    }
+}
+
+public class Vector2Wrapper : ObservableObject
+{
+    private Vector2 _vector;
+    private readonly Action<Vector2> _setter;
+
+    public float X
+    {
+        get => _vector.X;
+        set
+        {
+            _vector.X = value;
+            _setter(_vector);
+            OnPropertyChanged();
+        }
+    }
+
+    public float Y
+    {
+        get => _vector.Y;
+        set
+        {
+            _vector.Y = value;
+            _setter(_vector);
+            OnPropertyChanged();
+        }
+    }
+
+    public Vector2Wrapper(Vector2 vector, Action<Vector2> setter)
+    {
+        _vector = vector;
+        _setter = setter;
+    }
+
+    public override string ToString()
+    {
+        return _vector.ToString();
+    }
+}
+
+public class Vector3Wrapper : ObservableObject
+{
+    private Vector3 _vector;
+    private readonly Action<Vector3> _setter;
+
+    public float X
+    {
+        get => _vector.X;
+        set
+        {
+            _vector.X = value;
+            _setter(_vector);
+            OnPropertyChanged();
+        }
+    }
+
+    public float Y
+    {
+        get => _vector.Y;
+        set
+        {
+            _vector.Y = value;
+            _setter(_vector);
+            OnPropertyChanged();
+        }
+    }
+
+    public float Z
+    {
+        get => _vector.Z;
+        set
+        {
+            _vector.Z = value;
+            _setter(_vector);
+            OnPropertyChanged();
+        }
+    }
+
+    public Vector3Wrapper(Vector3 vector, Action<Vector3> setter)
+    {
+        _vector = vector;
+        _setter = setter;
+    }
+
+    public override string ToString()
+    {
+        return _vector.ToString();
+    }
+}
+
+public class QuaternionWrapper : ObservableObject
+{
+    private Quaternion _quaternion;
+    private readonly Action<Quaternion> _setter;
+
+    public float X
+    {
+        get => _quaternion.X;
+        set
+        {
+            _quaternion.X = value;
+            _setter(_quaternion);
+            OnPropertyChanged();
+        }
+    }
+
+    public float Y
+    {
+        get => _quaternion.Y;
+        set
+        {
+            _quaternion.Y = value;
+            _setter(_quaternion);
+            OnPropertyChanged();
+        }
+    }
+
+    public float Z
+    {
+        get => _quaternion.Z;
+        set
+        {
+            _quaternion.Z = value;
+            _setter(_quaternion);
+            OnPropertyChanged();
+        }
+    }
+
+    public float W
+    {
+        get => _quaternion.W;
+        set
+        {
+            _quaternion.W = value;
+            _setter(_quaternion);
+            OnPropertyChanged();
+        }
+    }
+
+    public QuaternionWrapper(Quaternion quaternion, Action<Quaternion> setter)
+    {
+        _quaternion = quaternion;
+        _setter = setter;
+    }
+
+    public override string ToString()
+    {
+        return _quaternion.ToString();
+    }
+}
+
+public class ColorWrapper : ObservableObject
+{
+    private Color4 _color;
+    private readonly Action<Color4> _setter;
+
+    public int Red
+    {
+        get => _color.Red;
+        set
+        {
+            _color.Red = value;
+            _setter(_color);
+            OnPropertyChanged();
+        }
+    }
+
+    public int Green
+    {
+        get => _color.Green;
+        set
+        {
+            _color.Green = value;
+            _setter(_color);
+            OnPropertyChanged();
+        }
+    }
+
+    public int Blue
+    {
+        get => _color.Blue;
+        set
+        {
+            _color.Blue = value;
+            _setter(_color);
+            OnPropertyChanged();
+        }
+    }
+
+    public int Alpha
+    {
+        get => _color.Alpha;
+        set
+        {
+            _color.Alpha = value;
+            _setter(_color);
+            OnPropertyChanged();
+        }
+    }
+
+    public ColorWrapper(Color4 color, Action<Color4> setter)
+    {
+        _color = color;
+        _setter = setter;
+    }
+
+    public override string ToString()
+    {
+        return _color.ToString();
+    }
+}
+
+public abstract class ObjectViewModel : ObservableObject, INamedEntity, IEditable
 {
     //private RenderTreeNode RenderTreeNode { get; }
 
     private IObject<BaseObjectData> Object { get; }
 
+    //[Browsable(false)]
     public CompositeCollection Children { get; }
 
+    //[Browsable(false)]
     public ObservableCollection<MessageResponseViewModel> MessageResponses { get; }
 
+    //[Browsable(false)]
     public abstract PackIconFontAwesomeKind Icon { get; }
 
+    //[Browsable(false)]
     public string Name
     {
         get
@@ -402,6 +962,17 @@ public abstract class ObjectViewModel : ObservableObject, INamedEntity
         set => throw new NotImplementedException();
     }
 
+    //[Category("Meta")]
+    //[DisplayName("Name Hash")]
+    public uint NameHash
+    {
+        get
+        {
+            return Object.NameHash;
+        }
+    }
+
+    //[Browsable(false)]
     public bool IsNameExplicit
     {
         get
@@ -409,6 +980,46 @@ public abstract class ObjectViewModel : ObservableObject, INamedEntity
             return Object.Name is { Length: > 0 };
         }
     }
+
+    //[Category("Meta")]
+    //[DisplayName("GUID")]
+    public uint Guid
+    {
+        get => Object.Guid;
+        set => SetProperty(Object.Guid, value, Object, (o, g) => o.Guid = g);
+    }
+
+    //[Category("Meta")]
+    //[DisplayName("Flags")]
+    //[ExpandableObject]
+    //[TypeConverter(typeof(ObjectFlagsConverter))]
+    public ObjectFlagsWrapper Flags { get; }
+
+    #region ObjectData Properties
+
+    public Color Color
+    {
+        get
+        {
+            var color = Object.Data.Color;
+            if (color is not { Alpha: >= 0 and <= 255, Blue: >= 0 and <= 255, Green: >= 0 and <= 255, Red: >= 0 and <= 255})
+            {
+                throw new Exception("Invalid color: " + color);
+            }
+            return Color.FromArgb((byte)color.Alpha, (byte)color.Red, (byte)color.Green, (byte)color.Blue);
+        }
+        set => SetProperty(Object.Data.Color, new Color4(value.B, value.G, value.R, value.A), Object.Data, (od, col) => od.Color = col);
+    }
+
+    public Vector3Wrapper Pivot { get; }
+
+    public Vector3Wrapper Position { get; }
+
+    public QuaternionWrapper Rotation { get; }
+
+    public Vector3Wrapper Size { get; }
+
+    #endregion
 
     protected ObjectViewModel(RenderTreeNode renderTreeNode)
     {
@@ -425,6 +1036,33 @@ public abstract class ObjectViewModel : ObservableObject, INamedEntity
         {
             new MessageResponsesFolder(MessageResponses)
         };
+
+        Flags = new ObjectFlagsWrapper(Object);
+        Pivot = new Vector3Wrapper(Object.Data.Pivot, vec =>
+        {
+            Object.Data.Pivot = vec;
+            OnPropertyChanged(nameof(Pivot));
+        });
+        Position = new Vector3Wrapper(Object.Data.Position, vec =>
+        {
+            Object.Data.Position = vec;
+            OnPropertyChanged(nameof(Position));
+        });
+        Rotation = new QuaternionWrapper(Object.Data.Rotation, quaternion =>
+        {
+            Object.Data.Rotation = quaternion;
+            OnPropertyChanged(nameof(Rotation));
+        });
+        Size = new Vector3Wrapper(Object.Data.Size, vec =>
+        {
+            Object.Data.Size = vec;
+            OnPropertyChanged(nameof(Size));
+        });
+    }
+
+    public PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.BaseObjectProperties;
     }
 }
 
@@ -527,4 +1165,40 @@ public class GroupViewModel : BaseObjectViewModel<Group>
     }
 
     public override PackIconFontAwesomeKind Icon => PackIconFontAwesomeKind.LayerGroupSolid;
+}
+
+public class MultiImageViewModel : BaseImageViewModel<MultiImage, MultiImageData, MultiImageScript>
+{
+    public MultiImageViewModel(RenderTreeNode<MultiImage, MultiImageScript> obj) : base(obj)
+    {
+
+    }
+
+    public override PackIconFontAwesomeKind Icon => PackIconFontAwesomeKind.ImagesSolid;
+    protected override ScriptViewModel<MultiImageScript> CreateScriptViewModel(MultiImageScript script)
+    {
+        return new MultiImageScriptViewModel(script);
+    }
+}
+
+public class ColoredImageViewModel : BaseImageViewModel<ColoredImage, ColoredImageData, ColoredImageScript>
+{
+    public ColoredImageViewModel(RenderTreeNode<ColoredImage, ColoredImageScript> obj) : base(obj)
+    {
+    }
+
+    public override PackIconFontAwesomeKind Icon => PackIconFontAwesomeKind.PaintRollerSolid;
+    protected override ScriptViewModel<ColoredImageScript> CreateScriptViewModel(ColoredImageScript script)
+    {
+        return new ColoredImageScriptViewModel(script);
+    }
+}
+
+public class MovieViewModel : BaseObjectViewModel<Movie>
+{
+    public MovieViewModel(RenderTreeNode<Movie, CommonScript> obj) : base(obj)
+    {
+    }
+
+    public override PackIconFontAwesomeKind Icon => PackIconFontAwesomeKind.FileVideoSolid;
 }

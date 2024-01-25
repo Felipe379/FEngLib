@@ -11,6 +11,7 @@
              xmlns:wpf="clr-namespace:SharpGL.WPF;assembly=SharpGL.WPF"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:controls="clr-namespace:FEngViewer.WPF.Controls"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              mc:Ignorable="d" 
              d:DesignHeight="640" d:DesignWidth="1280"
              d:DataContext="{d:DesignInstance viewModels:PackageViewModel, IsDesignTimeCreatable=True}">
@@ -23,7 +24,14 @@
             <ColumnDefinition MinWidth="640"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <TreeView ItemsSource="{Binding TreeRoots}" Grid.Column="0">
+        <TreeView ItemsSource="{Binding TreeRoots}" Grid.Column="0" Name="PackageTree">
+            <i:Interaction.Triggers>
+                <i:EventTrigger EventName="SelectedItemChanged">
+                    <i:EventTrigger.Actions>
+                        <i:InvokeCommandAction Command="{Binding SelectionChangedCommand}" CommandParameter="{Binding ElementName=PackageTree, Path=SelectedItem}"></i:InvokeCommandAction>
+                    </i:EventTrigger.Actions>
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
             <TreeView.Resources>
                 <!-- Begin Styles -->
 
@@ -36,6 +44,7 @@
                 <Style TargetType="{x:Type TreeViewItem}">
                     <Style.Setters>
                         <Setter Property="Margin" Value="0,5,0,0"></Setter>
+                        <Setter Property="Padding" Value="3"></Setter>
                     </Style.Setters>
                     <Style.Triggers>
                         <Trigger Property="componentModel:DesignerProperties.IsInDesignMode" Value="True">
@@ -167,6 +176,9 @@
             </TreeView.Resources>
         </TreeView>
         <controls:PackageViewport Grid.Column="1" x:Name="PackageViewport" RenderTree="{Binding Facade.RenderTree}"></controls:PackageViewport>
-        <xctk:PropertyGrid Grid.Column="2"/>
+        <xctk:PropertyGrid Grid.Column="2" 
+                           AutoGenerateProperties="False"
+                           PropertyDefinitions="{Binding CurrentEditingPropertyDefinitions}"
+                           SelectedObject="{Binding CurrentEditingObject}" />
     </Grid>
 </UserControl>

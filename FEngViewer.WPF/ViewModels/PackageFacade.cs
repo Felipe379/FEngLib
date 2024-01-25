@@ -130,9 +130,12 @@ public class RenderPackageFacade : ObservableObject
         return node switch
         {
             RenderTreeGroup group => new GroupViewModel(group, group.Select(RenderNodeToViewModel)),
-            RenderTreeText text => new TextViewModel(text),
             RenderTreeSimpleImage simpleImage => new SimpleImageViewModel(simpleImage),
             RenderTreeImage image => new ImageViewModel(image),
+            RenderTreeMultiImage multiImage => new MultiImageViewModel(multiImage),
+            RenderTreeColoredImage coloredImage => new ColoredImageViewModel(coloredImage),
+            RenderTreeMovie movie => new MovieViewModel(movie),
+            RenderTreeText text => new TextViewModel(text),
             _ => throw new Exception($"Can't create view model for node of type: {node.GetType()}")
         };
     }
