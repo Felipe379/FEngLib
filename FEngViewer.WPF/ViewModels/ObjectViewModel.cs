@@ -140,6 +140,8 @@ public abstract class ScriptTrackViewModel : ObservableObject, ICommandable, IEd
                 Debugger.Break();
             }))
         };
+
+        Children = new CompositeCollection();
     }
 
     public string Name
@@ -179,10 +181,9 @@ public abstract class ScriptTrackViewModel : ObservableObject, ICommandable, IEd
         }
     }
 
-    public PropertyDefinitionCollection GetPropertyDefinitions()
-    {
-        return EditorPropertyDefinitions.ScriptTrackProperties;
-    }
+    public ICollection Children { get; }
+
+    public abstract PropertyDefinitionCollection GetPropertyDefinitions();
 
     protected abstract void SetTrackLength(uint length);
 }
@@ -209,29 +210,76 @@ public abstract class ScriptTrackViewModel<TValue, TTrack> : ScriptTrackViewMode
 
 public class Vector2TrackViewModel : ScriptTrackViewModel<Vector2, Vector2Track>
 {
+    public Vector2Wrapper BaseKey { get; }
+
     public Vector2TrackViewModel(TrackId<Vector2> id, Vector2Track track) : base(id, track)
     {
+        BaseKey = new Vector2Wrapper(track.BaseKey, (vec) => track.BaseKey = vec);
+    }
+
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.Vector2ScriptTrackProperties;
     }
 }
 
 public class Vector3TrackViewModel : ScriptTrackViewModel<Vector3, Vector3Track>
 {
+    public Vector3Wrapper BaseKey { get; }
+
     public Vector3TrackViewModel(TrackId<Vector3> id, Vector3Track track) : base(id, track)
     {
+        BaseKey = new Vector3Wrapper(track.BaseKey, (vec) => track.BaseKey = vec);
+    }
+
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.Vector3ScriptTrackProperties;
     }
 }
 
 public class QuaternionTrackViewModel : ScriptTrackViewModel<Quaternion, QuaternionTrack>
 {
+    public QuaternionWrapper BaseKey { get; }
+
     public QuaternionTrackViewModel(TrackId<Quaternion> id, QuaternionTrack track) : base(id, track)
     {
+        BaseKey = new QuaternionWrapper(track.BaseKey, (quat) => track.BaseKey = quat);
+    }
+
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.QuaternionScriptTrackProperties;
     }
 }
 
 public class ColorTrackViewModel : ScriptTrackViewModel<Color4, ColorTrack>
 {
+    public Color BaseKey
+    {
+        get
+        {
+            var color = Track.BaseKey;
+            if (color is not { Alpha: >= 0 and <= 255, Blue: >= 0 and <= 255, Green: >= 0 and <= 255, Red: >= 0 and <= 255 })
+            {
+                throw new Exception("Invalid color: " + color);
+            }
+            return Color.FromArgb((byte)color.Alpha, (byte)color.Red, (byte)color.Green, (byte)color.Blue);
+        }
+        set
+        {
+            Track.BaseKey = new Color4(value.B, value.G, value.R, value.A);
+            OnPropertyChanged();
+        }
+    }
+
     public ColorTrackViewModel(TrackId<Color4> id, ColorTrack track) : base(id, track)
     {
+    }
+
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.ColorScriptTrackProperties;
     }
 }
 
@@ -496,52 +544,60 @@ public static class EditorPropertyDefinitions
 {
     public static readonly PropertyDefinitionCollection BaseObjectProperties;
     public static readonly PropertyDefinitionCollection ScriptProperties;
-    public static readonly PropertyDefinitionCollection ScriptTrackProperties;
+
+    public static readonly PropertyDefinitionCollection Vector2ScriptTrackProperties;
+    public static readonly PropertyDefinitionCollection Vector3ScriptTrackProperties;
+    public static readonly PropertyDefinitionCollection QuaternionScriptTrackProperties;
+    public static readonly PropertyDefinitionCollection ColorScriptTrackProperties;
+
+    public static readonly PropertyDefinitionCollection BaseImageObjectProperties;
+    public static readonly PropertyDefinitionCollection ColoredImageObjectProperties;
+    public static readonly PropertyDefinitionCollection MultiImageObjectProperties;
 
     static EditorPropertyDefinitions()
     {
         BaseObjectProperties = new PropertyDefinitionCollection
         {
-            new PropertyDefinition
+            new()
             {
                 Category = "Meta",
                 DisplayName = "GUID",
                 TargetProperties = { nameof(ObjectViewModel.Guid) }
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Meta",
                 DisplayName = "Name Hash",
                 TargetProperties = { nameof(ObjectViewModel.NameHash) }
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Object Data",
                 DisplayName = "Color",
                 TargetProperties = { nameof(ObjectViewModel.Color) },
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Object Data",
                 DisplayName = "Pivot",
                 TargetProperties = { nameof(ObjectViewModel.Pivot) },
                 IsExpandable = true
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Object Data",
                 DisplayName = "Position",
                 TargetProperties = { nameof(ObjectViewModel.Position) },
                 IsExpandable = true
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Object Data",
                 DisplayName = "Rotation",
                 TargetProperties = { nameof(ObjectViewModel.Rotation) },
                 IsExpandable = true
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Object Data",
                 DisplayName = "Size",
@@ -550,22 +606,121 @@ public static class EditorPropertyDefinitions
             }
         };
 
+        BaseImageObjectProperties = MergeCollections(BaseObjectProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Object Data - Image",
+                DisplayName = "Upper Left UV",
+                TargetProperties = { nameof(ImageViewModel.UpperLeft) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image",
+                DisplayName = "Lower Right UV",
+                TargetProperties = { nameof(ImageViewModel.LowerRight) },
+                IsExpandable = true
+            },
+        });
+
+        ColoredImageObjectProperties = MergeCollections(BaseImageObjectProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Object Data - Image (Colored)",
+                DisplayName = "Top Left Color",
+                TargetProperties = { nameof(ColoredImageViewModel.TopLeft)}
+            },
+            new()
+            {
+                Category = "Object Data - Image (Colored)",
+                DisplayName = "Top Right Color",
+                TargetProperties = { nameof(ColoredImageViewModel.TopRight)}
+            },
+            new()
+            {
+                Category = "Object Data - Image (Colored)",
+                DisplayName = "Bottom Right Color",
+                TargetProperties = { nameof(ColoredImageViewModel.BottomRight)}
+            },
+            new()
+            {
+                Category = "Object Data - Image (Colored)",
+                DisplayName = "Bottom Left Color",
+                TargetProperties = { nameof(ColoredImageViewModel.BottomLeft)}
+            },
+        });
+
+        MultiImageObjectProperties = MergeCollections(BaseImageObjectProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Texture 1: Top Left UV",
+                TargetProperties = { nameof(MultiImageViewModel.TopLeft1) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Texture 1: Bottom Right UV",
+                TargetProperties = { nameof(MultiImageViewModel.BottomRight1) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Texture 2: Top Left UV",
+                TargetProperties = { nameof(MultiImageViewModel.TopLeft2) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Texture 2: Bottom Right UV",
+                TargetProperties = { nameof(MultiImageViewModel.BottomRight2) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Texture 3: Top Left UV",
+                TargetProperties = { nameof(MultiImageViewModel.TopLeft3) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Texture 3: Bottom Right UV",
+                TargetProperties = { nameof(MultiImageViewModel.BottomRight3) },
+                IsExpandable = true
+            },
+            new()
+            {
+                Category = "Object Data - Image (Multi-Textured)",
+                DisplayName = "Pivot Rotation",
+                TargetProperties = { nameof(MultiImageViewModel.PivotRotation) },
+                IsExpandable = true
+            },
+        });
+
         ScriptProperties = new PropertyDefinitionCollection
         {
-            new PropertyDefinition
+            new()
             {
                 Category = "Meta",
                 DisplayName = "Name Hash",
                 TargetProperties = { nameof(ScriptViewModel.NameHash) }
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Script Data",
                 DisplayName = "Length",
                 Description = "The length of the script, in milliseconds.",
                 TargetProperties = { nameof(ScriptViewModel.Length) }
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Script Data",
                 DisplayName = "Looping",
@@ -574,22 +729,22 @@ public static class EditorPropertyDefinitions
             }
         };
 
-        ScriptTrackProperties = new PropertyDefinitionCollection
+        var baseScriptTrackProperties = new PropertyDefinitionCollection
         {
-            new PropertyDefinition
+            new()
             {
                 Category = "Meta",
                 DisplayName = "Parameter Type",
                 TargetProperties = { nameof(ScriptTrackViewModel.ParamType) }
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Track Data",
                 DisplayName = "Interpolation Method",
                 Description = "The interpolation strategy to use for the track. Unless you have a REALLY GOOD REASON to change this, LEAVE IT ALONE.",
                 TargetProperties = { nameof(ScriptTrackViewModel.InterpType) }
             },
-            new PropertyDefinition
+            new()
             {
                 Category = "Track Data",
                 DisplayName = "Length",
@@ -597,6 +752,53 @@ public static class EditorPropertyDefinitions
                 TargetProperties = { nameof(ScriptTrackViewModel.Length) }
             },
         };
+
+        QuaternionScriptTrackProperties = MergeCollections(baseScriptTrackProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Track Data",
+                DisplayName = "Base Key",
+                Description = "The initial value of the property controlled by the track.",
+                IsExpandable = true,
+                TargetProperties = { nameof(QuaternionTrackViewModel.BaseKey) },
+            }
+        });
+
+        Vector2ScriptTrackProperties = MergeCollections(baseScriptTrackProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Track Data",
+                DisplayName = "Base Key",
+                Description = "The initial value of the property controlled by the track.",
+                IsExpandable = true,
+                TargetProperties = { nameof(Vector2TrackViewModel.BaseKey) },
+            }
+        });
+
+        Vector3ScriptTrackProperties = MergeCollections(baseScriptTrackProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Track Data",
+                DisplayName = "Base Key",
+                Description = "The initial value of the property controlled by the track.",
+                IsExpandable = true,
+                TargetProperties = { nameof(Vector3TrackViewModel.BaseKey) },
+            }
+        });
+
+        ColorScriptTrackProperties = MergeCollections(baseScriptTrackProperties, new PropertyDefinitionCollection
+        {
+            new()
+            {
+                Category = "Track Data",
+                DisplayName = "Base Key",
+                Description = "The initial value of the property controlled by the track.",
+                TargetProperties = { nameof(ColorTrackViewModel.BaseKey) },
+            }
+        });
     }
 
     private static PropertyDefinitionCollection MergeCollections(params PropertyDefinitionCollection[] collections)
@@ -711,6 +913,7 @@ public class ObjectFlagsWrapper : ObservableObject
 
     private void UpdateFlag(ObjectFlags flag, bool value, [CallerMemberName] string? flagName = null)
     {
+        Debug.Assert(flagName != null);
         var newFlags = _obj.Flags;
         if (value)
             newFlags |= flag;
@@ -936,6 +1139,23 @@ public class ColorWrapper : ObservableObject
     }
 }
 
+public static class ColorHelper
+{
+    public static Color FngColorToMediaColor(Color4 color)
+    {
+        if (color is not { Alpha: >= 0 and <= 255, Blue: >= 0 and <= 255, Green: >= 0 and <= 255, Red: >= 0 and <= 255 })
+        {
+            throw new Exception("Invalid color: " + color);
+        }
+        return Color.FromArgb((byte)color.Alpha, (byte)color.Red, (byte)color.Green, (byte)color.Blue);
+    }
+
+    public static Color4 MediaColorToFngColor(Color color)
+    {
+        return new Color4(color.B, color.G, color.R, color.A);
+    }
+}
+
 public abstract class ObjectViewModel : ObservableObject, INamedEntity, IEditable
 {
     //private RenderTreeNode RenderTreeNode { get; }
@@ -999,16 +1219,8 @@ public abstract class ObjectViewModel : ObservableObject, INamedEntity, IEditabl
 
     public Color Color
     {
-        get
-        {
-            var color = Object.Data.Color;
-            if (color is not { Alpha: >= 0 and <= 255, Blue: >= 0 and <= 255, Green: >= 0 and <= 255, Red: >= 0 and <= 255})
-            {
-                throw new Exception("Invalid color: " + color);
-            }
-            return Color.FromArgb((byte)color.Alpha, (byte)color.Red, (byte)color.Green, (byte)color.Blue);
-        }
-        set => SetProperty(Object.Data.Color, new Color4(value.B, value.G, value.R, value.A), Object.Data, (od, col) => od.Color = col);
+        get => ColorHelper.FngColorToMediaColor(Object.Data.Color);
+        set => SetProperty(Object.Data.Color, ColorHelper.MediaColorToFngColor(value), Object.Data, (od, col) => od.Color = col);
     }
 
     public Vector3Wrapper Pivot { get; }
@@ -1060,7 +1272,7 @@ public abstract class ObjectViewModel : ObservableObject, INamedEntity, IEditabl
         });
     }
 
-    public PropertyDefinitionCollection GetPropertyDefinitions()
+    public virtual PropertyDefinitionCollection GetPropertyDefinitions()
     {
         return EditorPropertyDefinitions.BaseObjectProperties;
     }
@@ -1113,9 +1325,26 @@ public abstract class BaseImageViewModel<TObject, TObjectData, TScript> : Object
     where TObjectData : BaseImageData, new()
     where TScript : Script, new()
 {
+    public Vector2Wrapper UpperLeft { get; }
+    public Vector2Wrapper LowerRight { get; }
+
     protected BaseImageViewModel(RenderTreeNode<TObject, TScript> obj) : base(obj, obj.FrontendObject.Scripts)
     {
+        UpperLeft = new Vector2Wrapper(Object.Data.UpperLeft, vec =>
+        {
+            Object.Data.UpperLeft = vec;
+            OnPropertyChanged(nameof(UpperLeft));
+        });
+        LowerRight = new Vector2Wrapper(Object.Data.LowerRight, vec =>
+        {
+            Object.Data.LowerRight = vec;
+            OnPropertyChanged(nameof(LowerRight));
+        });
+    }
 
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.BaseImageObjectProperties;
     }
 }
 
@@ -1169,9 +1398,51 @@ public class GroupViewModel : BaseObjectViewModel<Group>
 
 public class MultiImageViewModel : BaseImageViewModel<MultiImage, MultiImageData, MultiImageScript>
 {
+    public Vector2Wrapper TopLeft1 { get; }
+    public Vector2Wrapper TopLeft2 { get; }
+    public Vector2Wrapper TopLeft3 { get; }
+    public Vector2Wrapper BottomRight1 { get; }
+    public Vector2Wrapper BottomRight2 { get; }
+    public Vector2Wrapper BottomRight3 { get; }
+    public Vector3Wrapper PivotRotation { get; }
+
     public MultiImageViewModel(RenderTreeNode<MultiImage, MultiImageScript> obj) : base(obj)
     {
-
+        TopLeft1 = new Vector2Wrapper(Object.Data.TopLeft1, vec =>
+        {
+            Object.Data.TopLeft1 = vec;
+            OnPropertyChanged(nameof(TopLeft1));
+        });
+        TopLeft2 = new Vector2Wrapper(Object.Data.TopLeft2, vec =>
+        {
+            Object.Data.TopLeft2 = vec;
+            OnPropertyChanged(nameof(TopLeft2));
+        });
+        TopLeft3 = new Vector2Wrapper(Object.Data.TopLeft3, vec =>
+        {
+            Object.Data.TopLeft3 = vec;
+            OnPropertyChanged(nameof(TopLeft3));
+        });
+        BottomRight1 = new Vector2Wrapper(Object.Data.BottomRight1, vec =>
+        {
+            Object.Data.BottomRight1 = vec;
+            OnPropertyChanged(nameof(BottomRight1));
+        });
+        BottomRight2 = new Vector2Wrapper(Object.Data.BottomRight2, vec =>
+        {
+            Object.Data.BottomRight2 = vec;
+            OnPropertyChanged(nameof(BottomRight2));
+        });
+        BottomRight3 = new Vector2Wrapper(Object.Data.BottomRight3, vec =>
+        {
+            Object.Data.BottomRight3 = vec;
+            OnPropertyChanged(nameof(BottomRight3));
+        });
+        PivotRotation = new Vector3Wrapper(Object.Data.PivotRotation, vec =>
+        {
+            Object.Data.PivotRotation = vec;
+            OnPropertyChanged(nameof(PivotRotation));
+        });
     }
 
     public override PackIconFontAwesomeKind Icon => PackIconFontAwesomeKind.ImagesSolid;
@@ -1179,10 +1450,36 @@ public class MultiImageViewModel : BaseImageViewModel<MultiImage, MultiImageData
     {
         return new MultiImageScriptViewModel(script);
     }
+
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.MultiImageObjectProperties;
+    }
 }
 
 public class ColoredImageViewModel : BaseImageViewModel<ColoredImage, ColoredImageData, ColoredImageScript>
 {
+    public Color TopLeft
+    {
+        get => ColorHelper.FngColorToMediaColor(Object.Data.TopLeft);
+        set => SetProperty(Object.Data.TopLeft, ColorHelper.MediaColorToFngColor(value), Object.Data, (od, col) => od.TopLeft = col);
+    }
+    public Color TopRight
+    {
+        get => ColorHelper.FngColorToMediaColor(Object.Data.TopRight);
+        set => SetProperty(Object.Data.TopRight, ColorHelper.MediaColorToFngColor(value), Object.Data, (od, col) => od.TopRight = col);
+    }
+    public Color BottomRight
+    {
+        get => ColorHelper.FngColorToMediaColor(Object.Data.BottomRight);
+        set => SetProperty(Object.Data.BottomRight, ColorHelper.MediaColorToFngColor(value), Object.Data, (od, col) => od.BottomRight = col);
+    }
+    public Color BottomLeft
+    {
+        get => ColorHelper.FngColorToMediaColor(Object.Data.BottomLeft);
+        set => SetProperty(Object.Data.BottomLeft, ColorHelper.MediaColorToFngColor(value), Object.Data, (od, col) => od.BottomLeft = col);
+    }
+
     public ColoredImageViewModel(RenderTreeNode<ColoredImage, ColoredImageScript> obj) : base(obj)
     {
     }
@@ -1191,6 +1488,11 @@ public class ColoredImageViewModel : BaseImageViewModel<ColoredImage, ColoredIma
     protected override ScriptViewModel<ColoredImageScript> CreateScriptViewModel(ColoredImageScript script)
     {
         return new ColoredImageScriptViewModel(script);
+    }
+
+    public override PropertyDefinitionCollection GetPropertyDefinitions()
+    {
+        return EditorPropertyDefinitions.ColoredImageObjectProperties;
     }
 }
 

@@ -162,7 +162,7 @@
                         <!--<TextBlock Text="{Binding DisplayText}"></TextBlock>-->
                     </StackPanel>
                 </DataTemplate>
-                <DataTemplate DataType="{x:Type viewModels:ScriptTrackViewModel}">
+                <HierarchicalDataTemplate DataType="{x:Type viewModels:ScriptTrackViewModel}" ItemsSource="{Binding Children}">
                     <StackPanel Orientation="Horizontal">
                         <StackPanel.ContextMenu>
                             <controls:CommandableContextMenu ItemsSource="{Binding Commands}" />
@@ -170,7 +170,7 @@
                         <iconPacks:FontAwesome Kind="SlidersHSolid"></iconPacks:FontAwesome>
                         <TextBlock Text="{Binding Name}"></TextBlock>
                     </StackPanel>
-                </DataTemplate>
+                </HierarchicalDataTemplate>
 
                 <!-- End Data Templates -->
             </TreeView.Resources>
@@ -179,6 +179,6 @@
         <xctk:PropertyGrid Grid.Column="2" 
                            AutoGenerateProperties="False"
                            PropertyDefinitions="{Binding CurrentEditingPropertyDefinitions}"
-                           SelectedObject="{Binding CurrentEditingObject}" />
+                           SelectedObject="{Binding CurrentEditingObject}"/>
     </Grid>
 </UserControl>
