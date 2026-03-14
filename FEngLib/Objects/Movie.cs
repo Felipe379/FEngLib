@@ -6,6 +6,15 @@ public class Movie : BaseObject
     {
     }
 
+    public override object Clone()
+    {
+        var result = new Movie(null);
+
+        result.InternalClone(this);
+
+        return result;
+    }
+
     public override ObjectType GetObjectType()
     {
         return ObjectType.Movie;

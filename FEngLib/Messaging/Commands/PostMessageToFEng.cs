@@ -23,4 +23,15 @@ public class PostMessageToFEng : MessageCommand, ITargetedCommand
     {
         return $"{GetCommandName()}(0x{Target:X}, 0x{MessageHash:X8})";
     }
+
+    public override object Clone()
+    {
+        var result = new PostMessageToSound(default, default);
+
+        result.InternalClone(this);
+
+        this.Target = result.Target;
+
+        return result;
+    }
 }

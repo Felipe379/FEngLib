@@ -61,7 +61,7 @@ public class ObjectDataChunk : FrontendObjectChunk
             case ObjectReferenceTag objectReferenceTag:
                 ProcessObjectReferenceTag(package, frontendObject, objectReferenceTag);
                 break;
-            case ImageInfoTag imageInfoTag when frontendObject is IImage<ImageData> frontendImage:
+            case ImageInfoTag imageInfoTag when frontendObject is IImage<BaseImageData> frontendImage:
                 ProcessImageInfoTag(frontendImage, imageInfoTag);
                 break;
             case ObjectParentTag objectParentTag:
@@ -154,7 +154,7 @@ public class ObjectDataChunk : FrontendObjectChunk
         return newInstance;
     }
 
-    private void ProcessImageInfoTag(IImage<ImageData> image, ImageInfoTag imageInfoTag)
+    private void ProcessImageInfoTag(IImage<BaseImageData> image, ImageInfoTag imageInfoTag)
     {
         image.ImageFlags = imageInfoTag.ImageFlags;
     }

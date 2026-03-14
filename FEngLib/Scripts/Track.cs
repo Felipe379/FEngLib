@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -28,7 +29,7 @@ public enum TrackInterpolationMethod : byte
     MoveToSpline = 0x4,
 }
 
-public interface ITrack
+public interface ITrack : ICloneable
 {
     public TrackInterpolationMethod InterpType { get; set; }
     public byte InterpAction { get; set; }
@@ -45,6 +46,15 @@ public interface ITrack<TValue> : ITrack where TValue : struct
 
 public abstract class Track : ITrack
 {
+    protected void InternalClone(Track @object)
+    {
+        this.InterpType = @object.InterpType;
+        this.InterpAction = @object.InterpAction;
+        this.Length = @object.Length;
+    }
+
+    public abstract object Clone();
+
     public TrackInterpolationMethod InterpType { get; set; }
     public byte InterpAction { get; set; }
     public uint Length { get; set; }
@@ -126,6 +136,15 @@ public abstract class Track<TValue> : Track, ITrack<TValue> where TValue : struc
 
 public class Vector2Track : Track<Vector2>
 {
+    public override object Clone()
+    {
+        var result = new Vector2Track();
+
+        result.InternalClone(this);
+
+        return result;
+    }
+
     public override TrackParamType GetParamType()
     {
         return TrackParamType.Vector2;
@@ -149,6 +168,16 @@ public class Vector2Track : Track<Vector2>
 
 public class Vector3Track : Track<Vector3>
 {
+
+    public override object Clone()
+    {
+        var result = new Vector3Track();
+
+        result.InternalClone(this);
+
+        return result;
+    }
+
     public override TrackParamType GetParamType()
     {
         return TrackParamType.Vector3;
@@ -172,6 +201,15 @@ public class Vector3Track : Track<Vector3>
 
 public class QuaternionTrack : Track<Quaternion>
 {
+    public override object Clone()
+    {
+        var result = new QuaternionTrack();
+
+        result.InternalClone(this);
+
+        return result;
+    }
+
     public override TrackParamType GetParamType()
     {
         return TrackParamType.Quaternion;
@@ -195,6 +233,15 @@ public class QuaternionTrack : Track<Quaternion>
 
 public class ColorTrack : Track<Color4>
 {
+    public override object Clone()
+    {
+        var result = new ColorTrack();
+
+        result.InternalClone(this);
+
+        return result;
+    }
+
     public override TrackParamType GetParamType()
     {
         return TrackParamType.Color;

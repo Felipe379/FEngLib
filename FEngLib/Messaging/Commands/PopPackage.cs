@@ -11,4 +11,13 @@ public class PopPackage : NonParameterizedCommand
     {
         return "PopPackage";
     }
+
+    public override object Clone()
+    {
+        var result = new PopPackage();
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

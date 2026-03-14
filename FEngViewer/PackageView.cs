@@ -489,7 +489,7 @@ public partial class PackageView : Form
     private void OpenFileMenuItem_Click(object sender, EventArgs e)
     {
         var ofd = new OpenFileDialog();
-        ofd.Filter = "FNG Files (*.fng)|*.fng|All files (*.*)|*.*";
+        ofd.Filter = "FNG Files (*.fng, *.bin)|*.fng;*.bin|All files (*.*)|*.*";
         ofd.CheckFileExists = true;
         if (ofd.ShowDialog() == DialogResult.OK)
         {
@@ -527,7 +527,7 @@ public partial class PackageView : Form
     private void SaveFileMenuItem_Click(object sender, EventArgs e)
     {
         var sfd = new SaveFileDialog();
-        sfd.Filter = "FNG Files (*.fng)|*.fng|All files (*.*)|*.*";
+        sfd.Filter = "FNG Files (*.fng, *.bin)|*.fng;*.bin|All files (*.*)|*.*";
         sfd.OverwritePrompt = true;
         if (sfd.ShowDialog() == DialogResult.OK)
         {

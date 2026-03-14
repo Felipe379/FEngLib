@@ -9,6 +9,11 @@ public class MessageTargetListTag : Tag
 {
     public MessageTargets Targets { get; private set; }
 
+    public override object Clone()
+    {
+        return new MessageTargetListTag() { Targets = this.Targets?.Clone() as MessageTargets };
+    }
+
     public override void Read(BinaryReader br, ushort id,
         ushort length)
     {

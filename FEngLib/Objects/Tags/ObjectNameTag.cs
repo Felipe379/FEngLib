@@ -12,6 +12,19 @@ public class ObjectNameTag : ObjectTag
     public string Name { get; set; }
     public uint NameHash { get; set; }
 
+
+    public override object Clone()
+    {
+        var result = new ObjectNameTag(null);
+
+        result.InternalClone(this);
+
+        result.Name = this.Name;
+        result.NameHash = this.NameHash;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br,
         ushort id,
         ushort length)

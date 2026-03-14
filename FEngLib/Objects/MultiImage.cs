@@ -15,6 +15,25 @@ public sealed class MultiImageData : BaseImageData
     public Vector2 BottomRight3 { get; set; }
     public Vector3 PivotRotation { get; set; }
 
+    public override object Clone()
+    {
+        var result = new MultiImageData();
+
+        result.InternalClone(this);
+
+        result.TopLeft1 = this.TopLeft1;
+        result.TopLeft2 = this.TopLeft2;
+        result.TopLeft3 = this.TopLeft3;
+
+        result.BottomRight1 = this.BottomRight1;
+        result.BottomRight2 = this.BottomRight2;
+        result.BottomRight3 = this.BottomRight3;
+
+        result.PivotRotation = this.PivotRotation;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br)
     {
         base.Read(br);
@@ -58,12 +77,37 @@ public sealed class MultiImageScript : BaseImageScript, IScript<MultiImageScript
     {
         RemoveTrackInternal(id);
     }
+
+    public override object Clone()
+    {
+        var result = new MultiImageScript();
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }
 
 public sealed class MultiImage : BaseImage<MultiImageData, MultiImageScript>
 {
     public MultiImage(MultiImageData data) : base(data)
     {
+    }
+
+    public override object Clone()
+    {
+        var result = new MultiImage(null);
+
+        result.InternalClone(this);
+
+        result.Texture1 = this.Texture1;
+        result.TextureFlags1 = this.TextureFlags1;
+        result.Texture2 = this.Texture2;
+        result.TextureFlags2 = this.TextureFlags2;
+        result.Texture3 = this.Texture3;
+        result.TextureFlags3 = this.TextureFlags3;
+
+        return result;
     }
 
     public uint Texture1 { get; set; }

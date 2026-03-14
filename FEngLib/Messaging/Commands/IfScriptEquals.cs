@@ -15,4 +15,13 @@ public class IfScriptEquals : ScriptCommand
     {
         return "IfScriptEquals";
     }
+
+    public override object Clone()
+    {
+        var result = new IfScriptEquals(default);
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

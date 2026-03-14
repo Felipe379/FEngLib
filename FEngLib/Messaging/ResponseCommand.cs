@@ -10,13 +10,15 @@ namespace FEngLib.Messaging;
 //    public uint Target { get; set; }
 //}
 
-public abstract class ResponseCommand
+public abstract class ResponseCommand : ICloneable
 {
     //public abstract uint Id { get; }
 
     public abstract uint GetId();
     public abstract string GetCommandName();
     public abstract override string ToString();
+
+    public abstract object Clone();
 }
 
 public interface ITargetedCommand
@@ -61,6 +63,11 @@ public abstract class PackageCommand : ResponseCommand, IStringCommand
         var escapedPkgName = PackageName.Replace(@"\", @"\\");
         return $"{GetCommandName()}(\"{escapedPkgName}\")";
     }
+
+    public void InternalClone(PackageCommand @object)
+    {
+        this.PackageName = @object.PackageName;
+    }
 }
 
 public abstract class MessageCommand : ResponseCommand, IIntegerCommand
@@ -80,6 +87,11 @@ public abstract class MessageCommand : ResponseCommand, IIntegerCommand
     public void SetParameter(uint parameter)
     {
         MessageHash = parameter;
+    }
+
+    public void InternalClone(MessageCommand @object)
+    {
+        this.MessageHash = @object.MessageHash;
     }
 }
 
@@ -106,6 +118,11 @@ public abstract class ScriptCommand : ResponseCommand, IIntegerCommand
     {
         return $"{GetCommandName()}(0x{ScriptHash:X})";
     }
+
+    public void InternalClone(ScriptCommand @object)
+    {
+        this.ScriptHash = @object.ScriptHash;
+    }
 }
 
 public abstract class ObjectCommand : ResponseCommand, IIntegerCommand
@@ -131,6 +148,11 @@ public abstract class ObjectCommand : ResponseCommand, IIntegerCommand
     {
         return $"{GetCommandName()}(0x{ObjectGuid:X})";
     }
+
+    public void InternalClone(ObjectCommand @object)
+    {
+        ObjectGuid = @object.ObjectGuid;
+    }
 }
 
 public abstract class NonParameterizedCommand : ResponseCommand
@@ -138,5 +160,9 @@ public abstract class NonParameterizedCommand : ResponseCommand
     public override string ToString()
     {
         return $"{GetCommandName()}()";
+    }
+
+    public void InternalClone(NonParameterizedCommand @object)
+    {
     }
 }

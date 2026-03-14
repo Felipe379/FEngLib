@@ -11,6 +11,18 @@ public class StringBufferTextTag : ObjectTag
 
     public string Value { get; set; }
 
+
+    public override object Clone()
+    {
+        var result = new StringBufferTextTag(null);
+
+        result.InternalClone(this);
+
+        result.Value = this.Value;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br,
         ushort id,
         ushort length)

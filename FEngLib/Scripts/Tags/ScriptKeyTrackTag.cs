@@ -18,6 +18,21 @@ public class ScriptKeyTrackTag : ScriptTag
     public byte InterpAction { get; set; }
     public uint Length { get; set; }
 
+    public override object Clone()
+    {
+        var result = new ScriptKeyTrackTag(null, null);
+
+        result.InternalClone(this);
+
+        result.ParamType = this.ParamType;
+        result.ParamSize = this.ParamSize;
+        result.InterpType = this.InterpType;
+        result.InterpAction = this.InterpAction;
+        result.Length = this.Length;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br,
         ushort id,
         ushort length)

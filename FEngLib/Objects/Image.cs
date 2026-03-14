@@ -10,6 +10,12 @@ public abstract class BaseImageData : BaseObjectData
     public Vector2 UpperLeft { get; set; }
     public Vector2 LowerRight { get; set; }
 
+    protected void InternalClone(BaseImageData @object)
+    {
+        this.UpperLeft = @object.UpperLeft;
+        this.LowerRight = @object.LowerRight;
+    }
+
     public override void Read(BinaryReader br)
     {
         base.Read(br);
@@ -28,7 +34,16 @@ public abstract class BaseImageData : BaseObjectData
 }
 
 public sealed class ImageData : BaseImageData
-{}
+{
+    public override object Clone()
+    {
+        var result = new ImageData();
+
+        result.InternalClone(this);
+
+        return result;
+    }
+}
 
 //public class ImageScriptTracks : BaseScriptTracks
 //{
@@ -55,7 +70,16 @@ public abstract class BaseImageScript : Script, IScript<BaseImageScript>
 }
 
 public sealed class ImageScript : BaseImageScript
-{}
+{
+    public override object Clone()
+    {
+        var result = new ImageScript();
+
+        result.InternalClone(this);
+
+        return result;
+    }
+}
 
 public class Image : BaseImage<ImageData, ImageScript>
 {
@@ -66,6 +90,15 @@ public class Image : BaseImage<ImageData, ImageScript>
     public override ObjectType GetObjectType()
     {
         return ObjectType.Image;
+    }
+
+    public override object Clone()
+    {
+        var result = new Image(null);
+
+        result.InternalClone(this);
+
+        return result;
     }
 }
 

@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace FEngLib.Messaging;
 
-public class MessageResponse
+public class MessageResponse : ICloneable
 {
     public MessageResponse()
     {
@@ -17,4 +18,19 @@ public class MessageResponse
 
     public uint Id { get; set; }
     public List<ResponseCommand> Responses { get; set; }
+
+
+    public object Clone()
+    {
+        var result = new MessageResponse();
+
+        result.Id = this.Id;
+
+        foreach (var response in this.Responses)
+        {
+            result.Responses.Add(response?.Clone() as ResponseCommand);
+        }
+
+        return result;
+    }
 }

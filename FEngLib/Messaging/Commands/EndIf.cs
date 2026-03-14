@@ -16,4 +16,13 @@ public class EndIf : NonParameterizedCommand
     {
         return GetCommandName();
     }
+
+    public override object Clone()
+    {
+        var result = new EndIf();
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

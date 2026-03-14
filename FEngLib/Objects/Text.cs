@@ -26,6 +26,23 @@ public class Text : BaseObject
     public int Leading { get; set; }
     public uint MaxWidth { get; set; }
 
+    public override object Clone()
+    {
+        var result = new Text(null);
+
+        result.InternalClone(this);
+
+        result.BufferLength = this.BufferLength;
+        result.Value = this.Value;
+        result.Label = this.Label;
+        result.Hash = this.Hash;
+        result.Formatting = this.Formatting;
+        result.Leading = this.Leading;
+        result.MaxWidth = this.MaxWidth;
+
+        return result;
+    }
+
     public override ObjectType GetObjectType()
     {
         return ObjectType.String;

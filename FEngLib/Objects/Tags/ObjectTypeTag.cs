@@ -11,6 +11,17 @@ public class ObjectTypeTag : ObjectTag
 
     public ObjectType Type { get; set; }
 
+    public override object Clone()
+    {
+        var result = new ObjectTypeTag(null);
+
+        result.InternalClone(this);
+
+        result.Type = this.Type;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br,
         ushort id,
         ushort length)

@@ -14,6 +14,20 @@ public class ScriptEventsTag : ScriptTag
 
     public List<Event> Events { get; set; }
 
+    public override object Clone()
+    {
+        var result = new ScriptEventsTag(null, null);
+
+        result.InternalClone(this);
+
+        foreach (var @event in this.Events)
+        {
+            result.Events.Add(@event?.Clone() as Event);
+        }
+
+        return result;
+    }
+
     public override void Read(BinaryReader br,
         ushort id,
         ushort length)

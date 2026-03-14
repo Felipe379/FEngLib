@@ -10,6 +10,18 @@ public class StringBufferLeadingTag : ObjectTag
 
     public int Leading { get; set; }
 
+
+    public override object Clone()
+    {
+        var result = new StringBufferLeadingTag(null);
+
+        result.InternalClone(this);
+
+        result.Leading = this.Leading;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br,
         ushort id,
         ushort length)

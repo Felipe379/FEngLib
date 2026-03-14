@@ -15,4 +15,13 @@ public class SetActiveButton : ObjectCommand
     {
         return "SetActiveButton";
     }
+
+    public override object Clone()
+    {
+        var result = new SetActiveButton(default);
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

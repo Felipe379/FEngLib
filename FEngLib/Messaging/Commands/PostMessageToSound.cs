@@ -1,4 +1,6 @@
-﻿namespace FEngLib.Messaging.Commands;
+﻿using System;
+
+namespace FEngLib.Messaging.Commands;
 
 public class PostMessageToSound : MessageCommand, ITargetedCommand
 {
@@ -26,5 +28,16 @@ public class PostMessageToSound : MessageCommand, ITargetedCommand
     {
         get;
         set;
+    }
+
+    public override object Clone()
+    {
+        var result = new PostMessageToSound(default, default);
+
+        result.InternalClone(this);
+
+        result.Target = this.Target;
+
+        return result;
     }
 }

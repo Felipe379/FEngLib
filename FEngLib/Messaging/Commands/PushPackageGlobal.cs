@@ -15,4 +15,14 @@ public class PushPackageGlobal : PackageCommand
     {
         return "PushPackageGlobal";
     }
+
+
+    public override object Clone()
+    {
+        var result = new PushPackageGlobal(default);
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

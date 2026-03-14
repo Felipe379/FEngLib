@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace FEngLib.Packages;
 
-public class MessageTargets
+public class MessageTargets : ICloneable
 {
     public MessageTargets()
     {
@@ -13,6 +14,17 @@ public class MessageTargets
     {
         MsgId = msgId;
         Targets = targets;
+    }
+
+    public object Clone()
+    {
+        var result = new MessageTargets();
+
+        result.MsgId = this.MsgId;
+
+        result.Targets.AddRange(this.Targets);
+
+        return result;
     }
 
     public uint MsgId { get; set; }

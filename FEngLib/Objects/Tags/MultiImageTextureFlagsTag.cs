@@ -9,6 +9,15 @@ public class MultiImageTextureFlagsTag : ObjectTag
     {
     }
 
+    public override object Clone()
+    {
+        var result = new MultiImageTextureFlagsTag(null);
+
+        result.InternalClone(this);
+
+        return result;
+    }
+
     public override void Read(BinaryReader br, ushort id,
         ushort length)
     {

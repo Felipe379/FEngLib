@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
@@ -15,13 +16,24 @@ namespace FEngLib.Objects;
 /// For objects where the ObjD chunk contains extra data (e.g. images),
 /// inherit from this class to represent the extra values in that chunk. 
 /// </summary>
-public abstract class BaseObjectData : IBinaryAccess
+public abstract class BaseObjectData : IBinaryAccess, ICloneable
 {
     public Color4 Color { get; set; }
     public Vector3 Pivot { get; set; }
     public Vector3 Position { get; set; }
     public Quaternion Rotation { get; set; }
     public Vector3 Size { get; set; }
+
+    public abstract object Clone();
+
+    protected void InternalClone(BaseObjectData @object)
+    {
+        this.Color = @object.Color;
+        this.Pivot = @object.Pivot;
+        this.Position = @object.Position;
+        this.Rotation = @object.Rotation;
+        this.Size = @object.Size;
+    }
 
     public virtual void Read(BinaryReader br)
     {
@@ -73,7 +85,7 @@ public interface IObject<out TData> : IScriptedObject, IHaveMessageResponses whe
     }
 }
 
-public interface IScriptedObject
+public interface IScriptedObject : ICloneable
 {
     IEnumerable<Script> GetScripts();
 
@@ -102,12 +114,26 @@ public interface IScriptedObject<out TScript> : IScriptedObject where TScript : 
 /// </summary>
 public sealed class CommonScript : Script
 {
+    public override object Clone()
+    {
+        var result = new CommonScript();
+        result.InternalClone(this);
+        return result;
+    }
 }
 
 /// <summary>
 /// An object data class containing just the standard parameters.
 /// </summary>
-public sealed class CommonObjectData : BaseObjectData {}
+public sealed class CommonObjectData : BaseObjectData
+{
+    public override object Clone()
+    {
+        var result = new CommonObjectData();
+        result.InternalClone(this);
+        return result;
+    }
+}
 
 /// <summary>
 /// Base class for objects that do not have any additional parameters.
@@ -135,6 +161,37 @@ public abstract class BaseObject<TData, TScript> : IObject<TData>, IScriptedObje
         Scripts = new List<TScript>();
         MessageResponses = new List<MessageResponse>();
         Data = data;
+    }
+
+    public abstract object Clone();
+
+    protected void InternalClone(BaseObject<TData, TScript> @object)
+    {
+        foreach (var script in @object.Scripts)
+        {
+            this.Scripts.Add(script?.Clone() as TScript);
+        }
+
+        this.Data = @object.Data?.Clone() as TData;
+        this.Flags = @object.Flags;
+        this.ResourceRequest = @object.ResourceRequest;
+        //We should not clone ResourceRequest as they are universal. Instead, we should just copy the reference.
+        //this.ResourceRequest = @object.ResourceRequest?.Clone() as ResourceRequest;
+
+        if ((this.ResourceRequest is null) != (@object.ResourceRequest is null))
+        {
+            Debugger.Break();
+        }
+
+        this.Name = @object.Name;
+        this.NameHash = @object.NameHash;
+        this.Guid = @object.Guid;
+        this.Parent = @object.Parent?.Clone() as Group;
+
+        foreach (var response in @object.MessageResponses)
+        {
+            this.MessageResponses.Add(response?.Clone() as MessageResponse);
+        }
     }
 
     public List<TScript> Scripts { get; }

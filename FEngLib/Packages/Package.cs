@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FEngLib.Messaging;
 using FEngLib.Objects;
 
@@ -24,6 +25,36 @@ public class Package : IHaveMessageResponses
     public List<MessageDefinition> MessageDefinitions { get; }
     public List<MessageResponse> MessageResponses { get; }
 
+    public object Clone()
+    {
+        var result = new Package();
+
+        result.Name = this.Name;
+        result.Filename = this.Filename;
+
+        foreach (var resource in this.ResourceRequests)
+        {
+            result.ResourceRequests.Add(resource?.Clone() as ResourceRequest);
+        }
+
+        foreach (var @object in this.Objects)
+        {
+            result.Objects.Add(@object?.Clone() as IObject<BaseObjectData>);
+        }
+
+        foreach (var definition in this.MessageDefinitions)
+        {
+            result.MessageDefinitions.Add(definition?.Clone() as MessageDefinition);
+        }
+
+        foreach (var response in this.MessageResponses)
+        {
+            result.MessageResponses.Add(response?.Clone() as MessageResponse);
+        }
+
+        return result;
+    }
+
     public IObject<BaseObjectData> FindObjectByGuid(uint guid)
     {
         return Objects.Find(o => o.Guid == guid) ??
@@ -36,9 +67,18 @@ public class Package : IHaveMessageResponses
                throw new KeyNotFoundException($"Could not find object with hash: 0x{hash:X8}");
     }
 
-    public class MessageDefinition
+    public class MessageDefinition : ICloneable
     {
         public string Name { get; set; }
         public string Category { get; set; }
+
+        public object Clone()
+        {
+            return new MessageDefinition
+            {
+                Name = this.Name,
+                Category = this.Category
+            };
+        }
     }
 }

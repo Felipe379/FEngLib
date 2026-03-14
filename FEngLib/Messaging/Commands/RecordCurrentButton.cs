@@ -16,4 +16,13 @@ public class RecordCurrentButton : NonParameterizedCommand
     {
         return $"{GetCommandName()}()";
     }
+
+    public override object Clone()
+    {
+        var result = new RecordCurrentButton();
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

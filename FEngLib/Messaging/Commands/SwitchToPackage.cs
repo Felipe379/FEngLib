@@ -15,4 +15,13 @@ public class SwitchToPackage : PackageCommand
     {
         return "SwitchToPackage";
     }
+
+    public override object Clone()
+    {
+        var result = new SwitchToPackage(null);
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

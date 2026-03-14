@@ -12,6 +12,20 @@ public sealed class ColoredImageData : BaseImageData
     public Color4 BottomRight { get; set; }
     public Color4 BottomLeft { get; set; }
 
+    public override object Clone()
+    {
+        var result = new ColoredImageData();
+
+        result.InternalClone(this);
+
+        result.TopLeft = this.TopLeft;
+        result.TopRight = this.TopRight;
+        result.BottomRight = this.BottomRight;
+        result.BottomLeft = this.BottomLeft;
+
+        return result;
+    }
+
     public override void Read(BinaryReader br)
     {
         base.Read(br);
@@ -47,6 +61,15 @@ public sealed class ColoredImageScript : BaseImageScript, IScript<ColoredImageSc
     {
         RemoveTrackInternal(id);
     }
+
+    public override object Clone()
+    {
+        var result = new ColoredImageScript();
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }
 
 public sealed class ColoredImage : BaseImage<ColoredImageData, ColoredImageScript>
@@ -63,5 +86,14 @@ public sealed class ColoredImage : BaseImage<ColoredImageData, ColoredImageScrip
     public override void InitializeData()
     {
         Data = new ColoredImageData();
+    }
+
+    public override object Clone()
+    {
+        var result = new ColoredImage(null);
+
+        result.InternalClone(this);
+
+        return result;
     }
 }

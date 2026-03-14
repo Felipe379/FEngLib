@@ -20,4 +20,14 @@ public class SetScript : ScriptCommand
     {
         return $"{GetCommandName()}(0x{ScriptHash:X8})";
     }
+
+
+    public override object Clone()
+    {
+        var result = new SetScript(default);
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

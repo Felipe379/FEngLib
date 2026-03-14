@@ -8,6 +8,18 @@ public class ObjectHashTag : ObjectTag
     {
     }
 
+
+    public override object Clone()
+    {
+        var result = new ObjectHashTag(null);
+
+        result.InternalClone(this);
+
+        result.Hash = this.Hash;
+
+        return result;
+    }
+
     public uint Hash { get; set; }
 
     public override void Read(BinaryReader br,

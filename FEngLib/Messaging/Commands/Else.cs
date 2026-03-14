@@ -16,4 +16,13 @@ public class Else : NonParameterizedCommand
     {
         return GetCommandName();
     }
+
+    public override object Clone()
+    {
+        var result = new Else();
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }

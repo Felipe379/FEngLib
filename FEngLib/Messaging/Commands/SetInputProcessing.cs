@@ -1,4 +1,6 @@
-﻿namespace FEngLib.Messaging.Commands;
+﻿using System;
+
+namespace FEngLib.Messaging.Commands;
 
 public class SetInputProcessing : ResponseCommand, IIntegerCommand
 {
@@ -36,5 +38,10 @@ public class SetInputProcessing : ResponseCommand, IIntegerCommand
     public void SetParameter(uint parameter)
     {
         Enabled = parameter == 1;
+    }
+
+    public override object Clone()
+    {
+        return new SetInputProcessing(Enabled);
     }
 }

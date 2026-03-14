@@ -25,7 +25,7 @@ public interface IScript<TSelf>/* : IScript*/ where TSelf : Script, IScript<TSel
     void RemoveTrack<TTrackValue>(TrackId<TSelf, TTrackValue> id) where TTrackValue : struct;
 }
 
-public abstract class Script : IScript<Script>
+public abstract class Script : IScript<Script>, ICloneable
 {
     private Dictionary<TrackId, Track> _tracks;
 
@@ -36,6 +36,22 @@ public abstract class Script : IScript<Script>
         _tracks = new Dictionary<TrackId, Track>();
         // Tracks = new List<Track>();
         Events = new List<Event>();
+    }
+
+    public abstract object Clone();
+
+    protected void InternalClone(Script script)
+    {
+        this.Name = script.Name;
+        this.Id = script.Id;
+        this.ChainedId = script.ChainedId;
+        this.Length = script.Length;
+        this.Flags = script.Flags;
+
+        foreach (var @event in script.Events)
+        {
+            this.Events.Add(@event?.Clone() as Event);
+        }
     }
 
     public string Name { get; set; }

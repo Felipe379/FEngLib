@@ -15,4 +15,13 @@ public class RecallRecordedButton : ObjectCommand
     {
         return "RecallRecordedButton";
     }
+
+    public override object Clone()
+    {
+        var result = new RecallRecordedButton(default);
+
+        result.InternalClone(this);
+
+        return result;
+    }
 }
