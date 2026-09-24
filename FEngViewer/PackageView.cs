@@ -670,7 +670,6 @@ public partial class PackageView : Form
 		script.Id = objectInput.NameHash.Value;
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objectData));
-
 	}
 
 	private void backgroundColorMenuItem_Click(object sender, EventArgs e)
@@ -744,6 +743,59 @@ public partial class PackageView : Form
 		AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(newObject));
+	}
+
+	private void duplicateUntilToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		if (treeView1.SelectedNode?.Tag is not RenderTreeNode node)
+			return;
+
+		var selectedObject = node.GetObject();
+
+		if (selectedObject is null || string.IsNullOrWhiteSpace(selectedObject.Name))
+			return;
+
+		var index = selectedObject.Name.Length;
+		while (index > 0 && char.IsDigit(selectedObject.Name[index - 1]))
+			index--;
+
+		var currentObjectName = selectedObject.Name[..index];
+		var currentObjectNumber = selectedObject.Name[index..];
+
+		var objectInput = _packageViewExtensions.ObjectInput(currentObjectNumber, false);
+
+		if (!objectInput.NameHash.HasValue)
+			return;
+
+		if (!int.TryParse(objectInput.Name, out var untilNumber))
+			return;
+
+		var objects = new List<IObject<ObjectData>>();
+
+		var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
+		var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
+
+		var initialNumber = index == selectedObject.Name.Length ? 0 : int.Parse(currentObjectNumber);
+
+		for (int i = untilNumber; i > initialNumber; i--)
+		{
+			var newObject = _packageViewExtensions.CopyObject(selectedObject, selectedObject.Parent, position, currentObjectName, currentObjectNumber, i);
+
+			if (newObject is null)
+				continue;
+
+			objects.Add(newObject);
+		}
+
+		if (!objects.Any())
+			return;
+
+		foreach (var newObject in objects)
+		{
+			AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
+		}
+
+		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objects.Last()));
 	}
 
 	private void cutToolStripMenuItem_Click(object sender, EventArgs e)

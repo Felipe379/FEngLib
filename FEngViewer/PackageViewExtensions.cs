@@ -27,17 +27,22 @@ namespace FEngViewer
 		public static string GetObjectTreeKey(IObject<ObjectData> objectData) => objectData != null ? $"{GetObjectText(objectData)}:{objectData.Guid:X}" : null;
 		public static string GetObjectText(IObject<ObjectData> objectData) => objectData != null ? $"{objectData.Name ?? "0x" + objectData.NameHash.ToString("X")}" : null;
 
-		public IObject<ObjectData> CopyObject(IObject<ObjectData> existingObject, IObject<ObjectData> selectedObject, int? index = null)
+		public IObject<ObjectData> CopyObject(IObject<ObjectData> existingObject, IObject<ObjectData> selectedObject, int? index = null, string objectName = null, string objectNumber = null, int? objectCount = null)
 		{
 			if (existingObject is null)
 				return null;
 
-			var objectInput = ObjectInput(existingObject.Name, existingObject is Group);
+			var fullObjectName = $"{objectName}{objectCount}";
+			var fullOjbectNameExists = !string.IsNullOrWhiteSpace(fullObjectName);
+
+			var objectInput = fullOjbectNameExists
+				? (fullObjectName, fullObjectName.BinHash(), existingObject is Group)
+				: ObjectInput(existingObject.Name, existingObject is Group);
 
 			if (!objectInput.NameHash.HasValue)
 				return null;
 
-			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, existingObject))
+			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, existingObject, null, fullOjbectNameExists))
 				return null;
 
 			var parent = selectedObject;
@@ -52,14 +57,13 @@ namespace FEngViewer
 
 			if (objectInput.CreateChildren && newObject is Group)
 			{
-				newObjectDictionary = CreateChildren(existingObject, newObject, validIndex);
+				newObjectDictionary = CreateChildren(existingObject, newObject, validIndex, objectNumber, objectCount);
 			}
 
 			newObjectDictionary.Add(validIndex, newObject);
 
 			foreach (var pair in newObjectDictionary.OrderBy(p => p.Key))
 			{
-
 				_packageView._currentPackage.Objects.Insert(pair.Key, FixClonedObject(pair.Value));
 			}
 
@@ -94,19 +98,43 @@ namespace FEngViewer
 			return newObject;
 		}
 
-		public Dictionary<int, IObject<ObjectData>> CreateChildren(IObject<ObjectData> objectData, IObject<ObjectData> newObjectData, int index)
+		public static (string Name, string Number) SplitTrailingNumber(string input)
+		{
+			int index = input.Length;
+
+			while (index > 0 && char.IsDigit(input[index - 1]))
+				index--;
+
+			return index == input.Length
+				? (input, string.Empty)
+				: (input[..index], input[index..]);
+		}
+
+		public Dictionary<int, IObject<ObjectData>> CreateChildren(IObject<ObjectData> objectData, IObject<ObjectData> newObjectData, int index, string objectNumber = null, int? objectCount = null)
 		{
 			var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent?.NameHash == objectData.NameHash && x.Parent?.Guid == objectData.Guid);
 			var newChildren = new Dictionary<int, IObject<ObjectData>>();
 			foreach (var child in children)
 			{
 				index++;
-				var newChild = CreateNewObject(child, newObjectData, child.Name, child.NameHash);
+				var childName = child.Name;
+				var childNameHash = child.NameHash;
+				if (!string.IsNullOrWhiteSpace(child.Name) && objectCount.HasValue)
+				{
+					var splitName = SplitTrailingNumber(child.Name);
+					if (splitName.Number == objectNumber)
+					{
+						childName = $"{splitName.Name}{objectCount}";
+						childNameHash = childName.BinHash();
+					}
+				}
+
+				var newChild = CreateNewObject(child, newObjectData, childName, childNameHash);
 				newChildren.Add(index, newChild);
 
 				if (newChild is Group)
 				{
-					var groupChildren = CreateChildren(child, newChild, index);
+					var groupChildren = CreateChildren(child, newChild, index, objectNumber, objectCount);
 					foreach (var groupChild in groupChildren)
 						newChildren.Add(groupChild.Key, groupChild.Value);
 					index = groupChildren.Keys.Max();
@@ -222,7 +250,7 @@ namespace FEngViewer
 			return (input, inputHash, inputForm.CreateChildren);
 		}
 
-		public bool NameAlreadyExists(string name, uint hash, IObject<ObjectData> data, object tag = null)
+		public bool NameAlreadyExists(string name, uint hash, IObject<ObjectData> data, object tag = null, bool skipExistingNames = false)
 		{
 			if (tag is Script collection)
 			{
@@ -230,6 +258,9 @@ namespace FEngViewer
 
 				if (scripts.Any(s => s.Id == hash || (!string.IsNullOrEmpty(name) && s.Name == name)))
 				{
+					if (skipExistingNames)
+						return true;
+
 					var result = MessageBox.Show($"A script with the name {name} or hash 0x{hash:x8} already exists.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 					return true;
 				}
@@ -238,6 +269,9 @@ namespace FEngViewer
 			{
 				if (_packageView._currentPackage.Objects.Any(x => x.NameHash == hash || (!string.IsNullOrEmpty(name) && x.Name == name)))
 				{
+					if (skipExistingNames)
+						return true;
+
 					var result = MessageBox.Show($"An object with the name {name} or hash 0x{hash:x8} already exists. Do you want to create it anyway?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 					return result != DialogResult.Yes;
 				}

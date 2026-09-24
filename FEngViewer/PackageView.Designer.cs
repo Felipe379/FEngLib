@@ -69,6 +69,7 @@ namespace FEngViewer
 			this.LblItemIndex = new Label();
 			this.viewerContextMenu = new ContextMenuStrip(this.components);
 			this.backgroundColorMenuItem = new ToolStripMenuItem();
+			this.duplicateUntilToolStripMenuItem = new ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.objectContextMenu.SuspendLayout();
 			this.scriptContextMenu.SuspendLayout();
@@ -150,9 +151,9 @@ namespace FEngViewer
 			// objectContextMenu
 			// 
 			this.objectContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
-			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.renameToolStripMenuItem, this.moveUpToolStripMenuItem, this.moveDownToolStripMenuItem, this.duplicateToolStripMenuItem, this.copyToolStripMenuItem, this.cutToolStripMenuItem, this.pasteToolStripMenuItem, this.deleteToolStripMenuItem, this.orderGroupToolStripMenu, this.orderGroupChildsToolStripMenu });
+			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.renameToolStripMenuItem, this.moveUpToolStripMenuItem, this.moveDownToolStripMenuItem, this.duplicateToolStripMenuItem, this.duplicateUntilToolStripMenuItem, this.copyToolStripMenuItem, this.cutToolStripMenuItem, this.pasteToolStripMenuItem, this.deleteToolStripMenuItem, this.orderGroupToolStripMenu, this.orderGroupChildsToolStripMenu });
 			this.objectContextMenu.Name = "objectContextMenu";
-			this.objectContextMenu.Size = new System.Drawing.Size(209, 246);
+			this.objectContextMenu.Size = new System.Drawing.Size(209, 268);
 			// 
 			// renameToolStripMenuItem
 			// 
@@ -418,6 +419,13 @@ namespace FEngViewer
 			this.backgroundColorMenuItem.Text = "Background color";
 			this.backgroundColorMenuItem.Click += this.backgroundColorMenuItem_Click;
 			// 
+			// duplicateUntilToolStripMenuItem
+			// 
+			this.duplicateUntilToolStripMenuItem.Name = "duplicateUntilToolStripMenuItem";
+			this.duplicateUntilToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
+			this.duplicateUntilToolStripMenuItem.Text = "Duplicate until...";
+			this.duplicateUntilToolStripMenuItem.Click += this.duplicateUntilToolStripMenuItem_Click;
+			// 
 			// PackageView
 			// 
 			this.AutoScaleMode = AutoScaleMode.Inherit;
@@ -484,5 +492,6 @@ namespace FEngViewer
 		private GroupBox groupBox1;
 		private Label LblChildsCount;
 		private Label LblItemIndex;
+		private ToolStripMenuItem duplicateUntilToolStripMenuItem;
 	}
 }
