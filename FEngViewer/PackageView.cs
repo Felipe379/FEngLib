@@ -532,6 +532,16 @@ public partial class PackageView : Form
 		}
 	}
 
+	private void CleanupAndSaveToolStripMenuItem_Click(object sender, EventArgs e)
+	{
+		foreach (var fngObject in _currentPackage.Objects.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
+		{
+			fngObject.Name = null;
+		}
+
+		SaveFileMenuItem_Click(sender, e);
+	}
+
 	private void ReloadFileMenuItem_Click(object sender, EventArgs e)
 	{
 		LoadFile();

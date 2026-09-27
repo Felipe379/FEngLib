@@ -32,7 +32,11 @@ namespace FEngViewer
 			if (existingObject is null)
 				return null;
 
-			var fullObjectName = $"{objectName}{objectCount}";
+			var fullObjectName = objectName;
+			var doesItEndWithANumber = !string.IsNullOrWhiteSpace(objectNumber);
+			if (doesItEndWithANumber)
+				fullObjectName += objectCount;
+
 			var fullOjbectNameExists = !string.IsNullOrWhiteSpace(fullObjectName);
 
 			var objectInput = fullOjbectNameExists
@@ -42,7 +46,7 @@ namespace FEngViewer
 			if (!objectInput.NameHash.HasValue)
 				return null;
 
-			if (NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, existingObject, null, fullOjbectNameExists))
+			if (doesItEndWithANumber && NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, existingObject, null, fullOjbectNameExists))
 				return null;
 
 			var parent = selectedObject;

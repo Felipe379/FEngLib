@@ -40,11 +40,13 @@ namespace FEngViewer
 			this.OpenFileMenuItem = new ToolStripMenuItem();
 			this.ReloadFileMenuItem = new ToolStripMenuItem();
 			this.SaveFileMenuItem = new ToolStripMenuItem();
+			this.cleanupAndSaveToolStripMenuItem = new ToolStripMenuItem();
 			this.objectContextMenu = new ContextMenuStrip(this.components);
 			this.renameToolStripMenuItem = new ToolStripMenuItem();
 			this.moveUpToolStripMenuItem = new ToolStripMenuItem();
 			this.moveDownToolStripMenuItem = new ToolStripMenuItem();
 			this.duplicateToolStripMenuItem = new ToolStripMenuItem();
+			this.duplicateUntilToolStripMenuItem = new ToolStripMenuItem();
 			this.copyToolStripMenuItem = new ToolStripMenuItem();
 			this.cutToolStripMenuItem = new ToolStripMenuItem();
 			this.pasteToolStripMenuItem = new ToolStripMenuItem();
@@ -69,7 +71,6 @@ namespace FEngViewer
 			this.LblItemIndex = new Label();
 			this.viewerContextMenu = new ContextMenuStrip(this.components);
 			this.backgroundColorMenuItem = new ToolStripMenuItem();
-			this.duplicateUntilToolStripMenuItem = new ToolStripMenuItem();
 			this.menuStrip1.SuspendLayout();
 			this.objectContextMenu.SuspendLayout();
 			this.scriptContextMenu.SuspendLayout();
@@ -119,7 +120,7 @@ namespace FEngViewer
 			// 
 			// FileMenuItem
 			// 
-			this.FileMenuItem.DropDownItems.AddRange(new ToolStripItem[] { this.OpenFileMenuItem, this.ReloadFileMenuItem, this.SaveFileMenuItem });
+			this.FileMenuItem.DropDownItems.AddRange(new ToolStripItem[] { this.OpenFileMenuItem, this.ReloadFileMenuItem, this.SaveFileMenuItem, this.cleanupAndSaveToolStripMenuItem });
 			this.FileMenuItem.Name = "FileMenuItem";
 			this.FileMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.FileMenuItem.Text = "File";
@@ -148,12 +149,19 @@ namespace FEngViewer
 			this.SaveFileMenuItem.Text = "Save";
 			this.SaveFileMenuItem.Click += this.SaveFileMenuItem_Click;
 			// 
+			// cleanupAndSaveToolStripMenuItem
+			// 
+			this.cleanupAndSaveToolStripMenuItem.Name = "cleanupAndSaveToolStripMenuItem";
+			this.cleanupAndSaveToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
+			this.cleanupAndSaveToolStripMenuItem.Text = "Cleanup and save";
+			this.cleanupAndSaveToolStripMenuItem.Click += this.CleanupAndSaveToolStripMenuItem_Click;
+			// 
 			// objectContextMenu
 			// 
 			this.objectContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
 			this.objectContextMenu.Items.AddRange(new ToolStripItem[] { this.renameToolStripMenuItem, this.moveUpToolStripMenuItem, this.moveDownToolStripMenuItem, this.duplicateToolStripMenuItem, this.duplicateUntilToolStripMenuItem, this.copyToolStripMenuItem, this.cutToolStripMenuItem, this.pasteToolStripMenuItem, this.deleteToolStripMenuItem, this.orderGroupToolStripMenu, this.orderGroupChildsToolStripMenu });
 			this.objectContextMenu.Name = "objectContextMenu";
-			this.objectContextMenu.Size = new System.Drawing.Size(209, 268);
+			this.objectContextMenu.Size = new System.Drawing.Size(209, 246);
 			// 
 			// renameToolStripMenuItem
 			// 
@@ -185,6 +193,13 @@ namespace FEngViewer
 			this.duplicateToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
 			this.duplicateToolStripMenuItem.Text = "Duplicate";
 			this.duplicateToolStripMenuItem.Click += this.duplicateToolStripMenuItem_Click;
+			// 
+			// duplicateUntilToolStripMenuItem
+			// 
+			this.duplicateUntilToolStripMenuItem.Name = "duplicateUntilToolStripMenuItem";
+			this.duplicateUntilToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
+			this.duplicateUntilToolStripMenuItem.Text = "Duplicate until...";
+			this.duplicateUntilToolStripMenuItem.Click += this.duplicateUntilToolStripMenuItem_Click;
 			// 
 			// copyToolStripMenuItem
 			// 
@@ -419,13 +434,6 @@ namespace FEngViewer
 			this.backgroundColorMenuItem.Text = "Background color";
 			this.backgroundColorMenuItem.Click += this.backgroundColorMenuItem_Click;
 			// 
-			// duplicateUntilToolStripMenuItem
-			// 
-			this.duplicateUntilToolStripMenuItem.Name = "duplicateUntilToolStripMenuItem";
-			this.duplicateUntilToolStripMenuItem.Size = new System.Drawing.Size(208, 22);
-			this.duplicateUntilToolStripMenuItem.Text = "Duplicate until...";
-			this.duplicateUntilToolStripMenuItem.Click += this.duplicateUntilToolStripMenuItem_Click;
-			// 
 			// PackageView
 			// 
 			this.AutoScaleMode = AutoScaleMode.Inherit;
@@ -493,5 +501,6 @@ namespace FEngViewer
 		private Label LblChildsCount;
 		private Label LblItemIndex;
 		private ToolStripMenuItem duplicateUntilToolStripMenuItem;
+		private ToolStripMenuItem cleanupAndSaveToolStripMenuItem;
 	}
 }
