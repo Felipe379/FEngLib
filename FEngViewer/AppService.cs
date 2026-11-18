@@ -5,7 +5,6 @@ using FEngLib.Packages;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
 using FEngLib;
-using FEngLib.Objects;
 
 namespace FEngViewer;
 
@@ -58,7 +57,7 @@ public class AppService
 		CurrentFileLoaded = path;
 		IsJson = true;
 
-		var package = JsonConvert.DeserializeObject<Package>(File.ReadAllText(path), new JsonSerializerSettings
+		return _currentPackage = JsonConvert.DeserializeObject<Package>(File.ReadAllText(path), new JsonSerializerSettings
 		{
 			Formatting = Formatting.Indented,
 			Converters = new List<JsonConverter>
@@ -70,15 +69,6 @@ public class AppService
 			PreserveReferencesHandling = PreserveReferencesHandling.Objects,
 			NullValueHandling = NullValueHandling.Ignore
 		});
-
-		package.Objects.ForEach(o =>
-		{
-			o.Name = HashResolver.ResolveNameHash(o.Name, o.NameHash);
-			if (o.Type == ObjectType.String)
-				((Text)o).Label = HashResolver.ResolveNameHash(((Text)o).Label, ((Text)o).Hash);
-		});
-
-		return _currentPackage = package;
 	}
 
 	public Package ReloadFile()

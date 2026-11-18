@@ -43,11 +43,7 @@ public abstract class ScriptViewWrapper<TScript> where TScript : Script
 	public uint HashHex
 	{
 		get => WrappedScript.Id;
-		set
-		{
-			WrappedScript.Id = value;
-			WrappedScript.Name = HashResolver.ResolveNameHash(WrappedScript.Name, value);
-		}
+		set => SetId(value);
 	}
 
 	[Category("Meta")]
@@ -57,11 +53,14 @@ public abstract class ScriptViewWrapper<TScript> where TScript : Script
 	public uint HashDec
 	{
 		get => WrappedScript.Id;
-		set
-		{
-			WrappedScript.Id = value;
-			WrappedScript.Name = HashResolver.ResolveNameHash(WrappedScript.Name, value);
-		}
+		set => SetId(value);
+	}
+
+	private void SetId(uint id)
+	{
+		if (WrappedScript.Id != id)
+			WrappedScript.Name = HashResolver.ResolveNameHash(null, id);
+		WrappedScript.Id = id;
 	}
 
 	[Category("Meta")]

@@ -25,7 +25,16 @@ namespace FEngViewer
 		public int SearchIndex { get; set; }
 
 		public static string GetObjectTreeKey(IObject<ObjectData> objectData) => objectData != null ? $"{GetObjectText(objectData)}:{objectData.Guid:X}" : null;
-		public static string GetObjectText(IObject<ObjectData> objectData) => objectData != null ? $"{objectData.Name ?? "0x" + objectData.NameHash.ToString("X")}" : null;
+		public static string GetObjectText(IObject<ObjectData> objectData) => objectData != null ? GetHashText(objectData.Name, objectData.NameHash) : null;
+
+		public static string ResolveName(string name, uint hash) => name ?? AppService.Instance.HashResolver.ResolveNameHash(null, hash);
+		public static string GetHashText(string name, uint hash) => name ?? $"{hash} (0x{hash:X}) {ResolveName(null, hash) ?? "-----"}";
+
+		public static void AddUserKey(IObject<ObjectData> objectData)
+		{
+			if (!string.IsNullOrEmpty(objectData.Name))
+				AppService.Instance.HashResolver.AddUserKey(objectData.Name, objectData.NameHash);
+		}
 
 		public IObject<ObjectData> CopyObject(IObject<ObjectData> existingObject, IObject<ObjectData> selectedObject, int? index = null, string objectName = null, string objectNumber = null, int? objectCount = null)
 		{
@@ -41,7 +50,7 @@ namespace FEngViewer
 
 			var objectInput = fullOjbectNameExists
 				? (fullObjectName, fullObjectName.BinHash(), existingObject is Group)
-				: ObjectInput(existingObject.Name, existingObject is Group);
+				: ObjectInput(ResolveName(existingObject.Name, existingObject.NameHash), existingObject is Group);
 
 			if (!objectInput.NameHash.HasValue)
 				return null;
@@ -123,9 +132,10 @@ namespace FEngViewer
 				index++;
 				var childName = child.Name;
 				var childNameHash = child.NameHash;
-				if (!string.IsNullOrWhiteSpace(child.Name) && objectCount.HasValue)
+				var resolvedChildName = ResolveName(child.Name, child.NameHash);
+				if (!string.IsNullOrWhiteSpace(resolvedChildName) && objectCount.HasValue)
 				{
-					var splitName = SplitTrailingNumber(child.Name);
+					var splitName = SplitTrailingNumber(resolvedChildName);
 					if (splitName.Number == objectNumber)
 					{
 						childName = $"{splitName.Name}{objectCount}";
@@ -141,7 +151,9 @@ namespace FEngViewer
 					var groupChildren = CreateChildren(child, newChild, index, objectNumber, objectCount);
 					foreach (var groupChild in groupChildren)
 						newChildren.Add(groupChild.Key, groupChild.Value);
-					index = groupChildren.Keys.Max();
+
+					if (groupChildren.Count != 0)
+						index = groupChildren.Keys.Max();
 				}
 			}
 

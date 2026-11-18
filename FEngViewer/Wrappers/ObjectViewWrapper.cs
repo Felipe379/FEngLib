@@ -325,11 +325,7 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
 	public uint LabelHashHex
 	{
 		get => WrappedObject.Hash;
-		set
-		{
-			WrappedObject.Hash = value;
-			WrappedObject.Label = HashResolver.ResolveNameHash(WrappedObject.Label, value);
-		}
+		set => SetLabelHash(value);
 	}
 
 	[Category("Text")]
@@ -339,11 +335,14 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
 	public uint LabelHashDec
 	{
 		get => WrappedObject.Hash;
-		set
-		{
-			WrappedObject.Hash = value;
-			WrappedObject.Label = HashResolver.ResolveNameHash(WrappedObject.Label, value);
-		}
+		set => SetLabelHash(value);
+	}
+
+	private void SetLabelHash(uint hash)
+	{
+		if (WrappedObject.Hash != hash)
+			WrappedObject.Label = HashResolver.ResolveNameHash(null, hash);
+		WrappedObject.Hash = hash;
 	}
 
 	[Category("Text")]

@@ -224,7 +224,7 @@ public partial class PackageView : Form
 
 	private static void CreateScriptTreeNode(TreeNodeCollection collection, Script script)
 	{
-		var node = collection.Add(script.Name ?? $"0x{script.Id:X}");
+		var node = collection.Add(PackageViewExtensions.GetHashText(script.Name, script.Id));
 		// ReSharper disable once LocalizableElement
 		node.ImageKey = node.SelectedImageKey = "TreeItem_Script";
 		node.Tag = script;
@@ -644,6 +644,23 @@ public partial class PackageView : Form
 		}
 	}
 
+	protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, Keys keyData)
+	{
+		var contextMenu = !treeView1.Focused ? null : treeView1.SelectedNode?.Tag switch
+		{
+			RenderTreeNode => objectContextMenu,
+			Script => scriptContextMenu,
+			_ => null
+		};
+
+		var menuItem = contextMenu?.Items.OfType<ToolStripMenuItem>().FirstOrDefault(i => i.Enabled && i.ShortcutKeys == keyData);
+		if (menuItem is null)
+			return base.ProcessCmdKey(ref msg, keyData);
+
+		menuItem.PerformClick();
+		return true;
+	}
+
 	private void toggleScriptMenuItem_Click(object sender, EventArgs e)
 	{
 		if (treeView1.SelectedNode?.Tag is Script script)
@@ -662,12 +679,12 @@ public partial class PackageView : Form
 		var objectData = viewNode.GetObject();
 		var scripts = objectData.GetScripts();
 
-		var objectInput = _packageViewExtensions.ObjectInput(script.Name, false);
+		var objectInput = _packageViewExtensions.ObjectInput(PackageViewExtensions.ResolveName(script.Name, script.Id), false);
 
 		if (!objectInput.NameHash.HasValue)
 			return;
 
-		if (objectInput.Name == script.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, objectData, script))
+		if (objectInput.NameHash == script.Id || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, objectData, script))
 			return;
 
 		foreach (var chainedScript in scripts)
@@ -703,17 +720,17 @@ public partial class PackageView : Form
 		if (selectedObject is null)
 			return;
 
-		var objectInput = _packageViewExtensions.ObjectInput(selectedObject.Name, false);
+		var objectInput = _packageViewExtensions.ObjectInput(PackageViewExtensions.ResolveName(selectedObject.Name, selectedObject.NameHash), false);
 
 		if (!objectInput.NameHash.HasValue)
 			return;
 
-		if (objectInput.Name == selectedObject.Name || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, selectedObject))
+		if (objectInput.NameHash == selectedObject.NameHash || _packageViewExtensions.NameAlreadyExists(objectInput.Name, objectInput.NameHash.Value, selectedObject))
 			return;
 
 		selectedObject.Name = objectInput.Name;
 		selectedObject.NameHash = objectInput.NameHash.Value;
-		AppService.Instance.HashResolver.AddUserKey(selectedObject.Name, selectedObject.NameHash);
+		PackageViewExtensions.AddUserKey(selectedObject);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
 	}
@@ -750,7 +767,7 @@ public partial class PackageView : Form
 		if (newObject is null)
 			return;
 
-		AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
+		PackageViewExtensions.AddUserKey(newObject);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(newObject));
 	}
@@ -762,15 +779,17 @@ public partial class PackageView : Form
 
 		var selectedObject = node.GetObject();
 
-		if (selectedObject is null || string.IsNullOrWhiteSpace(selectedObject.Name))
+		var selectedObjectName = selectedObject is null ? null : PackageViewExtensions.ResolveName(selectedObject.Name, selectedObject.NameHash);
+
+		if (string.IsNullOrWhiteSpace(selectedObjectName))
 			return;
 
-		var index = selectedObject.Name.Length;
-		while (index > 0 && char.IsDigit(selectedObject.Name[index - 1]))
+		var index = selectedObjectName.Length;
+		while (index > 0 && char.IsDigit(selectedObjectName[index - 1]))
 			index--;
 
-		var currentObjectName = selectedObject.Name[..index];
-		var currentObjectNumber = selectedObject.Name[index..];
+		var currentObjectName = selectedObjectName[..index];
+		var currentObjectNumber = selectedObjectName[index..];
 
 		var objectInput = _packageViewExtensions.ObjectInput(currentObjectNumber, false);
 
@@ -785,7 +804,7 @@ public partial class PackageView : Form
 		var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
 		var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
 
-		var initialNumber = index == selectedObject.Name.Length ? 0 : int.Parse(currentObjectNumber);
+		var initialNumber = index == selectedObjectName.Length ? 0 : int.Parse(currentObjectNumber);
 
 		for (int i = untilNumber; i > initialNumber; i--)
 		{
@@ -802,7 +821,7 @@ public partial class PackageView : Form
 
 		foreach (var newObject in objects)
 		{
-			AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
+			PackageViewExtensions.AddUserKey(newObject);
 		}
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objects.Last()));
@@ -852,7 +871,7 @@ public partial class PackageView : Form
 			if (newObject is null)
 				return;
 
-			AppService.Instance.HashResolver.AddUserKey(newObject.Name, newObject.NameHash);
+			PackageViewExtensions.AddUserKey(newObject);
 			treeKey = PackageViewExtensions.GetObjectTreeKey(newObject);
 		}
 		else
@@ -1041,7 +1060,7 @@ public partial class PackageView : Form
 
 		var feObjects = _currentPackage.Objects
 			.Where(x => x.Parent?.NameHash == node.NameHash && x.Parent?.Guid == node.Guid)
-			.OrderBy(x => x.Name, new NaturalStringComparer()).ThenBy(x => x.NameHash).ThenBy(x => x.Guid)
+			.OrderBy(x => PackageViewExtensions.ResolveName(x.Name, x.NameHash), new NaturalStringComparer()).ThenBy(x => x.NameHash).ThenBy(x => x.Guid)
 			.ToList();
 
 		foreach (var feObject in feObjects)

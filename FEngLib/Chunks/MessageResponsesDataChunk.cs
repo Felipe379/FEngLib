@@ -12,8 +12,6 @@ public class MessageResponsesDataChunk : FrontendObjectChunk
     {
     }
 
-	private string _logReference = "Message";
-
 	public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var tagProcessor = new MessageResponseTagProcessor<IObject<ObjectData>>();
@@ -24,7 +22,6 @@ public class MessageResponsesDataChunk : FrontendObjectChunk
         {
             var tag = tagStream.NextTag();
             tagProcessor.ProcessTag(FrontendObject, tag);
-			FrontendObject.Name = HashResolver.ResolveNameHash(FrontendObject.Name, FrontendObject.NameHash, _logReference);
         }
 
 		return FrontendObject;

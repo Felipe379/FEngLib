@@ -14,8 +14,6 @@ public class ScriptDataChunk : FrontendObjectChunk
     {
     }
 
-	private string _logReference = "Script";
-
 	public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var ctx = new ScriptProcessingContext(FrontendObject.CreateScript());
@@ -44,7 +42,7 @@ public class ScriptDataChunk : FrontendObjectChunk
                 ProcessScriptHeaderTag(ctx, scriptHeaderTag);
                 break;
             case ScriptNameTag scriptNameTag:
-				ctx.Script.Name = HashResolver.ResolveNameHash(scriptNameTag.Name, scriptNameTag.NameHash, "Script");
+				ctx.Script.Name = scriptNameTag.Name;
 				ctx.Script.Id = scriptNameTag.NameHash;
                 break;
             case ScriptChainTag scriptChainTag:
@@ -190,7 +188,6 @@ public class ScriptDataChunk : FrontendObjectChunk
         ScriptHeaderTag scriptHeaderTag)
     {
         ctx.Script.Id = scriptHeaderTag.Id;
-		ctx.Script.Name = HashResolver.ResolveNameHash(ctx.Script.Name, scriptHeaderTag.Id, _logReference);
 		ctx.Script.Flags = scriptHeaderTag.Flags;
         ctx.Script.Length = scriptHeaderTag.Length;
     }

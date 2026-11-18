@@ -15,8 +15,6 @@ public class ObjectDataChunk : FrontendObjectChunk
     {
     }
 
-	private string _logReference = "Object";
-
     public override IObject<ObjectData> Read(Package package, ObjectReaderState readerState, BinaryReader reader)
     {
         var newFrontendObject = FrontendObject;
@@ -59,7 +57,6 @@ public class ObjectDataChunk : FrontendObjectChunk
             case StringBufferLengthTag _:
                 break;
             case ObjectHashTag objectHashTag:
-				frontendObject.Name = HashResolver.ResolveNameHash(null, objectHashTag.Hash, _logReference);
 				frontendObject.NameHash = objectHashTag.Hash;
                 break;
             case ObjectReferenceTag objectReferenceTag:
@@ -72,7 +69,7 @@ public class ObjectDataChunk : FrontendObjectChunk
                 ProcessObjectParentTag(package, frontendObject, objectParentTag);
                 break;
             case ObjectNameTag objectNameTag:
-				frontendObject.Name = HashResolver.ResolveNameHash(objectNameTag.Name, objectNameTag.NameHash, _logReference);
+				frontendObject.Name = objectNameTag.Name;
                 frontendObject.NameHash = objectNameTag.NameHash;
                 break;
             case MultiImageTextureTag _:
@@ -102,7 +99,6 @@ public class ObjectDataChunk : FrontendObjectChunk
     private BaseObject ProcessStringBufferLabelHashTag(Text frontendString,
         StringBufferLabelHashTag stringBufferLabelHashTag)
     {
-		frontendString.Label = HashResolver.ResolveNameHash(frontendString.Label, stringBufferLabelHashTag.Hash, "Label");
 		frontendString.Hash = stringBufferLabelHashTag.Hash;
         return frontendString;
     }
