@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using FEngLib;
 using FEngLib.Objects;
 using FEngLib.Packages;
 
@@ -7,6 +8,10 @@ namespace FEngCli;
 
 public static class PackageDumper
 {
+    private static readonly Lazy<HashResolver> Resolver = new(() => new HashResolver());
+
+    private static string ResolveName(string name, uint hash) => name ?? Resolver.Value.ResolveNameHash(null, hash);
+
     public static void DumpPackage(Package package)
     {
         DumpPackageMeta(package);
@@ -67,8 +72,9 @@ public static class PackageDumper
         // if ((frontendObject.Type != ObjectType.Image || frontendObject.ResourceIndex != 4) && frontendObject.Type != ObjectType.Group) return;
 
         Console.WriteLine("--------- OBJECT ---------");
-        if (!string.IsNullOrEmpty(frontendObject.Name))
-            Console.WriteLine("Name     : {0} ({1})", frontendObject.Name, frontendObject.Name.ToUpper());
+        var objectName = ResolveName(frontendObject.Name, frontendObject.NameHash);
+        if (!string.IsNullOrEmpty(objectName))
+            Console.WriteLine("Name     : {0} ({1})", objectName, objectName.ToUpper());
         Console.WriteLine("Hash     : 0x{0:X8}", frontendObject.NameHash);
         Console.WriteLine("GUID     : 0x{0:X}", frontendObject.Guid);
         Console.WriteLine("Flags    : {0} (0x{0:X})", frontendObject.Flags);
@@ -96,8 +102,9 @@ public static class PackageDumper
             {
                 Console.WriteLine("\t----------");
                 Console.WriteLine("\tID     : 0x{0:X}", frontendScript.Id);
-                if (!string.IsNullOrEmpty(frontendScript.Name))
-                    Console.WriteLine("\tName   : {0} ({1})", frontendScript.Name, frontendScript.Name.ToUpper());
+                var scriptName = ResolveName(frontendScript.Name, frontendScript.Id);
+                if (!string.IsNullOrEmpty(scriptName))
+                    Console.WriteLine("\tName   : {0} ({1})", scriptName, scriptName.ToUpper());
                 if (frontendScript.ChainedId is { } chainedId)
                     Console.WriteLine("\tChained to: 0x{0:X}", chainedId);
                 Console.WriteLine("\tFlags  : 0x{0:X}", frontendScript.Flags);
@@ -159,9 +166,9 @@ public static class PackageDumper
         {
             case Text frontendString:
                 Console.WriteLine("\tString hash   : 0x{0:X}", frontendString.Hash);
-                if (!string.IsNullOrEmpty(frontendString.Label))
-                    Console.WriteLine("\tString ID     : {0} ({1})", frontendString.Label,
-                        frontendString.Label.ToUpper());
+                var label = ResolveName(frontendString.Label, frontendString.Hash);
+                if (!string.IsNullOrEmpty(label))
+                    Console.WriteLine("\tString ID     : {0} ({1})", label, label.ToUpper());
                 Console.WriteLine("\tDefault Text  : {0}", frontendString.Value);
                 Console.WriteLine("\tMaximum width : {0}", frontendString.MaxWidth);
                 Console.WriteLine("\tText leading  : {0}", frontendString.Leading);

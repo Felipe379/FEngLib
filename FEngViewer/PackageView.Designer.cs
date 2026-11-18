@@ -488,11 +488,9 @@ namespace FEngViewer
 		private Button BtnPrevious;
 		private ToolStripMenuItem moveUpToolStripMenuItem;
 		private ToolStripMenuItem moveDownToolStripMenuItem;
-		private ToolStripMenuItem editToolStripMenuItem;
 		private ToolStripMenuItem renameScriptMenuItem;
 		private ToolStripMenuItem moveUpScriptMenuItem;
 		private ToolStripMenuItem moveDownScriptMenuItem;
-		private Button BtnBackgroundColorPicker;
 		private ContextMenuStrip viewerContextMenu;
 		private ToolStripMenuItem backgroundColorMenuItem;
 		private ToolStripMenuItem orderGroupToolStripMenu;

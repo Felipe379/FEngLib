@@ -11,7 +11,7 @@ namespace FEngLib.Chunks;
 
 public class ObjectDataChunk : FrontendObjectChunk
 {
-    public ObjectDataChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
+    public ObjectDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
     {
     }
 

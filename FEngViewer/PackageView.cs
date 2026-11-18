@@ -304,13 +304,12 @@ public partial class PackageView : Form
 
 	private void SavePackageToChunk(string path)
 	{
-		using var bw = new BinaryWriter(File.Create(path));
-
 		using var tms = new MemoryStream();
 		using var tbw = new BinaryWriter(tms);
 		new FrontendChunkWriter(_currentPackage).Write(tbw);
 		tms.Position = 0;
 
+		using var bw = new BinaryWriter(File.Create(path));
 		bw.Write(0x30203);
 		bw.Write((uint)tms.Length);
 		tms.CopyTo(bw.BaseStream);
@@ -365,8 +364,12 @@ public partial class PackageView : Form
 
 	private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
 	{
+		LblItemIndex.Text = null;
+		LblChildsCount.Text = null;
+
 		if (e.Node == _rootNode)
 		{
+			objectPropertyGrid.SelectedObject = null;
 			LblChildsCount.Text = "Children: " + _currentPackage.Objects.Where(x => x.Parent == null).Count().ToString("D5") + " | Total: " + CountChildren(null);
 		}
 		else if (e.Node?.Tag is RenderTreeNode viewNode)
@@ -399,8 +402,6 @@ public partial class PackageView : Form
 #else
 			objectPropertyGrid.SelectedObject = null;
 #endif
-			LblItemIndex.Text = null;
-			LblChildsCount.Text = null;
 		}
 		Render();
 	}
@@ -460,7 +461,7 @@ public partial class PackageView : Form
 
 	private void OpenFileMenuItem_Click(object sender, EventArgs e)
 	{
-		var ofd = new OpenFileDialog();
+		using var ofd = new OpenFileDialog();
 		ofd.Filter = "FNG Files (*.fng, *.bin)|*.fng;*.bin|JSON Files (*.json)|*.json";
 		ofd.CheckFileExists = true;
 		if (ofd.ShowDialog() == DialogResult.OK)
@@ -481,65 +482,101 @@ public partial class PackageView : Form
 
 	private void LoadFile(string path = null, bool fileIsJson = false)
 	{
-		Package package;
 		if (string.IsNullOrWhiteSpace(path))
 		{
 			if (_currentPackage is null)
 				return;
 
-			package = AppService.Instance.ReloadFile();
-		}
-		else
-		{
-			if (fileIsJson)
-				package = AppService.Instance.LoadJson(path);
-			else
-				package = AppService.Instance.LoadFile(path);
+			path = AppService.Instance.CurrentFileLoaded;
+			fileIsJson = AppService.Instance.IsJson;
 		}
 
+		Package package;
+		RenderTree renderTree;
+		try
+		{
+			package = AppService.Instance.Load(path, fileIsJson);
+			renderTree = RenderTree.Create(package);
+		}
+		catch (Exception ex)
+		{
+			MessageBox.Show($"Could not load the file.{Environment.NewLine}{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			return;
+		}
+
+		AppService.Instance.SetCurrentPackage(package, path, fileIsJson);
 		_packageViewExtensions.ObjectSelected = null;
 		_packageViewExtensions.ShouldCopyObject = false;
 		_packageViewExtensions.SearchIndex = -1;
-		viewOutput.Init(Path.Combine(Path.GetDirectoryName(path) ?? "", "textures"));
+
+		try
+		{
+			viewOutput.Init(Path.Combine(Path.GetDirectoryName(path) ?? "", "textures"));
+		}
+		catch (Exception ex)
+		{
+			MessageBox.Show($"Could not load the textures.{Environment.NewLine}{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
 
 		_currentPackage = package;
-		CurrentPackageWasModified();
+		CurrentPackageWasModified(renderTree: renderTree);
 	}
 
 	private void SaveFileMenuItem_Click(object sender, EventArgs e)
 	{
-		if (_currentPackage is null)
-			return;
-
-		var sfd = new SaveFileDialog();
-		sfd.Filter = "FNG Files (*.fng)|*.fng|BIN Files (*.bin)|*.bin|JSON Files (*.json)|*.json";
-		sfd.FileName = Path.GetFileNameWithoutExtension(_currentPackage?.Name);
-		sfd.AddExtension = true;
-		if (sfd.ShowDialog() == DialogResult.OK)
-		{
-			switch (sfd.FilterIndex)
-			{
-				case 1:
-				case 2:
-					SaveFile(sfd.FileName, false);
-					break;
-				case 3:
-					SaveFile(sfd.FileName, true);
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(sfd.FilterIndex));
-			}
-		}
+		if (TryGetSavePath(out var path, out var fileIsJson))
+			SaveFile(path, fileIsJson);
 	}
 
 	private void CleanupAndSaveToolStripMenuItem_Click(object sender, EventArgs e)
 	{
-		foreach (var fngObject in _currentPackage.Objects.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
-		{
+		if (!TryGetSavePath(out var path, out var fileIsJson))
+			return;
+
+		var objectNames = _currentPackage.Objects.ToDictionary(o => o, o => o.Name);
+		var scriptNames = _currentPackage.Objects.SelectMany(o => o.GetScripts()).ToDictionary(s => s, s => s.Name);
+
+		foreach (var fngObject in objectNames.Keys)
 			fngObject.Name = null;
+		foreach (var script in scriptNames.Keys)
+			script.Name = null;
+
+		if (!SaveFile(path, fileIsJson))
+		{
+			foreach (var (fngObject, name) in objectNames)
+				fngObject.Name = name;
+			foreach (var (script, name) in scriptNames)
+				script.Name = name;
+			return;
 		}
 
-		SaveFileMenuItem_Click(sender, e);
+		CurrentPackageWasModified();
+	}
+
+	private bool TryGetSavePath(out string path, out bool fileIsJson)
+	{
+		path = null;
+		fileIsJson = false;
+
+		if (_currentPackage is null)
+			return false;
+
+		using var sfd = new SaveFileDialog();
+		sfd.Filter = "FNG Files (*.fng)|*.fng|BIN Files (*.bin)|*.bin|JSON Files (*.json)|*.json";
+		sfd.FileName = Path.GetFileNameWithoutExtension(_currentPackage.Name);
+		sfd.AddExtension = true;
+		if (sfd.ShowDialog() != DialogResult.OK)
+			return false;
+
+		path = sfd.FileName;
+		fileIsJson = sfd.FilterIndex switch
+		{
+			1 or 2 => false,
+			3 => true,
+			_ => throw new ArgumentOutOfRangeException(nameof(sfd.FilterIndex))
+		};
+
+		return true;
 	}
 
 	private void ReloadFileMenuItem_Click(object sender, EventArgs e)
@@ -547,17 +584,26 @@ public partial class PackageView : Form
 		LoadFile();
 	}
 
-	private void SaveFile(string path, bool fileIsJson)
+	private bool SaveFile(string path, bool fileIsJson)
 	{
 		if (string.IsNullOrWhiteSpace(path))
-			return;
+			return false;
 
-		if (fileIsJson)
-			SavePackageToJson(path);
-		else
-			SavePackageToChunk(path);
+		try
+		{
+			if (fileIsJson)
+				SavePackageToJson(path);
+			else
+				SavePackageToChunk(path);
+		}
+		catch (Exception ex)
+		{
+			MessageBox.Show($"Could not save the file.{Environment.NewLine}{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			return false;
+		}
 
 		OpenRecentlySaved(path, fileIsJson);
+		return true;
 	}
 
 	public static IEnumerable<TreeNode> FlattenTree(TreeView tv)
@@ -599,9 +645,9 @@ public partial class PackageView : Form
 		}
 	}
 
-	private void CurrentPackageWasModified(string treeKey = null)
+	private void CurrentPackageWasModified(string treeKey = null, RenderTree renderTree = null)
 	{
-		_currentRenderTree = RenderTree.Create(_currentPackage);
+		_currentRenderTree = renderTree ?? RenderTree.Create(_currentPackage);
 		PopulateTreeView(_currentPackage, _currentRenderTree);
 
 		if (!string.IsNullOrWhiteSpace(treeKey))
@@ -695,13 +741,14 @@ public partial class PackageView : Form
 
 		script.Name = objectInput.Name;
 		script.Id = objectInput.NameHash.Value;
+		PackageViewExtensions.AddUserKey(script.Name, script.Id);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objectData));
 	}
 
 	private void backgroundColorMenuItem_Click(object sender, EventArgs e)
 	{
-		var colorDialog = new ColorDialog();
+		using var colorDialog = new ColorDialog();
 		if (colorDialog.ShowDialog() != DialogResult.OK)
 			return;
 
@@ -730,7 +777,7 @@ public partial class PackageView : Form
 
 		selectedObject.Name = objectInput.Name;
 		selectedObject.NameHash = objectInput.NameHash.Value;
-		PackageViewExtensions.AddUserKey(selectedObject);
+		PackageViewExtensions.AddUserKey(selectedObject.Name, selectedObject.NameHash);
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(selectedObject));
 	}
@@ -743,6 +790,10 @@ public partial class PackageView : Form
 		var selectedObject = node.GetObject();
 
 		if (selectedObject is null)
+			return;
+
+		var message = $"Do you want to delete {PackageViewExtensions.GetObjectText(selectedObject)}{(selectedObject is Group ? " and all its children" : "")}?";
+		if (MessageBox.Show(message, "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
 			return;
 
 		var parentKey = PackageViewExtensions.GetObjectTreeKey(selectedObject.Parent);
@@ -767,8 +818,6 @@ public partial class PackageView : Form
 		if (newObject is null)
 			return;
 
-		PackageViewExtensions.AddUserKey(newObject);
-
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(newObject));
 	}
 
@@ -779,17 +828,15 @@ public partial class PackageView : Form
 
 		var selectedObject = node.GetObject();
 
-		var selectedObjectName = selectedObject is null ? null : PackageViewExtensions.ResolveName(selectedObject.Name, selectedObject.NameHash);
+		if (selectedObject is null)
+			return;
+
+		var selectedObjectName = PackageViewExtensions.ResolveName(selectedObject.Name, selectedObject.NameHash);
 
 		if (string.IsNullOrWhiteSpace(selectedObjectName))
 			return;
 
-		var index = selectedObjectName.Length;
-		while (index > 0 && char.IsDigit(selectedObjectName[index - 1]))
-			index--;
-
-		var currentObjectName = selectedObjectName[..index];
-		var currentObjectNumber = selectedObjectName[index..];
+		var (currentObjectName, currentObjectNumber) = PackageViewExtensions.SplitTrailingNumber(selectedObjectName);
 
 		var objectInput = _packageViewExtensions.ObjectInput(currentObjectNumber, false);
 
@@ -804,7 +851,13 @@ public partial class PackageView : Form
 		var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
 		var position = _currentPackage.Objects.IndexOf(lastChild) + 1;
 
-		var initialNumber = index == selectedObjectName.Length ? 0 : int.Parse(currentObjectNumber);
+		var initialNumber = 0;
+		if (currentObjectNumber.Length != 0 && !int.TryParse(currentObjectNumber, out initialNumber))
+			return;
+
+		var copiesCount = untilNumber - initialNumber;
+		if (copiesCount > 1000 && MessageBox.Show($"This will create {copiesCount} copies. Do you want to continue?", "Duplicate", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
+			return;
 
 		for (int i = untilNumber; i > initialNumber; i--)
 		{
@@ -818,11 +871,6 @@ public partial class PackageView : Form
 
 		if (!objects.Any())
 			return;
-
-		foreach (var newObject in objects)
-		{
-			PackageViewExtensions.AddUserKey(newObject);
-		}
 
 		CurrentPackageWasModified(PackageViewExtensions.GetObjectTreeKey(objects.Last()));
 	}
@@ -871,7 +919,6 @@ public partial class PackageView : Form
 			if (newObject is null)
 				return;
 
-			PackageViewExtensions.AddUserKey(newObject);
 			treeKey = PackageViewExtensions.GetObjectTreeKey(newObject);
 		}
 		else
@@ -882,15 +929,17 @@ public partial class PackageView : Form
 				return;
 			}
 
-			treeKey = PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected);
 			var lastChild = _packageViewExtensions.FindLastChild(selectedObject);
+			var newParent = selectedObject is Group && selectedObject == lastChild ? selectedObject : selectedObject.Parent;
+
+			if (PackageViewExtensions.IsSelfOrAncestor(_packageViewExtensions.ObjectSelected, newParent))
+				return;
+
+			treeKey = PackageViewExtensions.GetObjectTreeKey(_packageViewExtensions.ObjectSelected);
 			var newIndex = _currentPackage.Objects.IndexOf(lastChild) + 1;
 			var oldIndex = _currentPackage.Objects.IndexOf(_packageViewExtensions.ObjectSelected);
 
-			if (oldIndex == newIndex)
-				return;
-
-			_packageViewExtensions.ObjectSelected.Parent = selectedObject is Group && selectedObject == lastChild ? selectedObject : selectedObject.Parent;
+			_packageViewExtensions.ObjectSelected.Parent = newParent;
 			_packageViewExtensions.MoveItem(oldIndex, newIndex);
 			_packageViewExtensions.MoveChildren(_packageViewExtensions.ObjectSelected);
 

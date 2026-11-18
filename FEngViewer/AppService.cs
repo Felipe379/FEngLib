@@ -24,11 +24,13 @@ public class AppService
 
     public static AppService Instance => LazyInstance.Value;
 
-    public Package LoadFile(string path)
-    {
-		CurrentFileLoaded = path;
-		IsJson = false;
+	public Package Load(string path, bool isJson)
+	{
+		return isJson ? LoadJson(path) : LoadFile(path);
+	}
 
+    private static Package LoadFile(string path)
+    {
         using var fs = new FileStream(path, FileMode.Open);
         using var fr = new BinaryReader(fs);
         var marker = fr.ReadUInt32();
@@ -49,15 +51,12 @@ public class AppService
         ms.Position = 0;
 
         using var mr = new BinaryReader(ms);
-        return _currentPackage = new FrontendPackageLoader(HashResolver).Load(mr);
+        return new FrontendPackageLoader().Load(mr);
     }
 
-	public Package LoadJson(string path)
+	private static Package LoadJson(string path)
 	{
-		CurrentFileLoaded = path;
-		IsJson = true;
-
-		return _currentPackage = JsonConvert.DeserializeObject<Package>(File.ReadAllText(path), new JsonSerializerSettings
+		return JsonConvert.DeserializeObject<Package>(File.ReadAllText(path), new JsonSerializerSettings
 		{
 			Formatting = Formatting.Indented,
 			Converters = new List<JsonConverter>
@@ -68,12 +67,14 @@ public class AppService
 			ReferenceLoopHandling = ReferenceLoopHandling.Error,
 			PreserveReferencesHandling = PreserveReferencesHandling.Objects,
 			NullValueHandling = NullValueHandling.Ignore
-		});
+		}) ?? throw new InvalidDataException($"Invalid FEng JSON file: {path}");
 	}
 
-	public Package ReloadFile()
+	public void SetCurrentPackage(Package package, string path, bool isJson)
 	{
-		return IsJson ? LoadJson(CurrentFileLoaded) : LoadFile(CurrentFileLoaded);
+		CurrentFileLoaded = path;
+		IsJson = isJson;
+		_currentPackage = package;
 	}
 
 	public List<ResourceRequest> GetResourceRequests()

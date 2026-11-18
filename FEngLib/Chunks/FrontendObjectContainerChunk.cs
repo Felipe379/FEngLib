@@ -16,7 +16,7 @@ public class FrontendObjectContainerChunk : FrontendObjectChunk
         return FrontendChunkType.FrontendObjectContainer;
     }
 
-    public FrontendObjectContainerChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
+    public FrontendObjectContainerChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
     {
     }
 }

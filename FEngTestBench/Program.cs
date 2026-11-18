@@ -101,7 +101,7 @@ internal static class Program
         ms.Position = 0;
 
         using var mr = new BinaryReader(ms);
-        return new FrontendPackageLoader(new HashResolver()).Load(mr);
+        return new FrontendPackageLoader().Load(mr);
     }
 
     private static void SavePackageToChunk(Package pkg, string path)

@@ -10,7 +10,7 @@ namespace FEngLib.Chunks;
 
 public class ScriptDataChunk : FrontendObjectChunk
 {
-    public ScriptDataChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
+    public ScriptDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
     {
     }
 

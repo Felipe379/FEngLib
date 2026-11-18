@@ -308,7 +308,7 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
 	[RefreshProperties(RefreshProperties.Repaint)]
 	public string Label
 	{
-		get => WrappedObject.Label;
+		get => WrappedObject.Label ?? HashResolver.ResolveNameHash(null, WrappedObject.Hash);
 		set
 		{
 			WrappedObject.Label = value;
@@ -341,7 +341,7 @@ public class TextObjectViewWrapper : ObjectViewWrapper<Text>
 	private void SetLabelHash(uint hash)
 	{
 		if (WrappedObject.Hash != hash)
-			WrappedObject.Label = HashResolver.ResolveNameHash(null, hash);
+			WrappedObject.Label = null;
 		WrappedObject.Hash = hash;
 	}
 

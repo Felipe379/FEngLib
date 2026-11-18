@@ -12,16 +12,14 @@ namespace FEngLib;
 /// </summary>
 public class FrontendChunkReader
 {
-    public FrontendChunkReader(Package package, BinaryReader reader, HashResolver hashResolver)
+    public FrontendChunkReader(Package package, BinaryReader reader)
     {
         Package = package;
         Reader = reader;
-		HashResolver = hashResolver;
 	}
 
     public Package Package { get; }
     public BinaryReader Reader { get; }
-	public HashResolver HashResolver { get; }
 
 	/// <summary>
 	///     Reads chunks
@@ -102,7 +100,7 @@ public class FrontendChunkReader
                     buttonMapCountChunk.Read(Package, block, this, Reader);
                     break;
                 case FrontendChunkType.FrontendObjectContainer:
-                    var objectContainerChunk = new FrontendObjectContainerChunk(null, HashResolver);
+                    var objectContainerChunk = new FrontendObjectContainerChunk(null);
                     var frontendObject = objectContainerChunk.Read(Package, new ObjectReaderState(block, this), Reader);
                     Package.Objects.Add(frontendObject);
                     break;
@@ -143,9 +141,9 @@ public class FrontendChunkReader
 
             FrontendObjectChunk chunk = block.ChunkType switch
             {
-                FrontendChunkType.ObjectData => new ObjectDataChunk(frontendObject, HashResolver),
-                FrontendChunkType.ScriptData => new ScriptDataChunk(frontendObject, HashResolver),
-                FrontendChunkType.MessageResponses => new MessageResponsesDataChunk(frontendObject, HashResolver),
+                FrontendChunkType.ObjectData => new ObjectDataChunk(frontendObject),
+                FrontendChunkType.ScriptData => new ScriptDataChunk(frontendObject),
+                FrontendChunkType.MessageResponses => new MessageResponsesDataChunk(frontendObject),
                 _ => throw new ChunkReadingException($"Unknown chunk type: 0x{(int) block.ChunkType:X8}")
             };
 

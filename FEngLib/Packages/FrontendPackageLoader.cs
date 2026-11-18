@@ -8,13 +8,6 @@ namespace FEngLib.Packages;
 /// </summary>
 public class FrontendPackageLoader
 {
-	public FrontendPackageLoader(HashResolver hashResolver)
-	{
-		HashResolver = hashResolver;
-	}
-
-	public HashResolver HashResolver { get; }
-
 	/// <summary>
 	///     Loads a data stream as a <see cref="Package" />.
 	/// </summary>
@@ -23,7 +16,7 @@ public class FrontendPackageLoader
 	public Package Load(BinaryReader br)
     {
         var package = new Package();
-        var chunkReader = new FrontendChunkReader(package, br, HashResolver);
+        var chunkReader = new FrontendChunkReader(package, br);
 
         foreach (var chunk in chunkReader.ReadMainChunks())
             switch (chunk)

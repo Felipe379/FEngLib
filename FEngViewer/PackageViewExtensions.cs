@@ -30,10 +30,10 @@ namespace FEngViewer
 		public static string ResolveName(string name, uint hash) => name ?? AppService.Instance.HashResolver.ResolveNameHash(null, hash);
 		public static string GetHashText(string name, uint hash) => name ?? $"{hash} (0x{hash:X}) {ResolveName(null, hash) ?? "-----"}";
 
-		public static void AddUserKey(IObject<ObjectData> objectData)
+		public static void AddUserKey(string name, uint hash)
 		{
-			if (!string.IsNullOrEmpty(objectData.Name))
-				AppService.Instance.HashResolver.AddUserKey(objectData.Name, objectData.NameHash);
+			if (!string.IsNullOrEmpty(name))
+				AppService.Instance.HashResolver.AddUserKey(name, hash);
 		}
 
 		public IObject<ObjectData> CopyObject(IObject<ObjectData> existingObject, IObject<ObjectData> selectedObject, int? index = null, string objectName = null, string objectNumber = null, int? objectCount = null)
@@ -44,7 +44,7 @@ namespace FEngViewer
 			var fullObjectName = objectName;
 			var doesItEndWithANumber = !string.IsNullOrWhiteSpace(objectNumber);
 			if (doesItEndWithANumber)
-				fullObjectName += objectCount;
+				fullObjectName += FormatNumber(objectCount, objectNumber);
 
 			var fullOjbectNameExists = !string.IsNullOrWhiteSpace(fullObjectName);
 
@@ -78,6 +78,7 @@ namespace FEngViewer
 			foreach (var pair in newObjectDictionary.OrderBy(p => p.Key))
 			{
 				_packageView._currentPackage.Objects.Insert(pair.Key, FixClonedObject(pair.Value));
+				AddUserKey(pair.Value.Name, pair.Value.NameHash);
 			}
 
 			return newObject;
@@ -111,6 +112,19 @@ namespace FEngViewer
 			return newObject;
 		}
 
+		private static string FormatNumber(int? number, string originalNumber) => number?.ToString().PadLeft(originalNumber?.Length ?? 0, '0');
+
+		public static bool IsSelfOrAncestor(IObject<ObjectData> ancestor, IObject<ObjectData> objectData)
+		{
+			for (var current = objectData; current is not null; current = current.Parent)
+			{
+				if (current == ancestor)
+					return true;
+			}
+
+			return false;
+		}
+
 		public static (string Name, string Number) SplitTrailingNumber(string input)
 		{
 			int index = input.Length;
@@ -133,12 +147,12 @@ namespace FEngViewer
 				var childName = child.Name;
 				var childNameHash = child.NameHash;
 				var resolvedChildName = ResolveName(child.Name, child.NameHash);
-				if (!string.IsNullOrWhiteSpace(resolvedChildName) && objectCount.HasValue)
+				if (!string.IsNullOrWhiteSpace(resolvedChildName) && objectCount.HasValue && !string.IsNullOrEmpty(objectNumber))
 				{
 					var splitName = SplitTrailingNumber(resolvedChildName);
 					if (splitName.Number == objectNumber)
 					{
-						childName = $"{splitName.Name}{objectCount}";
+						childName = $"{splitName.Name}{FormatNumber(objectCount, objectNumber)}";
 						childNameHash = childName.BinHash();
 					}
 				}
@@ -164,23 +178,15 @@ namespace FEngViewer
 		{
 			if (objectData is Group)
 			{
-				var children = _packageView._currentPackage.Objects.FindAll(x => x.Parent == objectData);
-
-				foreach (var child in children)
-				{
-					if (child is Group)
-						DeleteObject(child);
-					else
-					{
-						if (ObjectSelected == child)
-							ObjectSelected = null;
-						_packageView._currentPackage.Objects.Remove(child);
-					}
-				}
+				foreach (var child in _packageView._currentPackage.Objects.FindAll(x => x.Parent == objectData))
+					DeleteObject(child);
 			}
 
 			if (ObjectSelected == objectData)
 				ObjectSelected = null;
+
+			foreach (var targetList in _packageView._currentPackage.MessageTargetLists)
+				targetList.Targets.RemoveAll(guid => guid == objectData.Guid);
 
 			_packageView._currentPackage.Objects.Remove(objectData);
 		}
@@ -240,7 +246,7 @@ namespace FEngViewer
 
 		public (string Name, uint? NameHash, bool CreateChildren) ObjectInput(string defaultInput, bool isGroup)
 		{
-			var inputForm = new InputForm(CharacterCasing.Upper, isGroup);
+			using var inputForm = new InputForm(CharacterCasing.Upper, isGroup);
 			inputForm.Input = defaultInput;
 			inputForm.CreateChildren = isGroup;
 			if (inputForm.ShowDialog() != DialogResult.OK)
@@ -251,7 +257,7 @@ namespace FEngViewer
 			if (inputForm.Input.IsHash(16))
 			{
 				inputHash = Convert.ToUInt32(inputForm.Input, 16);
-				input = AppService.Instance.HashResolver.ResolveNameHash(null, inputHash);
+				input = ResolveName(null, inputHash);
 			}
 			else if (!string.IsNullOrEmpty(inputForm.Input))
 			{

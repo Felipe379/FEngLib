@@ -17,7 +17,7 @@ namespace FEngLib
 			LogWriteHashCollision();
 		}
 
-		public string ResolveNameHash(string name, uint hash, string logReference = null)
+		public string ResolveNameHash(string name, uint hash)
 		{
 			if (hash != 0)
 			{
@@ -41,8 +41,7 @@ namespace FEngLib
 		{
 			if (Keys.ContainsKey(hash))
 			{
-				Keys[hash].Add(name);
-				if (Keys[hash].Count > 1)
+				if (Keys[hash].Add(name) && Keys[hash].Count > 1)
 					LogWriteHashCollision();
 			}
 			else

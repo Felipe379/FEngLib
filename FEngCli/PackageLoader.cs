@@ -1,5 +1,4 @@
 using System.IO;
-using FEngLib;
 using FEngLib.Packages;
 
 namespace FEngCli;
@@ -28,6 +27,6 @@ public static class PackageLoader
         ms.Position = 0;
 
         using var mr = new BinaryReader(ms);
-        return new FrontendPackageLoader(new HashResolver()).Load(mr);
+        return new FrontendPackageLoader().Load(mr);
     }
 }

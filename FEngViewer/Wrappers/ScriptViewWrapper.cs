@@ -59,7 +59,7 @@ public abstract class ScriptViewWrapper<TScript> where TScript : Script
 	private void SetId(uint id)
 	{
 		if (WrappedScript.Id != id)
-			WrappedScript.Name = HashResolver.ResolveNameHash(null, id);
+			WrappedScript.Name = null;
 		WrappedScript.Id = id;
 	}
 

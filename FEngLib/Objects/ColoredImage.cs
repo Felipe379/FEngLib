@@ -53,10 +53,10 @@ public class ColoredImageScriptTracks : ImageScriptTracks
 
 		result.InternalClone(this);
 
-		result.TopLeft = this.TopLeft;
-		result.TopRight = this.TopRight;
-		result.BottomRight = this.BottomRight;
-		result.BottomLeft = this.BottomLeft;
+		result.TopLeft = this.TopLeft?.Clone() as ColorTrack;
+		result.TopRight = this.TopRight?.Clone() as ColorTrack;
+		result.BottomRight = this.BottomRight?.Clone() as ColorTrack;
+		result.BottomLeft = this.BottomLeft?.Clone() as ColorTrack;
 
 		return result;
 	}

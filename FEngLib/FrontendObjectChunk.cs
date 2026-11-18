@@ -13,13 +13,10 @@ namespace FEngLib;
 public abstract class FrontendObjectChunk
 {
     protected IObject<ObjectData> FrontendObject { get; }
-	public HashResolver HashResolver { get; }
-	
 
-	protected FrontendObjectChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver)
+	protected FrontendObjectChunk(IObject<ObjectData> frontendObject)
     {
         FrontendObject = frontendObject;
-		HashResolver = hashResolver;
     }
 
 

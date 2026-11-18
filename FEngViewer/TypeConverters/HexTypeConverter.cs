@@ -11,7 +11,7 @@ public class HexTypeConverter : UInt32Converter
     {
         if (destinationType == typeof(string) && value != null)
         {
-            NumberFormatInfo formatInfo = (NumberFormatInfo?)culture.GetFormat(typeof(NumberFormatInfo));
+            NumberFormatInfo formatInfo = (NumberFormatInfo)culture.GetFormat(typeof(NumberFormatInfo));
             return "0x" + ((uint)value).ToString("X", formatInfo);
         } else
             return base.ConvertTo(context, culture, value, destinationType);

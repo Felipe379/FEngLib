@@ -51,8 +51,8 @@ public class ImageScriptTracks : ScriptTracks
 	{
 		base.InternalClone(@object);
 
-		this.UpperLeft = @object.UpperLeft;
-		this.LowerRight = @object.LowerRight;
+		this.UpperLeft = @object.UpperLeft?.Clone() as Vector2Track;
+		this.LowerRight = @object.LowerRight?.Clone() as Vector2Track;
 	}
 
 	public override object Clone()

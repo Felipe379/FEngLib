@@ -8,7 +8,7 @@ namespace FEngLib.Chunks;
 
 public class MessageResponsesDataChunk : FrontendObjectChunk
 {
-    public MessageResponsesDataChunk(IObject<ObjectData> frontendObject, HashResolver hashResolver) : base(frontendObject, hashResolver)
+    public MessageResponsesDataChunk(IObject<ObjectData> frontendObject) : base(frontendObject)
     {
     }
 
